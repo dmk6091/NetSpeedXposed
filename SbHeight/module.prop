@@ -1,6 +1,6 @@
 id=sbheight
 name=Status Bar Height (dual row)
-version=v2.1
-versionCode=5
+version=v2.2
+versionCode=6
 author=dmk6091
 description=Makes the status bar taller so NetSpeedXposed's second row is visible. Tap Action to change the height (44-56dp), then reboot.

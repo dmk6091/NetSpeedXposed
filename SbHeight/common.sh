@@ -68,6 +68,12 @@ diag() {
         grep -qiE '^metamodule=(1|true)' "$m" 2>/dev/null && meta="$meta $(grep '^name=' "$m" | cut -d= -f2)"
     done
     [ -n "$meta" ] && echo "metamodule:$meta" || echo "metamodule: none found"
+    echo "-- file labels:"
+    ls -Z /product/overlay/SbHeight50/SbHeight50.apk 2>&1
+    echo "-- package manager:"
+    pm list packages -f 2>/dev/null | grep -i sbheight || echo "(not installed)"
+    echo "-- boot log:"
+    logcat -d -b all 2>/dev/null | grep -iE "sbheight" | grep -iE "fail|error|skip|invalid|reject|denied|exception" | tail -4
     echo "-- overlay registered:"
     cmd overlay list android </dev/null 2>/dev/null | grep -i sbheight || echo "(none)"
     echo "--"

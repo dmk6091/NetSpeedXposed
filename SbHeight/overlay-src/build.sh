@@ -6,8 +6,10 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 MOD=$(dirname "$HERE")
 SDK=${ANDROID_HOME:-$ANDROID_SDK_ROOT}
 BT=$(ls -d "$SDK"/build-tools/* | sort -V | tail -1)
-JAR=$(ls -d "$SDK"/platforms/android-* | sort -V | tail -1)/android.jar
-echo "build-tools: $BT"; echo "android.jar: $JAR"
+PLAT=$(ls -d "$SDK"/platforms/android-* | sort -V | tail -1)
+JAR=$PLAT/android.jar
+API=$(basename "$PLAT" | sed 's/android-//; s/[^0-9].*//')
+echo "build-tools: $BT"; echo "android.jar: $JAR (api $API)"
 WORK=$(mktemp -d)
 KS="$WORK/key.jks"
 keytool -genkeypair -keystore "$KS" -storepass android -keypass android \
@@ -18,7 +20,8 @@ for H in $(cat "$HERE/heights"); do
   PKG="com.dmk.sbheight.h$H"
   D="$WORK/h$H"; mkdir -p "$D/res/values"
   cat > "$D/AndroidManifest.xml" <<XML
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="$PKG">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="$PKG"
+    android:versionCode="1" android:versionName="1.0">
     <overlay android:targetPackage="android" android:priority="999" android:isStatic="false" />
     <application android:hasCode="false" android:label="SbHeight $H" />
 </manifest>
@@ -32,7 +35,8 @@ XML
 XML
   "$BT/aapt2" compile --dir "$D/res" -o "$D/res.zip"
   "$BT/aapt2" link -I "$JAR" --manifest "$D/AndroidManifest.xml" \
-      -o "$D/unsigned.apk" "$D/res.zip" --auto-add-overlay
+      -o "$D/unsigned.apk" "$D/res.zip" --auto-add-overlay \
+      --min-sdk-version 30 --target-sdk-version "$API"
   "$BT/zipalign" -f 4 "$D/unsigned.apk" "$D/aligned.apk"
   OUT="$MOD/system/product/overlay/SbHeight$H"
   mkdir -p "$OUT"
