@@ -29,18 +29,29 @@ ov_name() {
 
 apply_height() {
     h=$1
+    LOG="$MODDIR/last_apply.log"
+    echo "== $(date) height=$h sdk=$(getprop ro.build.version.sdk)" > "$LOG"
     for r in $RES_LIST; do
         n=$(ov_name "$r")
         if [ "$h" = "off" ]; then
-            cmd overlay disable --user 0 "com.android.shell:$n" >/dev/null 2>&1
+            cmd overlay disable --user 0 "com.android.shell:$n" >>"$LOG" 2>&1
         else
+            echo "-- $r = ${h}dp ($(dp_hex "$h"))" >>"$LOG"
             cmd overlay fabricate --target android --name "$n" \
-                "android:dimen/$r" 0x05 "$(dp_hex "$h")" >/dev/null 2>&1
-            cmd overlay enable --user 0 "com.android.shell:$n" >/dev/null 2>&1
+                "android:dimen/$r" 0x05 "$(dp_hex "$h")" >>"$LOG" 2>&1
+            echo "fabricate exit $?" >>"$LOG"
+            cmd overlay enable --user 0 "com.android.shell:$n" >>"$LOG" 2>&1
+            echo "enable exit $?" >>"$LOG"
         fi
+    done
+    echo "-- overlays on android:" >>"$LOG"
+    cmd overlay list android >>"$LOG" 2>&1
+    echo "-- current values:" >>"$LOG"
+    for r in $RES_LIST; do
+        cmd overlay lookup android "android:dimen/$r" >>"$LOG" 2>&1
     done
 }
 
 status() {
-    cmd overlay list android 2>/dev/null | grep SbHeight
+    cat "$MODDIR/last_apply.log" 2>/dev/null
 }
