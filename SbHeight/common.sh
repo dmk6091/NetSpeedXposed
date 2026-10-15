@@ -24,7 +24,8 @@ get_height() {
 run() {
     out=$("$@" </dev/null 2>&1)
     rc=$?
-    [ -n "$out" ] && echo "$out" >>"$LOG"
+    # Keep only the first line of an error (no Java stack traces).
+    [ -n "$out" ] && echo "$out" | grep -v '^[[:space:]]*at ' | grep -v '^[[:space:]]*$' | head -3 >>"$LOG"
     return $rc
 }
 
@@ -32,6 +33,7 @@ apply_height() {
     h=$1
     LOG="$MODDIR/last_apply.log"
     echo "== $(date) height=$h sdk=$(getprop ro.build.version.sdk)" > "$LOG"
+    diag >>"$LOG"
     for x in $HEIGHTS; do
         [ "$x" = "$h" ] && continue
         run cmd overlay disable --user 0 "$PKG_PREFIX$x"
@@ -49,6 +51,26 @@ apply_height() {
     for r in status_bar_height_default status_bar_height_portrait; do
         run cmd overlay lookup android "android:dimen/$r"
     done
+}
+
+# Is the overlay APK visible where Android looks for it?
+diag() {
+    echo "-- mount check:"
+    for d in /product/overlay /system/product/overlay; do
+        if [ -f "$d/SbHeight50/SbHeight50.apk" ]; then echo "$d: SbHeight APKs present"
+        else echo "$d: SbHeight APKs MISSING"; fi
+    done
+    [ -f "$MODDIR/system/product/overlay/SbHeight50/SbHeight50.apk" ] \
+        && echo "module folder: APKs included" || echo "module folder: APKs NOT included"
+    meta=""
+    [ -e /data/adb/metamodule ] && meta="$(readlink /data/adb/metamodule 2>/dev/null || echo yes)"
+    for m in /data/adb/modules/*/module.prop; do
+        grep -qiE '^metamodule=(1|true)' "$m" 2>/dev/null && meta="$meta $(grep '^name=' "$m" | cut -d= -f2)"
+    done
+    [ -n "$meta" ] && echo "metamodule:$meta" || echo "metamodule: none found"
+    echo "-- overlay registered:"
+    cmd overlay list android </dev/null 2>/dev/null | grep -i sbheight || echo "(none)"
+    echo "--"
 }
 
 status() {
