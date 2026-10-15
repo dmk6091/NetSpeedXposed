@@ -1,30 +1,21 @@
 #!/system/bin/sh
-# Shared helpers. Uses Android's built-in "fabricated overlay" feature
-# (cmd overlay fabricate), so no overlay APK and no system file changes.
+# Shared helpers. Heights are applied with small overlay APKs (one per
+# height) that the module mounts into /product/overlay.
 
 MODDIR=${MODDIR:-${0%/*}}
 CONF="$MODDIR/height.conf"
 
 # Heights the Action button cycles through (dp). "off" = stock height.
+# Each height is a small overlay APK in system/product/overlay.
 STEPS="44 48 50 52 56 off"
 DEFAULT=50
-
-RES_LIST="status_bar_height_default status_bar_height_portrait status_bar_height_landscape"
+HEIGHTS="44 48 50 52 56"
+PKG_PREFIX="com.dmk.sbheight.h"
 
 get_height() {
     h=$(cat "$CONF" 2>/dev/null | tr -d ' \r\n')
     [ -z "$h" ] && h=$DEFAULT
     echo "$h"
-}
-
-# Android dimension "complex" value: integer dp -> (dp << 8) | COMPLEX_UNIT_DIP(1)
-dp_hex() {
-    printf '0x%x' $(( ($1 << 8) | 1 ))
-}
-
-ov_name() {
-    # status_bar_height_default -> SbHeight_default
-    echo "SbHeight_${1##*_}"
 }
 
 # Run a cmd with stdin from /dev/null and output through a pipe, so
@@ -41,23 +32,21 @@ apply_height() {
     h=$1
     LOG="$MODDIR/last_apply.log"
     echo "== $(date) height=$h sdk=$(getprop ro.build.version.sdk)" > "$LOG"
-    for r in $RES_LIST; do
-        n=$(ov_name "$r")
-        if [ "$h" = "off" ]; then
-            run cmd overlay disable --user 0 "com.android.shell:$n"
-        else
-            echo "-- $r = ${h}dp ($(dp_hex "$h"))" >>"$LOG"
-            run cmd overlay fabricate --target android --name "$n" \
-                "android:dimen/$r" 0x05 "$(dp_hex "$h")"
-            echo "fabricate exit $?" >>"$LOG"
-            run cmd overlay enable --user 0 "com.android.shell:$n"
-            echo "enable exit $?" >>"$LOG"
-        fi
+    for x in $HEIGHTS; do
+        [ "$x" = "$h" ] && continue
+        run cmd overlay disable --user 0 "$PKG_PREFIX$x"
     done
-    echo "-- overlays on android:" >>"$LOG"
-    run cmd overlay list android
+    if [ "$h" != "off" ]; then
+        run cmd overlay enable --user 0 "$PKG_PREFIX$h"
+        echo "enable exit $?" >>"$LOG"
+        run cmd overlay set-priority "$PKG_PREFIX$h" highest
+        echo "set-priority exit $?" >>"$LOG"
+    fi
+    echo "-- SbHeight overlays:" >>"$LOG"
+    out=$(cmd overlay list android </dev/null 2>&1)
+    echo "$out" | grep -i sbheight >>"$LOG" || echo "(none found - overlays not mounted?)" >>"$LOG"
     echo "-- current values:" >>"$LOG"
-    for r in $RES_LIST; do
+    for r in status_bar_height_default status_bar_height_portrait; do
         run cmd overlay lookup android "android:dimen/$r"
     done
 }

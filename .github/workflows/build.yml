@@ -19,9 +19,11 @@ jobs:
         with:
           name: NetSpeedXposed-apk
           path: NetSpeedXposed/app/build/outputs/apk/release/*.apk
-      - name: Package status bar height module
-        run: cd SbHeight && zip -rq ../SbHeight.zip .
+      - name: Build status bar height overlays
+        run: bash SbHeight/overlay-src/build.sh
       - uses: actions/upload-artifact@v4
         with:
           name: SbHeight-module
-          path: SbHeight/
+          path: |
+            SbHeight/
+            !SbHeight/overlay-src/
