@@ -27,6 +27,16 @@ ov_name() {
     echo "SbHeight_${1##*_}"
 }
 
+# Run a cmd with stdin from /dev/null and output through a pipe, so
+# system_server never has to touch files in the module folder (SELinux
+# blocks that and the call fails with "Failed transaction").
+run() {
+    out=$("$@" </dev/null 2>&1)
+    rc=$?
+    [ -n "$out" ] && echo "$out" >>"$LOG"
+    return $rc
+}
+
 apply_height() {
     h=$1
     LOG="$MODDIR/last_apply.log"
@@ -34,21 +44,21 @@ apply_height() {
     for r in $RES_LIST; do
         n=$(ov_name "$r")
         if [ "$h" = "off" ]; then
-            cmd overlay disable --user 0 "com.android.shell:$n" >>"$LOG" 2>&1
+            run cmd overlay disable --user 0 "com.android.shell:$n"
         else
             echo "-- $r = ${h}dp ($(dp_hex "$h"))" >>"$LOG"
-            cmd overlay fabricate --target android --name "$n" \
-                "android:dimen/$r" 0x05 "$(dp_hex "$h")" >>"$LOG" 2>&1
+            run cmd overlay fabricate --target android --name "$n" \
+                "android:dimen/$r" 0x05 "$(dp_hex "$h")"
             echo "fabricate exit $?" >>"$LOG"
-            cmd overlay enable --user 0 "com.android.shell:$n" >>"$LOG" 2>&1
+            run cmd overlay enable --user 0 "com.android.shell:$n"
             echo "enable exit $?" >>"$LOG"
         fi
     done
     echo "-- overlays on android:" >>"$LOG"
-    cmd overlay list android >>"$LOG" 2>&1
+    run cmd overlay list android
     echo "-- current values:" >>"$LOG"
     for r in $RES_LIST; do
-        cmd overlay lookup android "android:dimen/$r" >>"$LOG" 2>&1
+        run cmd overlay lookup android "android:dimen/$r"
     done
 }
 
