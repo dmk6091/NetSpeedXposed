@@ -2,6 +2,8 @@ name: Build APK
 on:
   push:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,3 +27,18 @@ jobs:
         with:
           name: NetSpeedXposed-apk
           path: NetSpeedXposed/app/build/outputs/apk/release/*.apk
+      - name: Publish as the "latest" release (used by the app's Update button)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          cp NetSpeedXposed/app/build/outputs/apk/release/*.apk NetSpeedXposed.apk
+          printf 'build=%s\n%s\n' "$((GITHUB_RUN_NUMBER + 1000))" "$MSG" > notes.txt
+          R=${{ github.repository }}
+          if gh release view latest -R "$R" >/dev/null 2>&1; then
+            gh release upload latest NetSpeedXposed.apk --clobber -R "$R"
+            gh release edit latest --notes-file notes.txt -R "$R"
+          else
+            gh release create latest NetSpeedXposed.apk --title "Latest build" --notes-file notes.txt -R "$R"
+          fi
