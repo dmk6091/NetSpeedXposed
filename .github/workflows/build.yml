@@ -14,18 +14,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Use the private signing key (if the secrets are set)
-        env:
-          KS: ${{ secrets.SIGNING_KEYSTORE_B64 }}
-          PW: ${{ secrets.SIGNING_PASSWORD }}
-        run: |
-          if [ -n "$KS" ] && [ -n "$PW" ]; then
-            echo "$KS" | base64 -d > NetSpeedXposed/app/release.jks
-            echo "SIGN_PW=$PW" >> "$GITHUB_ENV"
-            echo "Signing with the private key from repository secrets"
-          else
-            echo "::warning::SIGNING_KEYSTORE_B64 / SIGNING_PASSWORD not set: using the public fallback key"
-          fi
       - name: Build
         working-directory: NetSpeedXposed
         run: |
