@@ -23,6 +23,15 @@ jobs:
             grep -E "error:|e: |FAILURE|What went wrong" -A3 build.log | head -40 | while IFS= read -r l; do echo "::error::$l"; done
             exit 1
           }
+      - name: Build the NetSwitch Magisk module
+        run: |
+          mkdir -p nsout
+          javac --release 8 -d nsout netswitch/NetHelper.java
+          D8=$(ls $ANDROID_HOME/build-tools/*/d8 | sort -V | tail -n1)
+          $D8 --min-api 26 --output netswitch/helper.jar nsout/*.class
+          cd netswitch
+          zip -qr ../NetSwitch.zip . -x NetHelper.java
+          unzip -l ../NetSwitch.zip
       - uses: actions/upload-artifact@v4
         with:
           name: NetSpeedXposed-apk
@@ -40,8 +49,8 @@ jobs:
           printf 'build=%s\n%s\n' "$((GITHUB_RUN_NUMBER + 1000))" "$MSG" > notes.txt
           R=${{ github.repository }}
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk --clobber -R "$R"
+            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest NetSpeedXposed.apk WiFiActivity.apk --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip --title "Latest build" --notes-file notes.txt -R "$R"
           fi
