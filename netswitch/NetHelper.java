@@ -38,7 +38,13 @@ public class NetHelper {
             switch (cmd) {
                 case "subid": {
                     Object r = call(isub, "getSubId", Integer.parseInt(a[1]));
-                    System.out.println(((int[]) r)[0]);
+                    // Older Android returns int[], newer returns a plain int.
+                    if (r instanceof int[]) {
+                        int[] ids = (int[]) r;
+                        System.out.println(ids.length > 0 ? ids[0] : -1);
+                    } else {
+                        System.out.println(r);
+                    }
                     break;
                 }
                 case "getdata":
