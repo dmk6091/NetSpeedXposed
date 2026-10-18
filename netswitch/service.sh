@@ -19,7 +19,7 @@ pf=0
 bad=0; lbad=0; rec=0; ngood=0; probing=0; probe_start=0
 backoff=$RETRY_5G_AFTER; retry_at=0; last_switch=0; last_emit=0; last_key=""
 NR1=0; LTE1=0; NR2=0; LTE2=0
-light=0; kbps=0; loops=0
+light=0; kbps=0; loops=0; hv=0
 t_5g=0; t_eco=0; t_weak=0; last_stat=$(date +%s)
 last_b=$(mobile_bytes); last_t=$(date +%s)
 # daily 4G data counter (bytes used while on 4G)
@@ -110,10 +110,16 @@ while true; do
     if [ "$ECO_ENABLE" = 1 ] && [ "$RAT" = 5 ] && [ $probing = 0 ]; then
       if [ $ECO = 1 ]; then
         reason=""
-        [ $kbps -ge $ECO_HEAVY_KBPS ] && reason="heavy use - back on 5G"
+        if [ $kbps -ge $ECO_HEAVY_KBPS ]; then hv=$((hv + 1)); else hv=0; fi
+        [ $hv -ge $ECO_HEAVY_CHECKS ] && reason="heavy use - back on 5G"
+        if [ -z "$reason" ] && [ $kbps -ge 100 ] && [ -n "$ECO_HEAVY_APPS" ]; then
+          fgp=$(fg_pkg)
+          case " $ECO_HEAVY_APPS " in *" $fgp "*) reason="$fgp is streaming - back on 5G";; esac
+        fi
+        [ $((loops % 6)) -eq 0 ] && log "eco: ${kbps} KB/s, heavy x$hv, 4G today $((BUDGET_B / 1048576)) MB"
         [ $((BUDGET_B / 1048576)) -ge $ECO_BUDGET_MB ] && reason="daily 4G limit reached - back on 5G"
         if [ -n "$reason" ] && set_nr $PRIMARY_SLOT on; then
-          ECO=0; light=0; last_switch=$now; save_budget; save; msg="$reason"
+          ECO=0; light=0; hv=0; last_switch=$now; save_budget; save; msg="$reason"
         fi
       else
         if [ $kbps -le $ECO_LIGHT_KBPS ]; then light=$((light + 1)); else light=0; fi
@@ -121,6 +127,11 @@ while true; do
            && [ $((BUDGET_B / 1048576)) -lt $ECO_BUDGET_MB ]; then
           go=0
           if [ $light -ge $((ECO_LIGHT_SECS / INTERVAL)) ]; then go=1; elif screen_off; then go=1; fi
+          # a video app on screen: it just paused between bursts, stay on 5G
+          if [ $go = 1 ] && [ -n "$ECO_HEAVY_APPS" ] && ! screen_off; then
+            fgp=$(fg_pkg)
+            case " $ECO_HEAVY_APPS " in *" $fgp "*) go=0; light=0;; esac
+          fi
           if [ $go = 1 ] && set_nr $PRIMARY_SLOT off; then
             ECO=1; light=0; last_switch=$now; save; msg="light use - saving battery on 4G"
           fi

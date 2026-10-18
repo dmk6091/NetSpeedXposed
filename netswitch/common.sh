@@ -55,6 +55,15 @@ PING_FAILS=6              # no internet for this many checks in a row (x INTERVA
 S2_RETRY_AFTER=600        # on SIM 2: seconds before trying SIM 1 again if it isn't known to be weak
 EOC
 fi
+if ! grep -q ECO_HEAVY_APPS $CFG; then
+sed -i 's/^ECO_HEAVY_KBPS=1000\([^0-9]\)/ECO_HEAVY_KBPS=600\1/' $CFG
+cat >> $CFG <<EOC
+
+# ---- eco: video apps keep 5G while they are on screen and moving data
+ECO_HEAVY_APPS="com.google.android.youtube com.netflix.mediaclient in.startv.hotstar com.amazon.avod.thirdpartyclient com.jio.media.ondemand tv.twitch.android.app com.zhiliaoapp.musically com.instagram.android"
+ECO_HEAVY_CHECKS=2        # heavy traffic this many checks in a row = back to 5G
+EOC
+fi
 . $CFG
 
 log() {
@@ -97,6 +106,12 @@ read_sig() {
 # bytes moved through the mobile interfaces (rx + tx)
 mobile_bytes() {
   sed 's/:/ /' /proc/net/dev 2>/dev/null | awk '$1 ~ /^rmnet/ { s += $2 + $10 } END { printf "%d", s }'
+}
+
+# package of the app on screen
+fg_pkg() {
+  dumpsys activity activities 2>/dev/null | grep -m1 -E 'topResumedActivity=|mResumedActivity:' \
+    | sed -n 's/.*ActivityRecord{[^ ]* [^ ]* \([^/ ]*\)\/.*/\1/p'
 }
 
 screen_off() { dumpsys power 2>/dev/null | grep -m1 -q 'mWakefulness=Asleep\|mWakefulness=Dozing'; }
