@@ -81,9 +81,10 @@ read_sig() {
         k = index(s, "mNr=")
         l = (k ? substr(s, 1, k - 1) : s)
         r = (k ? substr(s, k) : "")
-        if (match(l, /rsrp=-?[0-9]+/)) lte = substr(l, RSTART + 5, RLENGTH - 5) + 0
-        if (match(r, /ssRsrp=-?[0-9]+/)) nr = substr(r, RSTART + 7, RLENGTH - 7) + 0
-        else if (match(r, /csiRsrp=-?[0-9]+/)) nr = substr(r, RSTART + 8, RLENGTH - 8) + 0
+        # LTE is written "rsrp=-78", NR is written "ssRsrp = -110" (spaces around the =)
+        if (match(l, /rsrp *= *-?[0-9]+/)) { t = substr(l, RSTART, RLENGTH); gsub(/[^-0-9]/, "", t); lte = t + 0 }
+        if (match(r, /ssRsrp *= *-?[0-9]+/)) { t = substr(r, RSTART, RLENGTH); gsub(/[^-0-9]/, "", t); nr = t + 0 }
+        else if (match(r, /csiRsrp *= *-?[0-9]+/)) { t = substr(r, RSTART, RLENGTH); gsub(/[^-0-9]/, "", t); nr = t + 0 }
         if (lte > 0 || lte < -200) lte = 0
         if (nr > 0 || nr < -200) nr = 0
         out = out nr " " lte " "
