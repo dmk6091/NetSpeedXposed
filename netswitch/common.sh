@@ -38,7 +38,7 @@ if ! grep -q ECO_ENABLE $CFG; then
 cat >> $CFG <<EOC
 
 # ---- eco mode: light use -> 4G (saves battery), heavy use -> 5G
-ECO_ENABLE=1
+ECO_ENABLE=0
 ECO_LIGHT_KBPS=150        # mobile traffic at or below this (KB/s) counts as light
 ECO_LIGHT_SECS=60         # light this long before going to 4G
 ECO_SCREENOFF_SECS=20     # the same, but with the screen off
@@ -72,6 +72,25 @@ cat >> $CFG <<EOC
 # with the screen off (background music/video) only a much bigger load brings 5G back
 ECO_HEAVY_OFF_KBPS=3000
 EOC
+fi
+. $CFG
+
+if ! grep -q ECO_FAST_KBPS $CFG; then
+# smarter eco: values still at the old defaults are moved to the new ones, your own edits are kept
+sed -i 's/^ECO_LIGHT_SECS=60\([^0-9]\)/ECO_LIGHT_SECS=180\1/; s/^ECO_HEAVY_KBPS=600\([^0-9]\)/ECO_HEAVY_KBPS=400\1/; s/^ECO_HEAVY_OFF_KBPS=3000\([^0-9]\)/ECO_HEAVY_OFF_KBPS=1500\1/' $CFG
+cat >> $CFG <<EOC
+
+# ---- eco v2: only when it is safe, and any heavy transfer brings 5G back (not just video apps)
+ECO_FAST_KBPS=2500        # two checks in a row at or above this (KB/s) = a big download: 5G at once
+ECO_HOLD_SECS=600         # after a heavy use, stay out of eco this long (no flapping between 4G and 5G)
+ECO_NEED_LTE=1            # only drop to 4G when the 4G signal is good (never trade good 5G for poor 4G)
+ECO_COMPARE=1             # after going back to 5G for a download, measure it: if 5G is clearly slower, return to 4G
+ECO_COMPARE_SECS=30       # how long 5G gets to show it is not slower
+EOC
+fi
+if ! grep -q ECO_OFF_V19 $CFG; then
+sed -i 's/^ECO_ENABLE=.*/ECO_ENABLE=0   # eco (battery saver on 4G) is off; set 1 to try it again/' $CFG
+echo "# ECO_OFF_V19 (eco switched off by default in v1.9)" >> $CFG
 fi
 . $CFG
 

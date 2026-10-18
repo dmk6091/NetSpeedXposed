@@ -20,6 +20,7 @@ bad=0; lbad=0; rec=0; ngood=0; probing=0; probe_start=0
 backoff=$RETRY_5G_AFTER; retry_at=0; last_switch=0; last_emit=0; last_key=""
 NR1=0; LTE1=0; NR2=0; LTE2=0
 light=0; kbps=0; loops=0; hv=0; h1=0; h2=0; h3=0; h4=0; h5=0; eavg=0
+eco_hold_until=0; cmp_at=0; eco_ref=0; h6=0
 t_5g=0; t_eco=0; t_weak=0; last_stat=$(date +%s)
 last_b=$(mobile_bytes); last_t=$(date +%s)
 # daily 4G data counter (bytes used while on 4G)
@@ -49,7 +50,7 @@ while true; do
   cur_b=$(mobile_bytes); dt=$((now - last_t)); [ $dt -lt 1 ] && dt=1
   db=$((cur_b - last_b)); [ $db -lt 0 ] && db=0
   kbps=$((db / 1024 / dt)); last_b=$cur_b; last_t=$now
-  eavg=$(( (kbps + h1 + h2 + h3 + h4 + h5) / 6 )); h5=$h4; h4=$h3; h3=$h2; h2=$h1; h1=$kbps
+  eavg=$(( (kbps + h1 + h2 + h3 + h4 + h5) / 6 )); avg3=$(( (kbps + h1 + h2) / 3 )); fast2=0; [ $kbps -ge ${ECO_FAST_KBPS:-2500} ] && [ $h1 -ge ${ECO_FAST_KBPS:-2500} ] && fast2=1; h5=$h4; h4=$h3; h3=$h2; h2=$h1; h1=$kbps
   today=$(date +%Y%m%d)
   if [ "$today" != "$BDAY" ]; then BDAY=$today; BUDGET_B=0; save_budget; fi
   if [ "$SIM" = 1 ] && { [ $ECO = 1 ] || [ $RAT = 4 ] || [ "$NR1" -eq 0 ]; }; then BUDGET_B=$((BUDGET_B + db)); fi
@@ -107,14 +108,37 @@ while true; do
       fi
     fi
 
+    # 2a) after a heavy transfer pulled us back to 5G: is 5G really faster than the 4G it left?
+    if [ $cmp_at -gt 0 ] && [ "$RAT" = 5 ] && [ $ECO = 0 ] && [ $now -ge $cmp_at ]; then
+      cmp_at=0
+      if [ "$NR1" -ne 0 ] && [ $kbps -ge $((ECO_HEAVY_KBPS / 2)) ] && [ $((avg3 * 10)) -lt $((eco_ref * 6)) ] \
+         && [ "$NR1" -le $((NR_BAD + 8)) ] && [ $dwell_ok = 1 ]; then
+        if set_nr $PRIMARY_SLOT off; then
+          RAT=4; probing=0; backoff=$RETRY_5G_AFTER; retry_at=$((now + backoff)); last_switch=$now; ngood=0; save
+          msg="5G is slower than 4G here (${avg3} vs ${eco_ref} KB/s) - back on 4G"
+        fi
+      else
+        log "5G checked after heavy use: ${avg3} KB/s (4G was ${eco_ref}) - staying on 5G"
+      fi
+    fi
+
     # 2b) eco: light use -> 4G (saves battery); heavy use or the daily 4G allowance used up -> 5G
+    if [ "$ECO_ENABLE" != 1 ] && [ $ECO = 1 ]; then
+      if set_nr $PRIMARY_SLOT on; then ECO=0; light=0; last_switch=$now; save; msg="eco off - back on 5G"; fi
+    fi
     if [ "$ECO_ENABLE" = 1 ] && [ "$RAT" = 5 ] && [ $probing = 0 ]; then
       if [ $ECO = 1 ]; then
         reason=""
-        thr=$ECO_HEAVY_KBPS
-        if [ $eavg -ge $thr ] && screen_off; then thr=${ECO_HEAVY_OFF_KBPS:-3000}; fi
-        if [ $eavg -ge $thr ]; then hv=$((hv + 1)); else hv=0; fi
-        [ $hv -ge $ECO_HEAVY_CHECKS ] && { reason="heavy use - back on 5G"; log "eco exit: avg ${eavg} KB/s (limit $thr), now ${kbps}"; }
+        # screen on: a 15 s average over the limit, or two very fast checks (a big download);
+        # screen off: only a much bigger 30 s load counts (background music / sync)
+        heavy=0
+        if screen_off; then
+          [ $eavg -ge ${ECO_HEAVY_OFF_KBPS:-1500} ] && heavy=1
+        else
+          { [ $avg3 -ge $ECO_HEAVY_KBPS ] || [ $fast2 = 1 ]; } && heavy=1
+        fi
+        if [ $heavy = 1 ]; then hv=$((hv + 1)); else hv=0; fi
+        [ $hv -ge $ECO_HEAVY_CHECKS ] && { reason="heavy transfer (${avg3} KB/s) - back on 5G"; log "eco exit: 15s avg ${avg3} KB/s, 30s avg ${eavg}, now ${kbps}, 4G signal ${LTE1}"; }
         if [ -z "$reason" ] && [ $kbps -ge 100 ] && [ -n "$ECO_HEAVY_APPS" ] && ! screen_off; then
           fgp=$(fg_pkg)
           case " $ECO_HEAVY_APPS " in *" $fgp "*)
@@ -128,11 +152,19 @@ while true; do
         [ $((loops % 6)) -eq 0 ] && log "eco: ${kbps} KB/s, heavy x$hv, 4G today $((BUDGET_B / 1048576)) MB"
         [ $((BUDGET_B / 1048576)) -ge $ECO_BUDGET_MB ] && reason="daily 4G limit reached - back on 5G"
         if [ -n "$reason" ] && set_nr $PRIMARY_SLOT on; then
-          ECO=0; light=0; hv=0; last_switch=$now; save_budget; save; msg="$reason"
+          ECO=0; light=0; last_switch=$now; save_budget; save; msg="$reason"
+          eco_hold_until=$((now + ${ECO_HOLD_SECS:-600}))
+          case "$reason" in heavy*) if [ "${ECO_COMPARE:-1}" = 1 ] && [ $hv -ge 1 ]; then
+            eco_ref=$avg3; [ $kbps -gt $eco_ref ] && eco_ref=$kbps
+            cmp_at=$((now + ${ECO_COMPARE_SECS:-30})); fi;; esac
+          hv=0
         fi
       else
         if [ $kbps -le $ECO_LIGHT_KBPS ]; then light=$((light + 1)); else light=0; fi
+        lte_ok=1
+        if [ "${ECO_NEED_LTE:-1}" = 1 ]; then { [ "$LTE1" -ne 0 ] && [ "$LTE1" -ge "$LTE_GOOD" ]; } || lte_ok=0; fi
         if [ $light -ge $((ECO_SCREENOFF_SECS / INTERVAL)) ] && [ "$NR1" -ne 0 ] && [ $ok = 1 ] && [ $dwell_ok = 1 ] \
+           && [ $now -ge $eco_hold_until ] && [ $lte_ok = 1 ] \
            && [ $((BUDGET_B / 1048576)) -lt $ECO_BUDGET_MB ]; then
           go=0
           if [ $light -ge $((ECO_LIGHT_SECS / INTERVAL)) ]; then go=1; elif screen_off; then go=1; fi
@@ -142,7 +174,7 @@ while true; do
             case " $ECO_HEAVY_APPS " in *" $fgp "*) go=0; light=0;; esac
           fi
           if [ $go = 1 ] && set_nr $PRIMARY_SLOT off; then
-            ECO=1; light=0; last_switch=$now; save; msg="light use - saving battery on 4G"
+            ECO=1; light=0; last_switch=$now; save; msg="light use - saving battery on 4G"; log "eco enter: ${kbps} KB/s, 5G ${NR1} dBm, 4G ${LTE1} dBm"
           fi
         fi
       fi
