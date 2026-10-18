@@ -1,0 +1,6 @@
+id=immersivenav
+name=Immersive Navigation
+version=v1.0
+versionCode=1
+author=dmk
+description=Gesture navigation: apps draw to the bottom edge and the gesture pill floats over them (removes the reserved pill strip). Needs gesture navigation. Reboot after installing.

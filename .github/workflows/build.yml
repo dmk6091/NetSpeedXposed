@@ -32,6 +32,22 @@ jobs:
           cd netswitch
           zip -qr ../NetSwitch.zip . -x NetHelper.java
           unzip -l ../NetSwitch.zip
+      - name: Build the Immersive Navigation Magisk module
+        run: |
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n1)
+          AJ=$(ls -d $ANDROID_HOME/platforms/android-* | sort -V | tail -n1)/android.jar
+          mkdir -p inav_out immersivenav/system/product/overlay
+          $BT/aapt2 compile --dir immersivenav/overlay/res -o inav_out/res.zip
+          $BT/aapt2 link -o inav_out/unsigned.apk -I "$AJ" --manifest immersivenav/overlay/AndroidManifest.xml \
+            --min-sdk-version 29 --target-sdk-version 35 inav_out/res.zip
+          keytool -genkeypair -keystore inav_out/k.jks -storepass netspeed -keypass netspeed -alias k \
+            -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=NetSpeed"
+          $BT/zipalign -f 4 inav_out/unsigned.apk inav_out/aligned.apk
+          $BT/apksigner sign --ks inav_out/k.jks --ks-pass pass:netspeed --key-pass pass:netspeed \
+            --out immersivenav/system/product/overlay/ImmersiveNav.apk inav_out/aligned.apk
+          chmod 755 immersivenav/service.sh immersivenav/uninstall.sh
+          (cd immersivenav && zip -qr ../ImmersiveNav.zip META-INF module.prop service.sh uninstall.sh system)
+          unzip -l ImmersiveNav.zip
       - uses: actions/upload-artifact@v4
         with:
           name: NetSpeedXposed-apk
@@ -56,8 +72,8 @@ jobs:
           printf '%s\n' "$MSG" > changelog.md
           cat update.json
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip update.json changelog.md --clobber -R "$R"
+            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip update.json changelog.md --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
           fi
