@@ -48,9 +48,16 @@ jobs:
           cp NetSpeedXposed/wifiactivity/build/outputs/apk/release/*.apk WiFiActivity.apk
           printf 'build=%s\n%s\n' "$((GITHUB_RUN_NUMBER + 1000))" "$MSG" > notes.txt
           R=${{ github.repository }}
+          # update.json: the KernelSU/Magisk manager reads this to offer the module update
+          MV=$(sed -n 's/^version=//p' netswitch/module.prop)
+          MC=$(sed -n 's/^versionCode=//p' netswitch/module.prop)
+          BASE="https://github.com/$R/releases/download/latest"
+          printf '{\n  "version": "%s",\n  "versionCode": %s,\n  "zipUrl": "%s/NetSwitch.zip",\n  "changelog": "%s/changelog.md"\n}\n' "$MV" "$MC" "$BASE" "$BASE" > update.json
+          printf '%s\n' "$MSG" > changelog.md
+          cat update.json
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip --clobber -R "$R"
+            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip update.json changelog.md --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
           fi
