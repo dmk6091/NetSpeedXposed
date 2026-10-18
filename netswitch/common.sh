@@ -115,6 +115,7 @@ net_ok() { # a ping through any mobile interface
 # 5G on / off for a slot (keeps every other allowed network type as it was)
 set_nr() { # slot on|off
   local sub cur orig new
+  [ "$(date +%s)" -lt "${nr_fail_until:-0}" ] && return 1     # cooling down after a failed change
   sub=$(subid "$1") || { log "no subscription id for slot $1"; return 1; }
   cur=$(H getnt "$sub" | tail -n1)
   case "$cur" in ''|*[!0-9]*) log "can't read network types of slot $1 (sub $sub): '$cur'"; return 1;; esac
@@ -126,7 +127,7 @@ set_nr() { # slot on|off
     if [ -n "$orig" ] && [ $(( orig & NRBIT )) -ne 0 ]; then new=$orig; else new=$(( cur | NRBIT )); fi
   fi
   [ "$new" = "$cur" ] && return 0
-  H setnt "$sub" "$new" >/dev/null || return 1
+  H setnt "$sub" "$new" >/dev/null || { nr_fail_until=$(( $(date +%s) + 300 )); log "network type change failed - pausing 5G switching for 5 min"; return 1; }
   log "slot $1 network types $cur -> $new (5G $2)"
   return 0
 }

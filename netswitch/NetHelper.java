@@ -29,6 +29,43 @@ public class NetHelper {
         throw last;
     }
 
+    /** Calls an ITelephony "network types" method whatever its exact signature is on this Android version:
+     *  ints are filled subId, then reason (0 = user); a long is the mask; a String is the calling package. */
+    static Object callTypes(Object o, String name, int sub, long mask) throws Exception {
+        StringBuilder cands = new StringBuilder();
+        Exception last = null;
+        for (Method m : o.getClass().getMethods()) {
+            String n = m.getName();
+            if (n.toLowerCase().contains("networktype")) {
+                cands.append("\n  ").append(n).append('(');
+                for (Class<?> c : m.getParameterTypes()) cands.append(c.getSimpleName()).append(' ');
+                cands.append(')');
+            }
+            if (!n.equals(name)) continue;
+            Class<?>[] pt = m.getParameterTypes();
+            Object[] args = new Object[pt.length];
+            int ints = 0;
+            boolean ok = true;
+            for (int i = 0; i < pt.length; i++) {
+                if (pt[i] == int.class) args[i] = (ints++ == 0) ? sub : 0;
+                else if (pt[i] == long.class) args[i] = mask;
+                else if (pt[i] == String.class) args[i] = "com.android.shell";
+                else { ok = false; break; }
+            }
+            if (!ok) continue;
+            try {
+                return m.invoke(o, args);
+            } catch (InvocationTargetException e) {
+                Throwable c = e.getCause();
+                last = c instanceof Exception ? (Exception) c : e;
+            } catch (IllegalArgumentException e) {
+                last = e;
+            }
+        }
+        if (last != null) throw last;
+        throw new Exception("no usable " + name + ". Network-type methods on this system:" + cands);
+    }
+
     public static void main(String[] a) {
         try {
             String cmd = a.length > 0 ? a[0] : "";
@@ -58,7 +95,7 @@ public class NetHelper {
                     System.out.println(call(tel, "getAllowedNetworkTypesForReason", Integer.parseInt(a[1]), 0));
                     break;
                 case "setnt":
-                    System.out.println(call(tel, "setAllowedNetworkTypesForReason", Integer.parseInt(a[1]), 0, Long.parseLong(a[2])));
+                    System.out.println(callTypes(tel, "setAllowedNetworkTypesForReason", Integer.parseInt(a[1]), Long.parseLong(a[2])));
                     break;
                 default:
                     System.err.println("usage: subid SLOT | getdata | setdata SUBID | getnt SUBID | setnt SUBID MASK");
