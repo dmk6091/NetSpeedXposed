@@ -114,7 +114,13 @@ while true; do
         [ $hv -ge $ECO_HEAVY_CHECKS ] && reason="heavy use - back on 5G"
         if [ -z "$reason" ] && [ $kbps -ge 100 ] && [ -n "$ECO_HEAVY_APPS" ]; then
           fgp=$(fg_pkg)
-          case " $ECO_HEAVY_APPS " in *" $fgp "*) reason="$fgp is streaming - back on 5G";; esac
+          case " $ECO_HEAVY_APPS " in *" $fgp "*)
+            case "$fgp" in
+              com.google.android.youtube) nm=YouTube;; com.netflix.mediaclient) nm=Netflix;; in.startv.hotstar) nm=Hotstar;;
+              com.amazon.avod.thirdpartyclient) nm="Prime Video";; com.jio.media.ondemand) nm=JioCinema;; tv.twitch.android.app) nm=Twitch;;
+              com.zhiliaoapp.musically) nm=TikTok;; com.instagram.android) nm=Instagram;; *) nm="Video";;
+            esac
+            reason="$nm is streaming - back on 5G";; esac
         fi
         [ $((loops % 6)) -eq 0 ] && log "eco: ${kbps} KB/s, heavy x$hv, 4G today $((BUDGET_B / 1048576)) MB"
         [ $((BUDGET_B / 1048576)) -ge $ECO_BUDGET_MB ] && reason="daily 4G limit reached - back on 5G"

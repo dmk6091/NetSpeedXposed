@@ -1,6 +1,6 @@
 id=netswitch
 name=NetSwitch
-version=v1.6
-versionCode=7
+version=v1.7
+versionCode=8
 author=dmk
 description=5G weak or unstable -> 4G (back to 5G when strong); both weak -> data on SIM 2 (back to SIM 1 when it recovers). Toasts + status bar symbol via NetSpeedXposed.
