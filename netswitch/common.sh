@@ -47,6 +47,15 @@ ECO_BUDGET_MB=1500        # daily 4G data allowance; eco stops (stays on 5G) onc
 EOC
 fi
 . $CFG
+if ! grep -q PING_FAILS $CFG; then
+cat >> $CFG <<EOC
+
+# ---- safety
+PING_FAILS=6              # no internet for this many checks in a row (x INTERVAL s) counts as a bad connection
+S2_RETRY_AFTER=600        # on SIM 2: seconds before trying SIM 1 again if it isn't known to be weak
+EOC
+fi
+. $CFG
 
 log() {
   echo "$(date '+%m-%d %H:%M:%S') $*" >> $LOG
