@@ -65,6 +65,15 @@ ECO_HEAVY_CHECKS=2        # heavy traffic this many checks in a row = back to 5G
 EOC
 fi
 . $CFG
+if ! grep -q ECO_HEAVY_OFF_KBPS $CFG; then
+cat >> $CFG <<EOC
+
+# ---- eco: heavy use is judged on a 30 s average (a streaming app's buffer bursts don't count);
+# with the screen off (background music/video) only a much bigger load brings 5G back
+ECO_HEAVY_OFF_KBPS=3000
+EOC
+fi
+. $CFG
 
 log() {
   echo "$(date '+%m-%d %H:%M:%S') $*" >> $LOG

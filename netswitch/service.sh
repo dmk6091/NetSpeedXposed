@@ -19,7 +19,7 @@ pf=0
 bad=0; lbad=0; rec=0; ngood=0; probing=0; probe_start=0
 backoff=$RETRY_5G_AFTER; retry_at=0; last_switch=0; last_emit=0; last_key=""
 NR1=0; LTE1=0; NR2=0; LTE2=0
-light=0; kbps=0; loops=0; hv=0
+light=0; kbps=0; loops=0; hv=0; h1=0; h2=0; h3=0; h4=0; h5=0; eavg=0
 t_5g=0; t_eco=0; t_weak=0; last_stat=$(date +%s)
 last_b=$(mobile_bytes); last_t=$(date +%s)
 # daily 4G data counter (bytes used while on 4G)
@@ -49,6 +49,7 @@ while true; do
   cur_b=$(mobile_bytes); dt=$((now - last_t)); [ $dt -lt 1 ] && dt=1
   db=$((cur_b - last_b)); [ $db -lt 0 ] && db=0
   kbps=$((db / 1024 / dt)); last_b=$cur_b; last_t=$now
+  eavg=$(( (kbps + h1 + h2 + h3 + h4 + h5) / 6 )); h5=$h4; h4=$h3; h3=$h2; h2=$h1; h1=$kbps
   today=$(date +%Y%m%d)
   if [ "$today" != "$BDAY" ]; then BDAY=$today; BUDGET_B=0; save_budget; fi
   if [ "$SIM" = 1 ] && { [ $ECO = 1 ] || [ $RAT = 4 ] || [ "$NR1" -eq 0 ]; }; then BUDGET_B=$((BUDGET_B + db)); fi
@@ -110,9 +111,11 @@ while true; do
     if [ "$ECO_ENABLE" = 1 ] && [ "$RAT" = 5 ] && [ $probing = 0 ]; then
       if [ $ECO = 1 ]; then
         reason=""
-        if [ $kbps -ge $ECO_HEAVY_KBPS ]; then hv=$((hv + 1)); else hv=0; fi
-        [ $hv -ge $ECO_HEAVY_CHECKS ] && reason="heavy use - back on 5G"
-        if [ -z "$reason" ] && [ $kbps -ge 100 ] && [ -n "$ECO_HEAVY_APPS" ]; then
+        thr=$ECO_HEAVY_KBPS
+        if [ $eavg -ge $thr ] && screen_off; then thr=${ECO_HEAVY_OFF_KBPS:-3000}; fi
+        if [ $eavg -ge $thr ]; then hv=$((hv + 1)); else hv=0; fi
+        [ $hv -ge $ECO_HEAVY_CHECKS ] && { reason="heavy use - back on 5G"; log "eco exit: avg ${eavg} KB/s (limit $thr), now ${kbps}"; }
+        if [ -z "$reason" ] && [ $kbps -ge 100 ] && [ -n "$ECO_HEAVY_APPS" ] && ! screen_off; then
           fgp=$(fg_pkg)
           case " $ECO_HEAVY_APPS " in *" $fgp "*)
             case "$fgp" in
