@@ -7,20 +7,28 @@ sleep 40
 log "---- NetSwitch started (interval ${INTERVAL}s, slots $PRIMARY_SLOT / $BACKUP_SLOT)"
 
 # SIM: 1 = data on the primary SIM, 2 = on the backup.  RAT: 5 = 5G allowed, 4 = locked to 4G.
-SIM=1; RAT=5; POOR=0
+SIM=1; RAT=5; POOR=0; ECO=0
 [ -f $D/state ] && . $D/state
 bad=0; lbad=0; rec=0; ngood=0; probing=0; probe_start=0
 backoff=$RETRY_5G_AFTER; retry_at=0; last_switch=0; last_emit=0; last_key=""
 NR1=0; LTE1=0; NR2=0; LTE2=0
+light=0; kbps=0; loops=0
+t_5g=0; t_eco=0; t_weak=0; last_stat=$(date +%s)
+last_b=$(mobile_bytes); last_t=$(date +%s)
+# daily 4G data counter (bytes used while on 4G)
+BDAY=$(date +%Y%m%d); BUDGET_B=0
+[ -f $D/budget ] && { read bd bb < $D/budget; [ "$bd" = "$BDAY" ] && BUDGET_B=${bb:-0}; }
 
-save() { printf 'SIM=%s\nRAT=%s\n' "$SIM" "$RAT" > $D/state; }
+save() { printf 'SIM=%s\nRAT=%s\nECO=%s\n' "$SIM" "$RAT" "$ECO" > $D/state; }
+save_budget() { echo "$BDAY $BUDGET_B" > $D/budget; }
 now_s() { date +%s; }
 
 while true; do
   now=$(now_s)
 
   if [ "$PAUSE_ON_WIFI" = 1 ] && wifi_up; then
-    POOR=0; bad=0; lbad=0; rec=0; ngood=0
+    POOR=0; bad=0; lbad=0; rec=0; ngood=0; light=0
+    last_b=$(mobile_bytes); last_t=$now
     key="wifi"
     if [ "$key" != "$last_key" ] || [ $((now - last_emit)) -ge 60 ]; then emit ""; last_emit=$now; last_key=$key; fi
     sleep $INTERVAL; continue
@@ -30,6 +38,19 @@ while true; do
   NR1=${1:-0}; LTE1=${2:-0}; NR2=${3:-0}; LTE2=${4:-0}
   [ "$PRIMARY_SLOT" = 1 ] && { t=$NR1; NR1=$NR2; NR2=$t; t=$LTE1; LTE1=$LTE2; LTE2=$t; }
   if net_ok; then ok=1; else ok=0; fi
+  # mobile traffic since the last check, and the daily 4G counter
+  cur_b=$(mobile_bytes); dt=$((now - last_t)); [ $dt -lt 1 ] && dt=1
+  db=$((cur_b - last_b)); [ $db -lt 0 ] && db=0
+  kbps=$((db / 1024 / dt)); last_b=$cur_b; last_t=$now
+  today=$(date +%Y%m%d)
+  if [ "$today" != "$BDAY" ]; then BDAY=$today; BUDGET_B=0; save_budget; fi
+  if [ "$SIM" = 1 ] && { [ $ECO = 1 ] || [ $RAT = 4 ] || [ "$NR1" -eq 0 ]; }; then BUDGET_B=$((BUDGET_B + db)); fi
+  loops=$((loops + 1)); [ $((loops % 12)) -eq 0 ] && save_budget
+  if [ $ECO = 1 ]; then t_eco=$((t_eco + dt)); elif [ $RAT = 4 ]; then t_weak=$((t_weak + dt)); else t_5g=$((t_5g + dt)); fi
+  if [ $((now - last_stat)) -ge 3600 ]; then
+    log "stats (last hour): 5G $((t_5g / 60)) min, 4G eco $((t_eco / 60)) min, 4G weak-5G $((t_weak / 60)) min; 4G data today $((BUDGET_B / 1048576)) MB"
+    t_5g=0; t_eco=0; t_weak=0; last_stat=$now
+  fi
   dwell_ok=0; [ $((now - last_switch)) -ge $MIN_DWELL ] && dwell_ok=1
   msg=""
 
@@ -73,8 +94,33 @@ while true; do
       fi
     fi
 
+    # 2b) eco: light use -> 4G (saves battery); heavy use or the daily 4G allowance used up -> 5G
+    if [ "$ECO_ENABLE" = 1 ] && [ "$RAT" = 5 ] && [ $probing = 0 ]; then
+      if [ $ECO = 1 ]; then
+        reason=""
+        [ $kbps -ge $ECO_HEAVY_KBPS ] && reason="heavy use - back on 5G"
+        [ $((BUDGET_B / 1048576)) -ge $ECO_BUDGET_MB ] && reason="daily 4G limit reached - back on 5G"
+        if [ -n "$reason" ] && set_nr $PRIMARY_SLOT on; then
+          ECO=0; light=0; last_switch=$now; save_budget; save; msg="$reason"
+        fi
+      else
+        if [ $kbps -le $ECO_LIGHT_KBPS ]; then light=$((light + 1)); else light=0; fi
+        if [ $light -ge $((ECO_SCREENOFF_SECS / INTERVAL)) ] && [ "$NR1" -ne 0 ] && [ $ok = 1 ] && [ $dwell_ok = 1 ] \
+           && [ $((BUDGET_B / 1048576)) -lt $ECO_BUDGET_MB ]; then
+          go=0
+          if [ $light -ge $((ECO_LIGHT_SECS / INTERVAL)) ]; then go=1; elif screen_off; then go=1; fi
+          if [ $go = 1 ] && set_nr $PRIMARY_SLOT off; then
+            ECO=1; light=0; last_switch=$now; save; msg="light use - saving battery on 4G"
+          fi
+        fi
+      fi
+    fi
+
     # 3) both weak (no 5G to use and 4G bad, or locked on 4G and bad) -> SIM 2
-    if [ $lbad -ge $DOWN_CHECKS ] && [ $dwell_ok = 1 ] && [ $probing = 0 ]; then
+    if [ $lbad -ge $DOWN_CHECKS ] && [ $ECO = 1 ]; then
+      # 4G is bad while eco has it locked: let 5G in again before giving up on SIM 1
+      if set_nr $PRIMARY_SLOT on; then ECO=0; light=0; lbad=0; last_switch=$now; save; msg="4G is weak - back on 5G"; fi
+    elif [ $lbad -ge $DOWN_CHECKS ] && [ $dwell_ok = 1 ] && [ $probing = 0 ]; then
       if { [ "$LTE2" -ne 0 ] && [ "$LTE2" -gt $((LTE_BAD + 5)) ]; } || [ "$NR2" -ne 0 ]; then
         if set_data $BACKUP_SLOT; then
           SIM=2; last_switch=$now; lbad=0; rec=0; save
@@ -100,7 +146,7 @@ while true; do
     if [ $ok = 0 ]; then POOR=1; else POOR=0; fi
   fi
 
-  key="$SIM$RAT$POOR"
+  key="$SIM$RAT$ECO$POOR"
   if [ -n "$msg" ] || [ "$key" != "$last_key" ] || [ $((now - last_emit)) -ge 60 ]; then
     emit "$msg"; last_emit=$now; last_key=$key
   fi

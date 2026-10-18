@@ -34,6 +34,19 @@ NOTIFY=0              # 1 = also post a notification for every switch
 EOC
 fi
 . $CFG
+if ! grep -q ECO_ENABLE $CFG; then
+cat >> $CFG <<EOC
+
+# ---- eco mode: light use -> 4G (saves battery), heavy use -> 5G
+ECO_ENABLE=1
+ECO_LIGHT_KBPS=150        # mobile traffic at or below this (KB/s) counts as light
+ECO_LIGHT_SECS=60         # light this long before going to 4G
+ECO_SCREENOFF_SECS=20     # the same, but with the screen off
+ECO_HEAVY_KBPS=1000       # at or above this (KB/s) = heavy: back to 5G at once
+ECO_BUDGET_MB=1500        # daily 4G data allowance; eco stops (stays on 5G) once this is used
+EOC
+fi
+. $CFG
 
 log() {
   echo "$(date '+%m-%d %H:%M:%S') $*" >> $LOG
@@ -70,6 +83,13 @@ read_sig() {
     }
     END { print out }'
 }
+
+# bytes moved through the mobile interfaces (rx + tx)
+mobile_bytes() {
+  sed 's/:/ /' /proc/net/dev 2>/dev/null | awk '$1 ~ /^rmnet/ { s += $2 + $10 } END { printf "%d", s }'
+}
+
+screen_off() { dumpsys power 2>/dev/null | grep -m1 -q 'mWakefulness=Asleep\|mWakefulness=Dozing'; }
 
 wifi_up() { cmd wifi status 2>/dev/null | grep -q 'connected to'; }
 
@@ -114,8 +134,10 @@ set_data() { # slot
 
 # message "" = just the state
 emit() { # msg
+  local r=$RAT
+  [ "$ECO" = 1 ] && r=4
   am broadcast --user 0 -a com.dmk.netswitch.STATE -p com.android.systemui \
-    --es msg "$1" --ei sim "$SIM" --ei rat "$RAT" --ei poor "$POOR" --ei nr "${NR1:-0}" --ei lte "${LTE1:-0}" >/dev/null 2>&1
+    --es msg "$1" --ei sim "$SIM" --ei rat "$r" --ei eco "${ECO:-0}" --ei poor "$POOR" --ei nr "${NR1:-0}" --ei lte "${LTE1:-0}" >/dev/null 2>&1
   if [ -n "$1" ]; then
     log "EVENT $1"
     [ "$NOTIFY" = 1 ] && cmd notification post -t NetSwitch netswitch "$1" >/dev/null 2>&1
