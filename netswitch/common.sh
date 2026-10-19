@@ -103,6 +103,14 @@ PING_EVERY=60             # ping at most this often, and only when no data is co
 # LOWHEAT_V21
 EOC
 fi
+if ! grep -q SIM2_DATA $CFG; then
+cat >> $CFG <<EOC
+
+# ---- backup SIM without a data pack (v2.3)
+SIM2_DATA=1               # 0 = SIM 2 has no data pack: never move mobile data to it
+S2_BLOCK_MINS=240         # SIM 2 had no internet after a switch: leave it alone this long
+EOC
+fi
 . $CFG
 
 log() {

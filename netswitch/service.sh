@@ -232,14 +232,37 @@ while true; do
       # 4G is bad while eco has it locked: let 5G in again before giving up on SIM 1
       if set_nr $PRIMARY_SLOT on; then ECO=0; light=0; lbad=0; last_switch=$now; save; msg="4G is weak - back on 5G"; fi
     elif [ $lbad -ge $DOWN_CHECKS ] && [ $dwell_ok = 1 ] && [ $probing = 0 ]; then
-      if { [ "$LTE2" -ne 0 ] && [ "$LTE2" -gt $((LTE_BAD + 5)) ]; } || [ "$NR2" -ne 0 ]; then
+      if [ "${SIM2_DATA:-1}" != 1 ]; then
+        [ $((loops % 60)) -eq 1 ] && log "SIM 1 weak, but SIM 2 is set as having no data - staying on SIM 1"
+      elif [ $now -lt ${s2_block_until:-0} ]; then
+        [ $((loops % 60)) -eq 1 ] && log "SIM 1 weak, SIM 2 had no internet earlier - staying on SIM 1"
+      elif { [ "$LTE2" -ne 0 ] && [ "$LTE2" -gt $((LTE_BAD + 5)) ]; } || [ "$NR2" -ne 0 ]; then
         if set_data $BACKUP_SLOT; then
-          SIM=2; last_switch=$now; lbad=0; rec=0; save
+          SIM=2; last_switch=$now; lbad=0; rec=0; s2_verify=1; s2_fail=0; save
           msg="SIM 1 is weak - mobile data moved to SIM 2"
         fi
       fi
     fi
   else
+    # just moved to SIM 2: does it actually have internet (a data pack)?
+    s2_nodata=0
+    if [ "${s2_verify:-0}" = 1 ]; then
+      if [ $((now - last_switch)) -ge 10 ]; then
+        if [ $drx -ge 4096 ] || net_ok; then s2_verify=0; log "SIM 2 has internet"
+        else s2_fail=$((s2_fail + 1)); [ $s2_fail -ge 3 ] && s2_nodata=1; fi
+      fi
+    elif [ $pf -ge $PING_FAILS ]; then
+      s2_nodata=1      # it worked before, but no internet now (pack ran out?)
+    fi
+    if [ $s2_nodata = 1 ]; then
+      if set_data $PRIMARY_SLOT; then
+        SIM=1; last_switch=$now; rec=0; lbad=0; s2_verify=0; pf=0; save
+        s2_block_until=$((now + ${S2_BLOCK_MINS:-240} * 60))
+        msg="SIM 2 has no internet (no data pack?) - back on SIM 1"
+        log "SIM 2 blocked for ${S2_BLOCK_MINS:-240} min"
+      fi
+    fi
+    if [ "$SIM" = 2 ]; then   # (unless we just went back above)
     # on SIM 2: has SIM 1 recovered?
     if { [ "$LTE1" -ne 0 ] && [ "$LTE1" -ge "$LTE_GOOD" ]; } || { [ "$NR1" -ne 0 ] && [ "$NR1" -ge "$NR_GOOD" ]; }; then rec=$((rec + 1)); else rec=0; fi
     # SIM 1 known to be weak on every network it reports?
@@ -258,6 +281,7 @@ while true; do
         SIM=1; last_switch=$now; rec=0; lbad=0; save
         msg="trying SIM 1 again - mobile data on SIM 1"
       fi
+    fi
     fi
   fi
 

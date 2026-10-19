@@ -162,6 +162,8 @@ pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 14px/1.5 u
     'g-sim': [
       { k: 'PRIMARY_SLOT', t: 'Main SIM slot', d: '0 = SIM 1, 1 = SIM 2', min: 0, max: 1, step: 1, u: '' },
       { k: 'BACKUP_SLOT', t: 'Backup SIM slot', d: '0 = SIM 1, 1 = SIM 2', min: 0, max: 1, step: 1, u: '' },
+      { k: 'SIM2_DATA', t: 'Backup SIM has data', d: 'Off = no data pack on it: never move data there', sw: true },
+      { k: 'S2_BLOCK_MINS', t: 'Backup SIM without internet: skip it for', d: 'After a switch where nothing loaded', min: 30, max: 1440, step: 30, u: 'min' },
       { k: 'PING_FAILS', t: 'Failed pings before it counts as bad', d: 'In a row', min: 2, max: 30, step: 1, u: '' },
       { k: 'S2_RETRY_AFTER', t: 'On backup SIM, retry the main one after', d: '', min: 60, max: 1800, step: 30, u: 'sec' }
     ],
@@ -195,7 +197,7 @@ pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 14px/1.5 u
   function run() { return sh('sh ' + MODDIR + '/webui.sh ' + Array.prototype.slice.call(arguments).join(' ')); }
 
   var demoMode = 'auto';
-  var demoCfg = 'NR_BAD=-110\nNR_GOOD=-100\nLTE_BAD=-112\nLTE_GOOD=-105\nDOWN_CHECKS=3\nUP_CHECKS=6\nMIN_DWELL=45\nRETRY_5G_AFTER=120\nPROBE_SECS=30\nINTERVAL=15\nSCREEN_OFF_INTERVAL=60\nPING_EVERY=60\nPAUSE_ON_WIFI=1\nNOTIFY=0\nPRIMARY_SLOT=0\nBACKUP_SLOT=1\nPING_FAILS=3\nS2_RETRY_AFTER=600\nECO_ENABLE=0\nECO_NEED_LTE=1\nECO_COMPARE=1\nECO_LIGHT_KBPS=150\nECO_LIGHT_SECS=180\nECO_SCREENOFF_SECS=20\nECO_HEAVY_KBPS=400\nECO_FAST_KBPS=2500\nECO_HEAVY_OFF_KBPS=1500\nECO_HEAVY_CHECKS=2\nECO_HOLD_SECS=600\nECO_BUDGET_MB=1500';
+  var demoCfg = 'NR_BAD=-110\nNR_GOOD=-100\nLTE_BAD=-112\nLTE_GOOD=-105\nDOWN_CHECKS=3\nUP_CHECKS=6\nMIN_DWELL=45\nRETRY_5G_AFTER=120\nPROBE_SECS=30\nINTERVAL=15\nSCREEN_OFF_INTERVAL=60\nPING_EVERY=60\nPAUSE_ON_WIFI=1\nNOTIFY=0\nPRIMARY_SLOT=0\nBACKUP_SLOT=1\nPING_FAILS=3\nS2_RETRY_AFTER=600\nSIM2_DATA=1\nS2_BLOCK_MINS=240\nECO_ENABLE=0\nECO_NEED_LTE=1\nECO_COMPARE=1\nECO_LIGHT_KBPS=150\nECO_LIGHT_SECS=180\nECO_SCREENOFF_SECS=20\nECO_HEAVY_KBPS=400\nECO_FAST_KBPS=2500\nECO_HEAVY_OFF_KBPS=1500\nECO_HEAVY_CHECKS=2\nECO_HOLD_SECS=600\nECO_BUDGET_MB=1500';
   function demo(cmd) {
     var out = '';
     if (/ live/.test(cmd)) {
