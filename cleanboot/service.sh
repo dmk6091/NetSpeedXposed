@@ -18,13 +18,6 @@ sleep 60
   else
     echo "ksu_susfs not found - SELinux files not hidden"
   fi
-  # 3) Sui's debug logger: a logcat copying every log line to sui.log all day (Sui itself keeps working)
-  stop_sui_log() {
-    for p in $(pgrep -f 'logcat.*sui/sui.log' 2>/dev/null); do kill "$p" 2>/dev/null && echo "stopped Sui logger (pid $p)"; done
-  }
-  stop_sui_log
 } >> $LOG 2>&1
-# Sui may start its logger a little later: look once more after 5 minutes, then exit
-( sleep 240; stop_sui_log >> $LOG 2>&1 ) &
 tail -n 40 $LOG > $LOG.t 2>/dev/null && mv $LOG.t $LOG
 exit 0
