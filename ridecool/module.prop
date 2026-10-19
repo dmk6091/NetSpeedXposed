@@ -1,0 +1,6 @@
+id=ridecool
+name=Ride Cool
+version=v1.0
+versionCode=1
+author=dmk
+description=Throttles like the stock ROM when the battery gets hot (sun, mount, charging): 40 C caps the fast CPU cores and GPU a little, 42 C more plus slower charging, 45 C strongest caps and charging held back. Lifts them when it cools. Checks one file every 15 s.
