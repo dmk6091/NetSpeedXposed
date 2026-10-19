@@ -63,6 +63,11 @@ jobs:
           cd ridecool
           zip -qr ../RideCool.zip .
           unzip -l ../RideCool.zip
+      - name: Build the Clean Boot Magisk module
+        run: |
+          cd cleanboot
+          zip -qr ../CleanBoot.zip .
+          unzip -l ../CleanBoot.zip
       - uses: actions/upload-artifact@v4
         with:
           name: NetSpeedXposed-apk
@@ -87,8 +92,8 @@ jobs:
           printf '%s\n' "$MSG" > changelog.md
           cat update.json
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip update.json changelog.md --clobber -R "$R"
+            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
           fi

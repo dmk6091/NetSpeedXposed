@@ -1,0 +1,6 @@
+id=cleanboot
+name=Clean Boot
+version=v1.0
+versionCode=1
+author=dmk
+description=Once after boot: removes sys.oem_unlock_allowed (doesn't exist on a stock Xiaomi, so detectors flag it) and hides the two vendor SELinux files that name LineageOS. Then exits.
