@@ -82,8 +82,19 @@ apply() { # level.  On a level change (FROM != lv) set exactly; otherwise only p
   fi
 }
 
+# battery health for NetSpeed's status bar: System UI may not read the battery driver's files
+pub_health() {
+  local h=""
+  [ -r /sys/class/qcom-battery/soh ] && read h < /sys/class/qcom-battery/soh
+  case "$h" in ''|*[!0-9]*) return;; esac
+  [ "$h" -gt 0 ] && [ "$h" -le 120 ] && [ "$h" != "$LAST_SOH" ] || return
+  [ -z "$R" ] && settings put global netspeed_battery_soh "$h" >/dev/null 2>&1 && LAST_SOH=$h
+}
+LAST_SOH=""; pub_health; hn=0
+
 lv=0; n=0; FROM=0
 while true; do
+  hn=$((hn + 1)); [ $((hn * INTERVAL)) -ge 1800 ] && { hn=0; pub_health; }
   read t < $TEMPF; t=$(( ${t:-0} / 10 ))
   tl=0; [ $t -ge $T1 ] && tl=1; [ $t -ge $T2 ] && tl=2; [ $t -ge $T3 ] && tl=3
   new=$lv
