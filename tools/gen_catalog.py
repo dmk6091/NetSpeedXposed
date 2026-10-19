@@ -36,7 +36,7 @@ def args_at(s, i):
     raise ValueError('unbalanced')
 
 items = []
-for m in re.finditer(r'\b(section|toggle|slider)\((c, )?', src):
+for m in re.finditer(r'\b(section|toggle|slider|textField|predictToggle)\((c\b(, )?)?', src):
     kind = m.group(1)
     line_start = src.rfind('\n', 0, m.start()) + 1
     if 'private void' in src[line_start:m.start()]:
@@ -46,6 +46,12 @@ for m in re.finditer(r'\b(section|toggle|slider)\((c, )?', src):
     a, _ = args_at(src, m.end())
     if kind == 'section' and len(a) == 1:
         items.append(('sec', a))
+        if a[0] == '"Updates"':
+            items.append(('U', []))           # update check: opens the app
+    elif kind == 'predictToggle':
+        items.append(('P', []))               # app suggestions: needs root in the app, opens it
+    elif kind == 'textField' and len(a) == 5 and a[4] == 'false':
+        items.append(('E', a[0:4]))           # label, desc, key, hint (tokens stay in the app)
     elif kind == 'toggle' and len(a) == 4:
         items.append(('T', a))
     elif kind == 'slider' and len(a) == 6:
@@ -57,7 +63,7 @@ out = ['package com.netspeed.xposed;', '',
        '    static java.util.List<Object[]> items() {',
        '        java.util.List<Object[]> l = new java.util.ArrayList<>();']
 for kind, a in items:
-    out.append('        l.add(new Object[]{"%s", %s});' % (kind, ', '.join(a)))
+    out.append('        l.add(new Object[]{%s});' % ', '.join(['"%s"' % kind] + list(a)))
 out += ['        return l;', '    }', '}', '']
 open(os.path.join(d, 'SettingsCatalog.java'), 'w', encoding='utf-8').write('\n'.join(out))
 print('catalog items:', len(items))
