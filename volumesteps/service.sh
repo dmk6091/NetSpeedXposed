@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Copies the numbers saved in Settings (Sound > Volume steps) into the config; they apply at the next boot.
+# Copies the numbers saved in NetSpeed settings (Volume steps) into the config; they apply at the next boot.
 MODDIR=${0%/*}
 . $MODDIR/common.sh
 while [ "$(getprop sys.boot_completed)" != 1 ]; do sleep 5; done
