@@ -1,0 +1,6 @@
+id=nfcoff
+name=NFC Off
+version=v1.0
+versionCode=1
+author=dmk
+description=Stops the NFC chip driver once after boot. On this ROM it loops even with NFC switched off, flooding the log and heating the CPU. Disable this module and reboot to get NFC back. Nothing keeps running.
