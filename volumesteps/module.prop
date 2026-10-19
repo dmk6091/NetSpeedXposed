@@ -1,0 +1,6 @@
+id=volumesteps
+name=Volume Steps
+version=v1.0
+versionCode=1
+author=dmk
+description=Finer (or coarser) volume steps for media, calls, ringtone, alarm, notification and system. Pick the numbers on the web page, then reboot.

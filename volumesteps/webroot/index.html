@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Volume Steps</title>
+<style>
+:root{--bg:#0d1014;--card:#161b22;--line:#263040;--text:#f1f5f9;--sub:#a9b6c6;--accent:#34d3b4;--ink:#04201a;--chip:#1e2733;--warn:#fbbf24}
+@media (prefers-color-scheme:light){:root{--bg:#f3f6fa;--card:#fff;--line:#d5dde8;--text:#0f172a;--sub:#475569;--accent:#0f9b82;--ink:#fff;--chip:#e8eef5;--warn:#b45309}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:18px/1.45 system-ui,sans-serif;padding:16px 16px 120px;max-width:640px;margin-inline:auto}
+h1{font-size:30px;margin:4px 0}.sub{color:var(--sub);font-size:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin:14px 0}
+.banner{background:var(--chip);border-radius:14px;padding:10px 14px;color:var(--warn);font-size:16px;margin-top:12px}
+.row{padding:14px 0;border-top:1px solid var(--line)}.row:first-child{border-top:0}
+.row b{font-size:20px}.row .sub{display:block}
+.step{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.step button{width:52px;height:52px;border-radius:14px;border:1px solid var(--line);background:var(--chip);color:var(--text);font-size:26px;font-weight:700}
+.step input{width:92px;height:52px;text-align:center;font:inherit;font-size:22px;font-weight:700;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--text)}
+.step input.d{border-color:var(--accent)}
+.pre{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pre button{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--chip);color:var(--text);font:inherit;font-weight:700}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px;background:var(--bg);border-top:1px solid var(--line)}
+.bar .in{max-width:640px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;min-height:58px;border-radius:16px;border:0;background:var(--accent);color:var(--ink);font:inherit;font-weight:800;font-size:20px}
+.btn.alt{background:var(--chip);color:var(--text);border:1px solid var(--line)}.btn:disabled{opacity:.45}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:12px 20px;border-radius:14px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none}.toast.show{opacity:1}
+</style></head><body>
+<h1>Volume Steps</h1>
+<div class="sub">How many levels each volume slider has. More levels = finer control, so the quietest levels get quieter.</div>
+<div class="banner" id="demo" hidden>Preview only. Open it from the root manager on the phone.</div>
+<div class="card" id="list"></div>
+<div class="card"><b>Right now (after reboot)</b><div class="sub" id="live">...</div></div>
+<div class="bar"><div class="in"><button class="btn alt" id="rb">Reboot</button><button class="btn" id="save" disabled>Save</button></div></div>
+<div class="toast" id="t"></div>
+<script>
+(function(){
+var M='/data/adb/modules/volumesteps',has=typeof ksu!=='undefined'&&ksu&&ksu.exec,seq=0;
+var ITEMS=[['MEDIA','Media','Music, video, YouTube. Stock is 15.',[15,30,50,100]],['CALL','Calls','Voice call volume. Stock is 5.',[5,10,15,30]],['RING','Ringtone','Stock is 7.',[7,15,30]],['ALARM','Alarm','Stock is 7.',[7,15,30]],['NOTIF','Notification','Stock is 7.',[7,15,30]],['SYSTEM','System sounds','Touch and keyboard sounds. Stock is 7.',[7,15,30]]];
+var cfg={},orig={},demoCfg='MEDIA=30\nCALL=15\nRING=7\nALARM=7\nNOTIF=7\nSYSTEM=7';
+function $(i){return document.getElementById(i)}
+function sh(c){return new Promise(function(r){if(!has){r({out:/ get/.test(c)?demoCfg:/ live/.test(c)?'media=15\ncall=5\nring=7\nalarm=7\nnotif=7\nsystem=7':'ok'});return}var cb='x'+(++seq);window[cb]=function(a,o){delete window[cb];r({out:o||''})};try{ksu.exec(c,'{}',cb)}catch(e){r({out:''})}})}
+function run(){return sh('sh '+M+'/webui.sh '+[].slice.call(arguments).join(' '))}
+function parse(t){var o={};t.split('\n').forEach(function(l){var i=l.indexOf('=');if(i>0)o[l.slice(0,i).trim()]=l.slice(i+1).trim()});return o}
+var tt;function toast(m){var e=$('t');e.textContent=m;e.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){e.classList.remove('show')},2400)}
+function build(){var h=$('list');h.innerHTML='';ITEMS.forEach(function(it){var r=document.createElement('div');r.className='row';
+r.innerHTML='<b>'+it[1]+'</b><span class="sub">'+it[2]+'</span><div class="step"><button aria-label="less">−</button><input id="i_'+it[0]+'" type="number" inputmode="numeric"><button aria-label="more">+</button></div><div class="pre"></div>';
+var b=r.querySelectorAll('button'),inp=r.querySelector('input'),pre=r.querySelector('.pre');
+function set(v){v=Math.max(3,Math.min(150,v));cfg[it[0]]=String(v);paint()}
+b[0].onclick=function(){set((parseInt(cfg[it[0]],10)||0)-1)};b[1].onclick=function(){set((parseInt(cfg[it[0]],10)||0)+1)};
+inp.onchange=function(){var v=parseInt(inp.value,10);if(!isNaN(v))set(v);else paint()};
+it[3].forEach(function(p){var x=document.createElement('button');x.textContent=p;x.onclick=function(){set(p)};pre.appendChild(x)});
+h.appendChild(r)})}
+function paint(){var d=0;ITEMS.forEach(function(it){var e=$('i_'+it[0]);if(document.activeElement!==e)e.value=cfg[it[0]]||'';var x=cfg[it[0]]!==orig[it[0]];if(x)d++;e.classList.toggle('d',x)});$('save').disabled=!d}
+function load(){return run('get').then(function(r){cfg=parse(r.out);orig=JSON.parse(JSON.stringify(cfg));paint()})}
+function live(){run('live').then(function(r){var o=parse(r.out);$('live').textContent='Media '+(o.media||'15')+' · Calls '+(o.call||'5')+' · Ring '+(o.ring||'7')+' · Alarm '+(o.alarm||'7')+' · Notification '+(o.notif||'7')+' · System '+(o.system||'7')})}
+$('save').onclick=function(){var ks=Object.keys(cfg).filter(function(k){return cfg[k]!==orig[k]}),p=Promise.resolve();ks.forEach(function(k){p=p.then(function(){return run('set',k,cfg[k])})});p.then(load).then(function(){toast('Saved. Reboot to apply.')})};
+$('rb').onclick=function(){run('reboot')};
+$('demo').hidden=!!has;build();load().then(live);
+})();
+</script></body></html>
