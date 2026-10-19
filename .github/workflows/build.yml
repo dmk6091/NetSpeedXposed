@@ -48,6 +48,11 @@ jobs:
           chmod 755 immersivenav/service.sh immersivenav/uninstall.sh
           (cd immersivenav && zip -qr ../ImmersiveNav.zip META-INF module.prop service.sh uninstall.sh system)
           unzip -l ImmersiveNav.zip
+      - name: Build the Volume Steps Magisk module
+        run: |
+          cd volumesteps
+          zip -qr ../VolumeSteps.zip .
+          unzip -l ../VolumeSteps.zip
       - uses: actions/upload-artifact@v4
         with:
           name: NetSpeedXposed-apk
@@ -72,8 +77,8 @@ jobs:
           printf '%s\n' "$MSG" > changelog.md
           cat update.json
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip update.json changelog.md --clobber -R "$R"
+            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip update.json changelog.md --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest NetSpeedXposed.apk WiFiActivity.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
           fi
