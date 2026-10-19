@@ -153,14 +153,16 @@ pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 14px/1.5 u
       { k: 'MIN_DWELL', t: 'Stay after any switch', d: 'Stops quick flipping', min: 10, max: 300, step: 5, u: 'sec' },
       { k: 'RETRY_5G_AFTER', t: 'Try 5G again after', d: 'While sitting on 4G', min: 30, max: 900, step: 10, u: 'sec' },
       { k: 'PROBE_SECS', t: 'Time 5G gets to prove itself', d: '', min: 10, max: 120, step: 5, u: 'sec' },
-      { k: 'INTERVAL', t: 'Check every', d: 'Shorter reacts faster, uses a bit more battery', min: 2, max: 30, step: 1, u: 'sec' },
+      { k: 'INTERVAL', t: 'Check every', d: 'Shorter reacts faster but heats the phone more', min: 5, max: 60, step: 1, u: 'sec' },
+      { k: 'SCREEN_OFF_INTERVAL', t: 'Check every, screen off', d: 'Longer lets the phone rest', min: 15, max: 300, step: 5, u: 'sec' },
+      { k: 'PING_EVERY', t: 'Internet ping at most every', d: 'Only when no data is coming in', min: 15, max: 600, step: 5, u: 'sec' },
       { k: 'PAUSE_ON_WIFI', t: 'Pause on Wi-Fi', d: 'Do nothing while Wi-Fi is connected', sw: true },
       { k: 'NOTIFY', t: 'Notification for every switch', d: '', sw: true }
     ],
     'g-sim': [
       { k: 'PRIMARY_SLOT', t: 'Main SIM slot', d: '0 = SIM 1, 1 = SIM 2', min: 0, max: 1, step: 1, u: '' },
       { k: 'BACKUP_SLOT', t: 'Backup SIM slot', d: '0 = SIM 1, 1 = SIM 2', min: 0, max: 1, step: 1, u: '' },
-      { k: 'PING_FAILS', t: 'No internet checks before it counts as bad', d: 'In a row', min: 2, max: 30, step: 1, u: '' },
+      { k: 'PING_FAILS', t: 'Failed pings before it counts as bad', d: 'In a row', min: 2, max: 30, step: 1, u: '' },
       { k: 'S2_RETRY_AFTER', t: 'On backup SIM, retry the main one after', d: '', min: 60, max: 1800, step: 30, u: 'sec' }
     ],
     'g-eco': [
@@ -193,7 +195,7 @@ pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 14px/1.5 u
   function run() { return sh('sh ' + MODDIR + '/webui.sh ' + Array.prototype.slice.call(arguments).join(' ')); }
 
   var demoMode = 'auto';
-  var demoCfg = 'NR_BAD=-110\nNR_GOOD=-100\nLTE_BAD=-112\nLTE_GOOD=-105\nDOWN_CHECKS=3\nUP_CHECKS=6\nMIN_DWELL=45\nRETRY_5G_AFTER=120\nPROBE_SECS=30\nINTERVAL=5\nPAUSE_ON_WIFI=1\nNOTIFY=0\nPRIMARY_SLOT=0\nBACKUP_SLOT=1\nPING_FAILS=6\nS2_RETRY_AFTER=600\nECO_ENABLE=0\nECO_NEED_LTE=1\nECO_COMPARE=1\nECO_LIGHT_KBPS=150\nECO_LIGHT_SECS=180\nECO_SCREENOFF_SECS=20\nECO_HEAVY_KBPS=400\nECO_FAST_KBPS=2500\nECO_HEAVY_OFF_KBPS=1500\nECO_HEAVY_CHECKS=2\nECO_HOLD_SECS=600\nECO_BUDGET_MB=1500';
+  var demoCfg = 'NR_BAD=-110\nNR_GOOD=-100\nLTE_BAD=-112\nLTE_GOOD=-105\nDOWN_CHECKS=3\nUP_CHECKS=6\nMIN_DWELL=45\nRETRY_5G_AFTER=120\nPROBE_SECS=30\nINTERVAL=15\nSCREEN_OFF_INTERVAL=60\nPING_EVERY=60\nPAUSE_ON_WIFI=1\nNOTIFY=0\nPRIMARY_SLOT=0\nBACKUP_SLOT=1\nPING_FAILS=3\nS2_RETRY_AFTER=600\nECO_ENABLE=0\nECO_NEED_LTE=1\nECO_COMPARE=1\nECO_LIGHT_KBPS=150\nECO_LIGHT_SECS=180\nECO_SCREENOFF_SECS=20\nECO_HEAVY_KBPS=400\nECO_FAST_KBPS=2500\nECO_HEAVY_OFF_KBPS=1500\nECO_HEAVY_CHECKS=2\nECO_HOLD_SECS=600\nECO_BUDGET_MB=1500';
   function demo(cmd) {
     var out = '';
     if (/ live/.test(cmd)) {

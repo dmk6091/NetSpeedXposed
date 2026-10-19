@@ -22,7 +22,8 @@ NR1=0; LTE1=0; NR2=0; LTE2=0
 light=0; kbps=0; loops=0; hv=0; h1=0; h2=0; h3=0; h4=0; h5=0; eavg=0
 eco_hold_until=0; cmp_at=0; eco_ref=0; h6=0
 t_5g=0; t_eco=0; t_weak=0; last_stat=$(date +%s)
-last_b=$(mobile_bytes); last_t=$(date +%s)
+set -- $(mobile_bytes); last_b=${1:-0}; last_rx=${2:-0}; last_t=$(date +%s)
+ok=1; last_ping=0
 # daily 4G data counter (bytes used while on 4G)
 BDAY=$(date +%Y%m%d); BUDGET_B=0
 [ -f $D/budget ] && { read bd bb < $D/budget; [ "$bd" = "$BDAY" ] && BUDGET_B=${bb:-0}; }
@@ -34,6 +35,7 @@ now_s() { date +%s; }
 mode_done=""
 while true; do
   now=$(now_s)
+  screen_check
 
   # manual override from the web page: auto | 5g | 4g
   MODE=$(cat $D/mode 2>/dev/null); [ -z "$MODE" ] && MODE=auto
@@ -47,7 +49,7 @@ while true; do
       if [ "$mode_done" = "$MODE" ]; then save; emit "manual: forced ${MODE}"; fi
     fi
     printf 'manual=1\nsim=%s\nrat=%s\neco=0\nts=%s\n' "$SIM" "$RAT" "$now" > $D/live
-    sleep $INTERVAL; continue
+    sleep 30; continue
   fi
   if [ -n "$mode_done" ]; then
     mode_done=""; bad=0; lbad=0; rec=0; ngood=0; probing=0; light=0; last_switch=$now
@@ -56,21 +58,30 @@ while true; do
 
   if [ "$PAUSE_ON_WIFI" = 1 ] && wifi_up; then
     POOR=0; bad=0; lbad=0; rec=0; ngood=0; light=0
-    last_b=$(mobile_bytes); last_t=$now
+    set -- $(mobile_bytes); last_b=${1:-0}; last_rx=${2:-0}; last_t=$now
     printf 'wifi=1\nsim=%s\nrat=%s\neco=%s\nts=%s\n' "$SIM" "$RAT" "${ECO:-0}" "$now" > $D/live
     key="wifi"
-    if [ "$key" != "$last_key" ] || [ $((now - last_emit)) -ge 60 ]; then emit ""; last_emit=$now; last_key=$key; fi
-    sleep $INTERVAL; continue
+    if [ "$key" != "$last_key" ] || { [ $((now - last_emit)) -ge 60 ] && ! screen_off; }; then emit ""; last_emit=$now; last_key=$key; fi
+    sleep 30; continue
   fi
 
   set -- $(read_sig)
   NR1=${1:-0}; LTE1=${2:-0}; NR2=${3:-0}; LTE2=${4:-0}
   [ "$PRIMARY_SLOT" = 1 ] && { t=$NR1; NR1=$NR2; NR2=$t; t=$LTE1; LTE1=$LTE2; LTE2=$t; }
-  if net_ok; then ok=1; pf=0; else ok=0; pf=$((pf + 1)); fi
   # mobile traffic since the last check, and the daily 4G counter
-  cur_b=$(mobile_bytes); dt=$((now - last_t)); [ $dt -lt 1 ] && dt=1
+  set -- $(mobile_bytes); cur_b=${1:-0}; cur_rx=${2:-0}
+  dt=$((now - last_t)); [ $dt -lt 1 ] && dt=1
   db=$((cur_b - last_b)); [ $db -lt 0 ] && db=0
-  kbps=$((db / 1024 / dt)); last_b=$cur_b; last_t=$now
+  drx=$((cur_rx - last_rx)); [ $drx -lt 0 ] && drx=0
+  kbps=$((db / 1024 / dt)); last_b=$cur_b; last_rx=$cur_rx; last_t=$now
+  # internet check: data coming in proves it works. Only ping when nothing came in, and not too often
+  # (a ping every few seconds keeps the modem awake, which heats the phone)
+  if [ $drx -ge 4096 ]; then ok=1; pf=0
+  elif [ $((db - drx)) -ge 2048 ] || [ $((now - last_ping)) -ge ${PING_EVERY:-60} ]; then
+    # (sending but nothing coming back = maybe no internet: check now, don't wait for PING_EVERY)
+    last_ping=$now
+    if net_ok; then ok=1; pf=0; else ok=0; pf=$((pf + 1)); fi
+  fi
   eavg=$(( (kbps + h1 + h2 + h3 + h4 + h5) / 6 )); avg3=$(( (kbps + h1 + h2) / 3 )); fast2=0; [ $kbps -ge ${ECO_FAST_KBPS:-2500} ] && [ $h1 -ge ${ECO_FAST_KBPS:-2500} ] && fast2=1; h5=$h4; h4=$h3; h3=$h2; h2=$h1; h1=$kbps
   today=$(date +%Y%m%d)
   if [ "$today" != "$BDAY" ]; then BDAY=$today; BUDGET_B=0; save_budget; fi
@@ -245,8 +256,9 @@ while true; do
   fi
 
   key="$SIM$RAT$ECO$POOR"
-  if [ -n "$msg" ] || [ "$key" != "$last_key" ] || [ $((now - last_emit)) -ge 60 ]; then
+  if [ -n "$msg" ] || [ "$key" != "$last_key" ] || { [ $((now - last_emit)) -ge 60 ] && ! screen_off; }; then
     emit "$msg"; last_emit=$now; last_key=$key
   fi
-  sleep $INTERVAL
+  # screen off: check much less often (nobody is looking, and the CPU and modem can sleep)
+  if screen_off && [ $probing = 0 ] && [ $cmp_at = 0 ]; then sleep ${SCREEN_OFF_INTERVAL:-60}; else sleep $INTERVAL; fi
 done

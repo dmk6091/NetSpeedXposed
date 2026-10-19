@@ -92,6 +92,17 @@ if ! grep -q ECO_OFF_V19 $CFG; then
 sed -i 's/^ECO_ENABLE=.*/ECO_ENABLE=0   # eco (battery saver on 4G) is off; set 1 to try it again/' $CFG
 echo "# ECO_OFF_V19 (eco switched off by default in v1.9)" >> $CFG
 fi
+if ! grep -q LOWHEAT_V21 $CFG; then
+# v2.1 low heat: values still at the old defaults move to the new ones, your own edits are kept
+sed -i 's/^INTERVAL=5\([^0-9]\)/INTERVAL=15\1/; s/^PING_FAILS=6\([^0-9]\)/PING_FAILS=3\1/' $CFG
+cat >> $CFG <<EOC
+
+# ---- low heat (v2.1)
+SCREEN_OFF_INTERVAL=60    # seconds between checks while the screen is off
+PING_EVERY=60             # ping at most this often, and only when no data is coming in
+# LOWHEAT_V21
+EOC
+fi
 . $CFG
 
 log() {
@@ -131,9 +142,9 @@ read_sig() {
     END { print out }'
 }
 
-# bytes moved through the mobile interfaces (rx + tx)
+# bytes through the mobile interfaces: "rx+tx rx"
 mobile_bytes() {
-  sed 's/:/ /' /proc/net/dev 2>/dev/null | awk '$1 ~ /^rmnet/ { s += $2 + $10 } END { printf "%d", s }'
+  sed 's/:/ /' /proc/net/dev 2>/dev/null | awk '$1 ~ /^rmnet/ { s += $2 + $10; r += $2 } END { printf "%d %d", s, r }'
 }
 
 # package of the app on screen
@@ -142,9 +153,27 @@ fg_pkg() {
     | sed -n 's/.*ActivityRecord{[^ ]* [^ ]* \([^/ ]*\)\/.*/\1/p'
 }
 
-screen_off() { dumpsys power 2>/dev/null | grep -m1 -q 'mWakefulness=Asleep\|mWakefulness=Dozing'; }
+# screen state, read once per check (screen_check) from the backlight file: no dumpsys every time
+BL=""
+for f in /sys/class/backlight/*/brightness; do [ -r "$f" ] && { BL=$f; break; }; done
+screen_check() {
+  local v=""
+  if [ -n "$BL" ] && read v < "$BL" 2>/dev/null && [ -n "$v" ]; then
+    if [ "$v" = 0 ]; then SCR=off; else SCR=on; fi
+  elif dumpsys power 2>/dev/null | grep -m1 -q 'mWakefulness=Asleep\|mWakefulness=Dozing'; then SCR=off
+  else SCR=on; fi
+}
+screen_off() { [ -n "$SCR" ] || screen_check; [ "$SCR" = off ]; }
 
-wifi_up() { cmd wifi status 2>/dev/null | grep -q 'connected to'; }
+# Wi-Fi: a cheap file read first; only ask the Wi-Fi service when the interface is up
+wifi_up() {
+  local s=""
+  if [ -r /sys/class/net/wlan0/operstate ]; then
+    read s < /sys/class/net/wlan0/operstate 2>/dev/null
+    [ "$s" = up ] || return 1
+  fi
+  cmd wifi status 2>/dev/null | grep -q 'connected to'
+}
 
 net_ok() { # a ping through any mobile interface
   local i
