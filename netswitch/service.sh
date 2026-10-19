@@ -11,6 +11,7 @@ SIM=1; RAT=5; POOR=0; ECO=0
 [ -f $D/state ] && . $D/state
 # trust the phone, not the saved state: which SIM really has mobile data right now?
 ds=$(H getdata | tail -n1); ps=$(subid $PRIMARY_SLOT)
+case "$ds" in ''|*[!0-9]*) DSUB="";; *) DSUB=$ds;; esac
 if [ -n "$ds" ] && [ -n "$ps" ]; then
   if [ "$ds" = "$ps" ]; then SIM=1; else SIM=2; fi
   log "data is on SIM $SIM (default data sub $ds, SIM 1 sub $ps)"
@@ -54,6 +55,18 @@ while true; do
   if [ -n "$mode_done" ]; then
     mode_done=""; bad=0; lbad=0; rec=0; ngood=0; probing=0; light=0; last_switch=$now
     emit "back to automatic"
+  fi
+
+  # mobile data off (or airplane mode): nothing to manage, don't touch the SIMs
+  if data_off; then
+    if [ "$paused_off" != 1 ]; then paused_off=1; log "mobile data is off - paused"; emit ""; fi
+    printf 'dataoff=1\nsim=%s\nrat=%s\neco=%s\nts=%s\n' "$SIM" "$RAT" "${ECO:-0}" "$now" > $D/live
+    sleep 30; continue
+  fi
+  if [ "$paused_off" = 1 ]; then
+    paused_off=0; bad=0; lbad=0; rec=0; ngood=0; light=0; pf=0; ok=1; last_switch=$now
+    set -- $(mobile_bytes); last_b=${1:-0}; last_rx=${2:-0}; last_t=$now
+    log "mobile data is on again - resumed"
   fi
 
   if [ "$PAUSE_ON_WIFI" = 1 ] && wifi_up; then

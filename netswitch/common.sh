@@ -165,6 +165,18 @@ screen_check() {
 }
 screen_off() { [ -n "$SCR" ] || screen_check; [ "$SCR" = off ]; }
 
+# mobile data switched off by the user (or airplane mode on)?  'settings' is a thin wrapper
+# around 'cmd settings' (no new Java process), so this is cheap.  DSUB = sub that carries data.
+data_off() {
+  local v
+  [ "$(settings get global airplane_mode_on 2>/dev/null)" = 1 ] && return 0
+  if [ -n "$DSUB" ]; then
+    v=$(settings get global mobile_data$DSUB 2>/dev/null)
+    case "$v" in 0) return 0;; 1) return 1;; esac
+  fi
+  [ "$(settings get global mobile_data 2>/dev/null)" = 0 ]
+}
+
 # Wi-Fi: a cheap file read first; only ask the Wi-Fi service when the interface is up
 wifi_up() {
   local s=""
@@ -210,7 +222,7 @@ set_data() { # slot
   H setdata "$sub" >/dev/null
   sleep 2
   now=$(H getdata | tail -n1)
-  if [ "$now" = "$sub" ]; then log "mobile data now on slot $1 (sub $sub)"; return 0; fi
+  if [ "$now" = "$sub" ]; then DSUB=$sub; log "mobile data now on slot $1 (sub $sub)"; return 0; fi
   log "data switch to slot $1 (sub $sub) did not stick (default data sub = '$now')"
   return 1
 }

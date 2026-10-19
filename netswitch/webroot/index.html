@@ -269,6 +269,7 @@ pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 14px/1.5 u
     var rat = live.rat, eco = live.eco === '1', wifi = live.wifi === '1', sim = live.sim === '2' ? 'SIM 2' : 'SIM 1';
     var txt, sub = '';
     if (!live.ts) { txt = run ? 'Starting...' : 'Not running'; sub = run ? 'First reading in a few seconds. It waits about 40 s after boot.' : 'Tap Save and apply, or reboot, to start it.'; }
+    else if (live.dataoff === '1') { txt = 'Data off'; sub = 'Paused while mobile data (or airplane mode) is off'; }
     else if (wifi) { txt = 'Wi-Fi'; sub = 'Paused while Wi-Fi is connected'; }
     else if (live.sim === '2') { txt = '4G on SIM 2'; sub = 'Main SIM is weak, data moved to the backup'; }
     else if (eco) { txt = '4G eco'; sub = 'Light use, saving battery'; }
