@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NetSwitch</title>
+<style>
+:root {
+  --bg: #0d1014; --card: #161b22; --line: #263040; --text: #f1f5f9; --sub: #a9b6c6;
+  --accent: #34d3b4; --accent-ink: #04201a; --warn: #fbbf24; --bad: #fb7185; --good: #4ade80; --chip: #1e2733;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f6fa; --card: #ffffff; --line: #d5dde8; --text: #0f172a; --sub: #475569;
+    --accent: #0f9b82; --accent-ink: #ffffff; --warn: #b45309; --bad: #be123c; --good: #15803d; --chip: #e8eef5;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 18px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 16px 16px 120px; max-width: 640px; margin-inline: auto; }
+h1 { font-size: 30px; margin: 4px 0 2px; letter-spacing: -0.3px; }
+h2 { font-size: 22px; margin: 0 0 10px; }
+.sub { color: var(--sub); font-size: 16px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; background: var(--chip); border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 16px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--bad); }
+.dot.on { background: var(--good); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; margin-bottom: 14px; }
+.banner { background: var(--chip); border-radius: 14px; padding: 10px 14px; margin-bottom: 14px; color: var(--warn); font-size: 16px; }
+.big { font-size: 52px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.stat { flex: 1 1 130px; background: var(--chip); border-radius: 14px; padding: 12px 14px; }
+.stat b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 15px; color: var(--sub); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.seg button { min-height: 64px; border-radius: 16px; border: 2px solid var(--line); background: var(--chip); font-weight: 700; font-size: 20px; }
+.seg button.sel { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.set { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
+.set:first-of-type { border-top: 0; }
+.set .t { flex: 1; min-width: 0; }
+.set.stack { flex-direction: column; align-items: stretch; gap: 10px; }
+.set.stack .step { justify-content: flex-start; }
+.set.stack .step input { flex: 1; width: auto; max-width: 160px; }
+.set .t b { display: block; font-size: 18px; }
+.set .t span { font-size: 15px; color: var(--sub); }
+.step { display: flex; align-items: center; gap: 6px; }
+.step button { width: 48px; height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--chip); font-size: 26px; font-weight: 700; }
+.step input { width: 86px; height: 48px; text-align: center; font: inherit; font-size: 20px; font-weight: 700; border-radius: 14px;
+  border: 2px solid var(--line); background: var(--bg); color: var(--text); font-variant-numeric: tabular-nums; }
+.step input.dirty { border-color: var(--accent); }
+.unit { font-size: 14px; color: var(--sub); min-width: 34px; }
+.sw { width: 64px; height: 38px; border-radius: 999px; border: 0; background: var(--line); position: relative; flex: none; }
+.sw::after { content: ""; position: absolute; top: 4px; left: 4px; width: 30px; height: 30px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.sw.on { background: var(--accent); }
+.sw.on::after { transform: translateX(26px); }
+.sw.dirty { outline: 2px solid var(--warn); outline-offset: 2px; }
+details { margin-bottom: 14px; }
+summary { list-style: none; cursor: pointer; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; font-size: 22px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font-size: 28px; color: var(--sub); }
+details[open] summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+details[open] summary::after { content: "\2212"; }
+details .body { background: var(--card); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 20px 20px; padding: 4px 18px 10px; }
+.meter { height: 12px; border-radius: 8px; background: var(--chip); overflow: hidden; margin-top: 8px; }
+.meter i { display: block; height: 100%; border-radius: 8px; background: var(--accent); }
+pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--sub); max-height: 340px; overflow: auto; }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); }
+.bar .in { max-width: 640px; margin: 0 auto; display: flex; gap: 10px; }
+.btn { flex: 1; min-height: 58px; border-radius: 16px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 20px; }
+.btn.alt { background: var(--chip); color: var(--text); border: 1px solid var(--line); flex: 0 0 auto; padding: 0 20px; }
+.btn:disabled { opacity: .45; }
+.toast { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 12px 20px; border-radius: 14px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90%; text-align: center; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <h1>NetSwitch</h1>
+    <div class="sub">Your 5G / 4G / SIM switcher, in your hands</div>
+  </div>
+  <div class="chip"><span class="dot" id="runDot"></span><span id="runTxt">...</span></div>
+</div>
+
+<div class="banner" id="demo" hidden>Preview only. On the phone, open this from the root manager (module, Open) and it controls the real module.</div>
+
+<div class="card">
+  <div class="sub">Right now</div>
+  <div class="big" id="now">...</div>
+  <div class="sub" id="nowSub"></div>
+  <div class="row" style="margin-top:14px">
+    <div class="stat"><b id="sNr">-</b><span>5G signal (dBm)</span></div>
+    <div class="stat"><b id="sLte">-</b><span>4G signal (dBm)</span></div>
+    <div class="stat"><b id="sSpd">-</b><span>speed (KB/s)</span></div>
+    <div class="stat"><b id="sPing">-</b><span>internet</span></div>
+  </div>
+  <div style="margin-top:14px">
+    <div class="sub">4G data used today: <b id="budTxt" style="color:var(--text)">-</b></div>
+    <div class="meter"><i id="budBar" style="width:0%"></i></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Mode</h2>
+  <div class="seg" id="modes">
+    <button data-m="auto">Auto</button>
+    <button data-m="5g">Force 5G</button>
+    <button data-m="4g">Force 4G</button>
+  </div>
+  <div class="sub" id="modeHint" style="margin-top:10px"></div>
+</div>
+
+<details open>
+  <summary>When to leave 5G</summary>
+  <div class="body" id="g-switch"></div>
+</details>
+<details>
+  <summary>SIMs and safety</summary>
+  <div class="body" id="g-sim"></div>
+</details>
+<details>
+  <summary>Eco mode (battery saver)</summary>
+  <div class="body" id="g-eco"></div>
+</details>
+
+<div class="card">
+  <div class="top" style="margin:0 0 8px"><h2 style="margin:0">Log</h2><button class="btn alt" id="logBtn" style="min-height:44px;font-size:16px">Refresh</button></div>
+  <pre id="log">...</pre>
+</div>
+
+<div class="bar"><div class="in">
+  <button class="btn alt" id="resetBtn">Undo</button>
+  <button class="btn" id="saveBtn" disabled>Save and apply</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var MODDIR = '/data/adb/modules/netswitch';
+  var hasKsu = typeof ksu !== 'undefined' && ksu && typeof ksu.exec === 'function';
+  var seq = 0;
+
+  var GROUPS = {
+    'g-switch': [
+      { k: 'NR_BAD', t: '5G is weak at or below', d: 'Signal level that counts as weak 5G', min: -140, max: -70, step: 1, u: 'dBm' },
+      { k: 'NR_GOOD', t: '5G is strong again at or above', d: 'Needed before going back to 5G', min: -140, max: -70, step: 1, u: 'dBm' },
+      { k: 'LTE_BAD', t: '4G is weak at or below', d: 'Both weak means the other SIM is tried', min: -140, max: -70, step: 1, u: 'dBm' },
+      { k: 'LTE_GOOD', t: '4G is good again at or above', d: '', min: -140, max: -70, step: 1, u: 'dBm' },
+      { k: 'DOWN_CHECKS', t: 'Weak checks before switching down', d: 'In a row, higher is calmer', min: 1, max: 20, step: 1, u: '' },
+      { k: 'UP_CHECKS', t: 'Good checks before switching up', d: 'In a row, higher is calmer', min: 1, max: 30, step: 1, u: '' },
+      { k: 'MIN_DWELL', t: 'Stay after any switch', d: 'Stops quick flipping', min: 10, max: 300, step: 5, u: 'sec' },
+      { k: 'RETRY_5G_AFTER', t: 'Try 5G again after', d: 'While sitting on 4G', min: 30, max: 900, step: 10, u: 'sec' },
+      { k: 'PROBE_SECS', t: 'Time 5G gets to prove itself', d: '', min: 10, max: 120, step: 5, u: 'sec' },
+      { k: 'INTERVAL', t: 'Check every', d: 'Shorter reacts faster, uses a bit more battery', min: 2, max: 30, step: 1, u: 'sec' },
+      { k: 'PAUSE_ON_WIFI', t: 'Pause on Wi-Fi', d: 'Do nothing while Wi-Fi is connected', sw: true },
+      { k: 'NOTIFY', t: 'Notification for every switch', d: '', sw: true }
+    ],
+    'g-sim': [
+      { k: 'PRIMARY_SLOT', t: 'Main SIM slot', d: '0 = SIM 1, 1 = SIM 2', min: 0, max: 1, step: 1, u: '' },
+      { k: 'BACKUP_SLOT', t: 'Backup SIM slot', d: '0 = SIM 1, 1 = SIM 2', min: 0, max: 1, step: 1, u: '' },
+      { k: 'PING_FAILS', t: 'No internet checks before it counts as bad', d: 'In a row', min: 2, max: 30, step: 1, u: '' },
+      { k: 'S2_RETRY_AFTER', t: 'On backup SIM, retry the main one after', d: '', min: 60, max: 1800, step: 30, u: 'sec' }
+    ],
+    'g-eco': [
+      { k: 'ECO_ENABLE', t: 'Eco mode', d: 'Light use goes to 4G to save battery. Off keeps 5G whenever it is good.', sw: true },
+      { k: 'ECO_NEED_LTE', t: 'Only if 4G is good', d: 'Never trade good 5G for poor 4G', sw: true },
+      { k: 'ECO_COMPARE', t: 'Compare after a download', d: 'Back to 4G if 5G turns out slower', sw: true },
+      { k: 'ECO_LIGHT_KBPS', t: 'Light use is at or below', d: '', min: 10, max: 1000, step: 10, u: 'KB/s' },
+      { k: 'ECO_LIGHT_SECS', t: 'Light for this long before 4G', d: 'Screen on', min: 30, max: 900, step: 10, u: 'sec' },
+      { k: 'ECO_SCREENOFF_SECS', t: 'Same, screen off', d: '', min: 10, max: 300, step: 5, u: 'sec' },
+      { k: 'ECO_HEAVY_KBPS', t: 'Heavy use at or above', d: '15 second average, back to 5G', min: 100, max: 5000, step: 50, u: 'KB/s' },
+      { k: 'ECO_FAST_KBPS', t: 'Big download at or above', d: 'Two checks in a row, 5G at once', min: 500, max: 10000, step: 100, u: 'KB/s' },
+      { k: 'ECO_HEAVY_OFF_KBPS', t: 'Heavy use, screen off', d: 'Music or sync in the background', min: 300, max: 10000, step: 100, u: 'KB/s' },
+      { k: 'ECO_HEAVY_CHECKS', t: 'Heavy checks in a row', d: '', min: 1, max: 10, step: 1, u: '' },
+      { k: 'ECO_HOLD_SECS', t: 'Stay out of eco after heavy use', d: '', min: 0, max: 3600, step: 30, u: 'sec' },
+      { k: 'ECO_BUDGET_MB', t: 'Daily 4G data allowance', d: 'Eco stops when this is used', min: 100, max: 10000, step: 100, u: 'MB' }
+    ]
+  };
+
+  var cfg = {}, orig = {}, live = {};
+
+  // ---- run a command as root (KernelSU WebUI) or fake it in the preview
+  function sh(cmd) {
+    return new Promise(function (resolve) {
+      if (!hasKsu) { resolve(demo(cmd)); return; }
+      var cb = 'nsx_' + (++seq);
+      window[cb] = function (code, out, err) { try { delete window[cb]; } catch (e) { window[cb] = undefined; } resolve({ code: code, out: out || '', err: err || '' }); };
+      try { ksu.exec(cmd, '{}', cb); } catch (e) { resolve({ code: 1, out: '', err: String(e) }); }
+    });
+  }
+  function run() { return sh('sh ' + MODDIR + '/webui.sh ' + Array.prototype.slice.call(arguments).join(' ')); }
+
+  var demoMode = 'auto';
+  var demoCfg = 'NR_BAD=-110\nNR_GOOD=-100\nLTE_BAD=-112\nLTE_GOOD=-105\nDOWN_CHECKS=3\nUP_CHECKS=6\nMIN_DWELL=45\nRETRY_5G_AFTER=120\nPROBE_SECS=30\nINTERVAL=5\nPAUSE_ON_WIFI=1\nNOTIFY=0\nPRIMARY_SLOT=0\nBACKUP_SLOT=1\nPING_FAILS=6\nS2_RETRY_AFTER=600\nECO_ENABLE=0\nECO_NEED_LTE=1\nECO_COMPARE=1\nECO_LIGHT_KBPS=150\nECO_LIGHT_SECS=180\nECO_SCREENOFF_SECS=20\nECO_HEAVY_KBPS=400\nECO_FAST_KBPS=2500\nECO_HEAVY_OFF_KBPS=1500\nECO_HEAVY_CHECKS=2\nECO_HOLD_SECS=600\nECO_BUDGET_MB=1500';
+  function demo(cmd) {
+    var out = '';
+    if (/ live/.test(cmd)) {
+      var t = Math.floor(Date.now() / 1000);
+      out = 'wifi=0\nnr=' + (-98 - (t % 7)) + '\nlte=-96\nnr2=0\nlte2=-104\nkbps=' + (240 + (t % 9) * 37) + '\nping=1\nsim=1\nrat=' + (demoMode === '4g' ? 4 : 5) + '\neco=0\npoor=0\nbudget_mb=212\nts=' + t + '\nmode=' + demoMode + '\nrunning=1234\nnow=' + t;
+    } else if (/ get/.test(cmd)) out = demoCfg;
+    else if (/ log/.test(cmd)) out = '10-19 08:01:12 ---- NetSwitch started (interval 5s, slots 0 / 1)\n10-19 08:03:40 sig NR1=-101 LTE1=-96 NR2=0 LTE2=-104 ping=1 kbps=180 SIM=1 RAT=5 ECO=0\n10-19 08:09:02 EVENT 5G weak - on 4G\n10-19 08:11:30 EVENT 5G strong again - back on 5G';
+    else if (/ mode /.test(cmd)) { var m = cmd.match(/mode (\w+)/); if (m) demoMode = m[1]; out = 'ok'; }
+    else out = 'ok';
+    return { code: 0, out: out, err: '' };
+  }
+
+  function parse(txt) { var o = {}; txt.split('\n').forEach(function (l) { var i = l.indexOf('='); if (i > 0) o[l.slice(0, i).trim()] = l.slice(i + 1).trim(); }); return o; }
+  function $(id) { return document.getElementById(id); }
+  var toastT;
+  function toast(m) { var t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2400); }
+
+  // ---- settings rows
+  function build() {
+    Object.keys(GROUPS).forEach(function (gid) {
+      var host = $(gid); host.innerHTML = '';
+      GROUPS[gid].forEach(function (it) {
+        var row = document.createElement('div'); row.className = 'set';
+        var tx = document.createElement('div'); tx.className = 't';
+        tx.innerHTML = '<b></b><span></span>'; tx.firstChild.textContent = it.t; tx.lastChild.textContent = it.d || '';
+        row.appendChild(tx);
+        if (it.sw) {
+          var b = document.createElement('button'); b.className = 'sw'; b.id = 'c_' + it.k; b.setAttribute('role', 'switch'); b.setAttribute('aria-label', it.t);
+          b.onclick = function () { cfg[it.k] = cfg[it.k] === '1' ? '0' : '1'; paint(); };
+          row.appendChild(b);
+        } else {
+          row.classList.add('stack');
+          var st = document.createElement('div'); st.className = 'step';
+          var mi = document.createElement('button'); mi.textContent = '−'; mi.setAttribute('aria-label', 'less');
+          var pl = document.createElement('button'); pl.textContent = '+'; pl.setAttribute('aria-label', 'more');
+          var inp = document.createElement('input'); inp.type = 'number'; inp.inputMode = 'numeric'; inp.id = 'c_' + it.k;
+          var un = document.createElement('span'); un.className = 'unit'; un.textContent = it.u;
+          function setv(v) { v = Math.max(it.min, Math.min(it.max, v)); cfg[it.k] = String(v); paint(); }
+          mi.onclick = function () { setv((parseInt(cfg[it.k], 10) || 0) - it.step); };
+          pl.onclick = function () { setv((parseInt(cfg[it.k], 10) || 0) + it.step); };
+          inp.onchange = function () { var v = parseInt(inp.value, 10); if (!isNaN(v)) setv(v); else paint(); };
+          st.appendChild(mi); st.appendChild(inp); st.appendChild(pl); st.appendChild(un);
+          row.appendChild(st);
+        }
+        host.appendChild(row);
+      });
+    });
+  }
+  function paint() {
+    var dirty = 0;
+    Object.keys(GROUPS).forEach(function (gid) {
+      GROUPS[gid].forEach(function (it) {
+        var el = $('c_' + it.k); if (!el) return;
+        var v = cfg[it.k]; var d = v !== orig[it.k];
+        if (d) dirty++;
+        if (it.sw) { el.classList.toggle('on', v === '1'); el.setAttribute('aria-checked', v === '1' ? 'true' : 'false'); el.classList.toggle('dirty', d); }
+        else { if (document.activeElement !== el) el.value = v === undefined ? '' : v; el.classList.toggle('dirty', d); }
+      });
+    });
+    $('saveBtn').disabled = dirty === 0;
+    $('saveBtn').textContent = dirty ? 'Save and apply (' + dirty + ')' : 'Save and apply';
+  }
+
+  // ---- live status
+  function ago(s) { return s < 90 ? s + ' s ago' : Math.round(s / 60) + ' min ago'; }
+  function sig(v) { v = parseInt(v, 10); return (!v || isNaN(v)) ? '-' : String(v); }
+  function renderLive() {
+    var run = !!live.running;
+    $('runDot').classList.toggle('on', run); $('runTxt').textContent = run ? 'Running' : 'Stopped';
+    var mode = live.mode || 'auto';
+    var rat = live.rat, eco = live.eco === '1', wifi = live.wifi === '1', sim = live.sim === '2' ? 'SIM 2' : 'SIM 1';
+    var txt, sub = '';
+    if (!live.ts) { txt = run ? 'Starting...' : 'Not running'; sub = run ? 'First reading in a few seconds. It waits about 40 s after boot.' : 'Tap Save and apply, or reboot, to start it.'; }
+    else if (wifi) { txt = 'Wi-Fi'; sub = 'Paused while Wi-Fi is connected'; }
+    else if (live.sim === '2') { txt = '4G on SIM 2'; sub = 'Main SIM is weak, data moved to the backup'; }
+    else if (eco) { txt = '4G eco'; sub = 'Light use, saving battery'; }
+    else if (rat === '4') { txt = mode === '4g' ? '4G forced' : '4G'; sub = mode === '4g' ? 'You locked it to 4G' : '5G is weak, will retry'; }
+    else { txt = mode === '5g' ? '5G forced' : '5G'; sub = mode === '5g' ? 'You locked it to 5G' : 'Strong enough, nothing to do'; }
+    if (live.ts && live.now) { var age = parseInt(live.now, 10) - parseInt(live.ts, 10); sub += ' · ' + sim + ' · updated ' + ago(Math.max(0, age)); }
+    $('now').textContent = txt; $('nowSub').textContent = sub;
+    $('sNr').textContent = sig(live.nr); $('sLte').textContent = sig(live.lte);
+    $('sSpd').textContent = live.kbps !== undefined ? live.kbps : '-';
+    $('sPing').textContent = live.ping === '1' ? 'OK' : live.ping === '0' ? 'None' : '-';
+    var used = parseInt(live.budget_mb, 10) || 0, cap = parseInt(cfg.ECO_BUDGET_MB, 10) || 1500;
+    $('budTxt').textContent = used + ' MB of ' + cap + ' MB';
+    $('budBar').style.width = Math.min(100, used * 100 / cap) + '%';
+    Array.prototype.forEach.call($('modes').children, function (b) { b.classList.toggle('sel', b.getAttribute('data-m') === mode); });
+    $('modeHint').textContent = mode === 'auto' ? 'It decides from signal, speed and your settings.' : 'Automatic switching is off until you tap Auto.';
+  }
+  function poll() {
+    run('live').then(function (r) { live = parse(r.out); renderLive(); });
+  }
+  function loadLog() { run('log', 50).then(function (r) { var p = $('log'); p.textContent = r.out.trim() || '(empty)'; p.scrollTop = p.scrollHeight; }); }
+  function loadCfg() {
+    return run('get').then(function (r) { cfg = parse(r.out); orig = JSON.parse(JSON.stringify(cfg)); paint(); renderLive(); });
+  }
+
+  // ---- actions
+  Array.prototype.forEach.call($('modes').children, function (b) {
+    b.onclick = function () { var m = b.getAttribute('data-m'); run('mode', m).then(function () { live.mode = m; renderLive(); toast(m === 'auto' ? 'Automatic' : 'Forcing ' + m.toUpperCase()); setTimeout(poll, 1500); }); };
+  });
+  $('saveBtn').onclick = function () {
+    var keys = Object.keys(cfg).filter(function (k) { return cfg[k] !== orig[k]; });
+    if (!keys.length) return;
+    $('saveBtn').disabled = true;
+    var p = Promise.resolve();
+    keys.forEach(function (k) { p = p.then(function () { return run('set', k, cfg[k]); }); });
+    p.then(function () { return run('restart'); }).then(function () { toast('Saved. NetSwitch restarted.'); return loadCfg(); }).then(function () { setTimeout(poll, 2500); });
+  };
+  $('resetBtn').onclick = function () { cfg = JSON.parse(JSON.stringify(orig)); paint(); };
+  $('logBtn').onclick = loadLog;
+
+  $('demo').hidden = hasKsu;
+  build();
+  loadCfg().then(function () { poll(); loadLog(); });
+  setInterval(poll, 3000);
+  setInterval(loadLog, 15000);
+})();
+</script>
+</body>
+</html>

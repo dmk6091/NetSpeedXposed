@@ -3,7 +3,7 @@ MODDIR=${0%/*}
 . $MODDIR/common.sh
 
 while [ "$(getprop sys.boot_completed)" != 1 ]; do sleep 5; done
-sleep 40
+[ "$(cut -d. -f1 /proc/uptime)" -lt 240 ] && sleep 40   # a restart from the web page skips the wait
 log "---- NetSwitch started (interval ${INTERVAL}s, slots $PRIMARY_SLOT / $BACKUP_SLOT)"
 
 # SIM: 1 = data on the primary SIM, 2 = on the backup.  RAT: 5 = 5G allowed, 4 = locked to 4G.
@@ -31,12 +31,33 @@ save() { printf 'SIM=%s\nRAT=%s\nECO=%s\n' "$SIM" "$RAT" "$ECO" > $D/state; }
 save_budget() { echo "$BDAY $BUDGET_B" > $D/budget; }
 now_s() { date +%s; }
 
+mode_done=""
 while true; do
   now=$(now_s)
+
+  # manual override from the web page: auto | 5g | 4g
+  MODE=$(cat $D/mode 2>/dev/null); [ -z "$MODE" ] && MODE=auto
+  if [ "$MODE" != auto ]; then
+    if [ "$MODE" != "$mode_done" ]; then
+      if [ "$MODE" = 5g ]; then
+        set_nr $PRIMARY_SLOT on && { RAT=5; ECO=0; POOR=0; mode_done=$MODE; }
+      else
+        set_nr $PRIMARY_SLOT off && { RAT=4; ECO=0; mode_done=$MODE; }
+      fi
+      if [ "$mode_done" = "$MODE" ]; then save; emit "manual: forced ${MODE}"; fi
+    fi
+    printf 'manual=1\nsim=%s\nrat=%s\neco=0\nts=%s\n' "$SIM" "$RAT" "$now" > $D/live
+    sleep $INTERVAL; continue
+  fi
+  if [ -n "$mode_done" ]; then
+    mode_done=""; bad=0; lbad=0; rec=0; ngood=0; probing=0; light=0; last_switch=$now
+    emit "back to automatic"
+  fi
 
   if [ "$PAUSE_ON_WIFI" = 1 ] && wifi_up; then
     POOR=0; bad=0; lbad=0; rec=0; ngood=0; light=0
     last_b=$(mobile_bytes); last_t=$now
+    printf 'wifi=1\nsim=%s\nrat=%s\neco=%s\nts=%s\n' "$SIM" "$RAT" "${ECO:-0}" "$now" > $D/live
     key="wifi"
     if [ "$key" != "$last_key" ] || [ $((now - last_emit)) -ge 60 ]; then emit ""; last_emit=$now; last_key=$key; fi
     sleep $INTERVAL; continue
@@ -55,6 +76,8 @@ while true; do
   if [ "$today" != "$BDAY" ]; then BDAY=$today; BUDGET_B=0; save_budget; fi
   if [ "$SIM" = 1 ] && { [ $ECO = 1 ] || [ $RAT = 4 ] || [ "$NR1" -eq 0 ]; }; then BUDGET_B=$((BUDGET_B + db)); fi
   loops=$((loops + 1)); [ $((loops % 12)) -eq 0 ] && save_budget
+  printf 'wifi=0\nnr=%s\nlte=%s\nnr2=%s\nlte2=%s\nkbps=%s\nping=%s\nsim=%s\nrat=%s\neco=%s\npoor=%s\nbudget_mb=%s\nts=%s\n' \
+    "$NR1" "$LTE1" "$NR2" "$LTE2" "$kbps" "$ok" "$SIM" "$RAT" "${ECO:-0}" "${POOR:-0}" "$((BUDGET_B / 1048576))" "$now" > $D/live
   [ $((loops % 60)) -eq 1 ] && log "sig NR1=$NR1 LTE1=$LTE1 NR2=$NR2 LTE2=$LTE2 ping=$ok kbps=$kbps SIM=$SIM RAT=$RAT ECO=$ECO"
   if [ $((loops % 360)) -eq 1 ] && [ "$NR1" -eq 0 ] && [ "$LTE1" -eq 0 ]; then
     echo "raw signal lines:" >> $LOG; dumpsys telephony.registry 2>/dev/null | grep -m2 'mSignalStrength=' | cut -c1-900 >> $LOG
