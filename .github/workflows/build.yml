@@ -10,8 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: unzip -q NetSpeedXposed.zip
-      - name: Generate the list of settings for the ROM Settings page
-        run: python3 tools/gen_catalog.py NetSpeedXposed/app/src/main/java/com/netspeed/xposed
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
