@@ -103,6 +103,14 @@ PING_EVERY=60             # ping at most this often, and only when no data is co
 # LOWHEAT_V21
 EOC
 fi
+if ! grep -q SYS_AUTO_SWITCH $CFG; then
+cat >> $CFG <<EOC
+
+# ---- HyperOS / Android 13+: use the phone's own hidden "switch mobile data automatically" (v2.4)
+SYS_AUTO_SWITCH=1         # 1 = the system moves data to SIM 2 when SIM 1 is bad; NetSwitch only does 5G/4G
+                          # 0 = NetSwitch moves data between the SIMs itself (old way)
+EOC
+fi
 if ! grep -q SIM2_DATA $CFG; then
 cat >> $CFG <<EOC
 
@@ -127,7 +135,8 @@ subid() { # slot -> subscription id
   echo "$v"
 }
 
-# prints: nr1 lte1 nr2 lte2 (RSRP dBm; 0 = not reported) in SLOT order
+# prints: nr1 lte1 nr2 lte2 ads (RSRP dBm; 0 = not reported) in SLOT order;
+# ads = the subscription that really carries data now (same dumpsys, so no extra cost)
 read_sig() {
   dumpsys telephony.registry 2>/dev/null | awk '
     /^ *mSignalStrength=/ && cnt < 4 {
@@ -147,7 +156,8 @@ read_sig() {
         cnt++
       }
     }
-    END { print out }'
+    /mActiveDataSubId=/ && ads == "" { v = $0; sub(/.*mActiveDataSubId=/, "", v); sub(/[^0-9-].*/, "", v); ads = v }
+    END { split(out, f, " "); print f[1] + 0, f[2] + 0, f[3] + 0, f[4] + 0, (ads == "" ? "-" : ads) }'
 }
 
 # bytes through the mobile interfaces: "rx+tx rx"
@@ -240,9 +250,39 @@ emit() { # msg
   local r=$RAT
   [ "$ECO" = 1 ] && r=4
   am broadcast --user 0 -a com.dmk.netswitch.STATE -p com.android.systemui \
-    --es msg "$1" --ei sim "$SIM" --ei rat "$r" --ei eco "${ECO:-0}" --ei poor "$POOR" --ei nr "${NR1:-0}" --ei lte "${LTE1:-0}" >/dev/null 2>&1
+    --es msg "$1" --ei sim "${VSIM:-$SIM}" --ei rat "$r" --ei eco "${ECO:-0}" --ei poor "$POOR" --ei nr "${NR1:-0}" --ei lte "${LTE1:-0}" >/dev/null 2>&1
   if [ -n "$1" ]; then
     log "EVENT $1"
     [ "$NOTIFY" = 1 ] && cmd notification post -t NetSwitch netswitch "$1" >/dev/null 2>&1
   fi
+}
+
+# ---- the system's own auto data switch (Settings > SIM > "Switch mobile data automatically",
+# hidden on HyperOS).  Turned on for both SIMs; what it was before is kept so uninstall can put it back.
+SYSAUTO_OK=0
+sys_auto_on() { [ "${SYS_AUTO_SWITCH:-0}" = 1 ] && [ "$SYSAUTO_OK" = 1 ]; }
+enable_sys_auto() {
+  local s sub cur good=0
+  for s in $PRIMARY_SLOT $BACKUP_SLOT; do
+    sub=$(subid $s) || continue
+    cur=$(H getautosw "$sub" | tail -n1)
+    case "$cur" in true|false) ;; *) log "auto data switch not available here (slot $s: '$cur')"; continue;; esac
+    [ -f $D/autosw_orig_$s ] || echo "$cur" > $D/autosw_orig_$s
+    if [ "$cur" != true ]; then
+      H setautosw "$sub" 1 >/dev/null
+      cur=$(H getautosw "$sub" | tail -n1)
+      log "auto data switch on slot $s: $cur"
+    fi
+    [ "$cur" = true ] && good=1
+  done
+  SYSAUTO_OK=$good
+  [ $good = 1 ] || log "system auto data switch could not be turned on - NetSwitch moves data to SIM 2 itself"
+}
+restore_sys_auto() {
+  local s sub o
+  for s in 0 1; do
+    o=$(cat $D/autosw_orig_$s 2>/dev/null) || continue
+    sub=$(subid $s) || continue
+    [ "$o" = false ] && H setautosw "$sub" 0 >/dev/null
+  done
 }

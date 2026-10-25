@@ -1,7 +1,7 @@
 id=netswitch
 name=NetSwitch
-version=v2.3
-versionCode=14
+version=v2.4
+versionCode=15
 author=dmk
-description=5G weak or unstable -> 4G (back to 5G when strong); both weak -> data on SIM 2 (back to SIM 1 when it recovers). Toasts + status bar symbol via NetSpeedXposed.
+description=5G weak or unstable -> 4G (back to 5G when strong); SIM 1 weak -> data on SIM 2 through Android's hidden auto data switch (HyperOS), back to SIM 1 when it recovers.
 updateJson=https://github.com/dmk6091/NetSpeedXposed/releases/download/latest/update.json

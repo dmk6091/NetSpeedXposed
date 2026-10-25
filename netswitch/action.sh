@@ -8,9 +8,9 @@ OUT=$D/probe.txt
   echo "== busybox: $BB"
   for s in 0 1; do
     sub=$(subid $s)
-    echo "slot $s -> sub '$sub'; allowed types: $(H getnt "$sub" | tail -n1)"
+    echo "slot $s -> sub '$sub'; allowed types: $(H getnt "$sub" | tail -n1); auto data switch: $(H getautosw "$sub" | tail -n1)"
   done
-  echo "default data sub: $(H getdata | tail -n1)"
+  echo "default data sub: $(H getdata | tail -n1)   active data sub: $(H activesub | tail -n1)   SYS_AUTO_SWITCH=$SYS_AUTO_SWITCH"
   echo "== signal (nr1 lte1 nr2 lte2): $(read_sig)"
   echo "== wifi connected: $(wifi_up && echo yes || echo no)   mobile ping: $(net_ok && echo ok || echo FAIL)"
   echo "== signal lines"

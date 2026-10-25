@@ -33,6 +33,20 @@ save() { printf 'SIM=%s\nRAT=%s\nECO=%s\n' "$SIM" "$RAT" "$ECO" > $D/state; }
 save_budget() { echo "$BDAY $BUDGET_B" > $D/budget; }
 now_s() { date +%s; }
 
+# v2.4: hand the SIM 2 part to the system's own auto data switch (needs the default data SIM = SIM 1)
+PSUB=$ps; VSIM=$SIM; last_vsim=$SIM
+sys_auto_check() {
+  enable_sys_auto
+  if sys_auto_on && [ "$SIM" = 2 ]; then
+    set_data $PRIMARY_SLOT && { SIM=1; VSIM=1; last_vsim=1; save; log "default data back on SIM 1 - the system's auto switch handles SIM 2 now"; }
+  fi
+}
+if [ "${SYS_AUTO_SWITCH:-0}" = 1 ]; then
+  sys_auto_check
+else
+  restore_sys_auto   # switched off in the settings: give the system toggle back its old state
+fi
+
 mode_done=""
 while true; do
   now=$(now_s)
@@ -79,8 +93,18 @@ while true; do
   fi
 
   set -- $(read_sig)
-  NR1=${1:-0}; LTE1=${2:-0}; NR2=${3:-0}; LTE2=${4:-0}
+  NR1=${1:-0}; LTE1=${2:-0}; NR2=${3:-0}; LTE2=${4:-0}; ADS=${5:--}
   [ "$PRIMARY_SLOT" = 1 ] && { t=$NR1; NR1=$NR2; NR2=$t; t=$LTE1; LTE1=$LTE2; LTE2=$t; }
+  # which SIM really carries data (the system's auto switch moves it without changing the default)
+  VSIM=$SIM; sysmsg=""
+  if sys_auto_on && [ "$SIM" = 1 ] && [ -n "$PSUB" ]; then
+    case "$ADS" in ''|-|*[!0-9]*) ;; *) [ "$ADS" != "$PSUB" ] && VSIM=2;; esac
+  fi
+  if [ "$VSIM" != "$last_vsim" ]; then
+    if [ "$VSIM" = 2 ]; then sysmsg="SIM 1 is weak - the phone moved data to SIM 2"; else sysmsg="SIM 1 is back - the phone moved data to SIM 1"; fi
+    last_vsim=$VSIM
+  fi
+  [ $((loops % 360)) -eq 359 ] && [ "${SYS_AUTO_SWITCH:-0}" = 1 ] && sys_auto_check
   # mobile traffic since the last check, and the daily 4G counter
   set -- $(mobile_bytes); cur_b=${1:-0}; cur_rx=${2:-0}
   dt=$((now - last_t)); [ $dt -lt 1 ] && dt=1
@@ -98,10 +122,10 @@ while true; do
   eavg=$(( (kbps + h1 + h2 + h3 + h4 + h5) / 6 )); avg3=$(( (kbps + h1 + h2) / 3 )); fast2=0; [ $kbps -ge ${ECO_FAST_KBPS:-2500} ] && [ $h1 -ge ${ECO_FAST_KBPS:-2500} ] && fast2=1; h5=$h4; h4=$h3; h3=$h2; h2=$h1; h1=$kbps
   today=$(date +%Y%m%d)
   if [ "$today" != "$BDAY" ]; then BDAY=$today; BUDGET_B=0; save_budget; fi
-  if [ "$SIM" = 1 ] && { [ $ECO = 1 ] || [ $RAT = 4 ] || [ "$NR1" -eq 0 ]; }; then BUDGET_B=$((BUDGET_B + db)); fi
+  if [ "$VSIM" = 1 ] && { [ $ECO = 1 ] || [ $RAT = 4 ] || [ "$NR1" -eq 0 ]; }; then BUDGET_B=$((BUDGET_B + db)); fi
   loops=$((loops + 1)); [ $((loops % 12)) -eq 0 ] && save_budget
   printf 'wifi=0\nnr=%s\nlte=%s\nnr2=%s\nlte2=%s\nkbps=%s\nping=%s\nsim=%s\nrat=%s\neco=%s\npoor=%s\nbudget_mb=%s\nts=%s\n' \
-    "$NR1" "$LTE1" "$NR2" "$LTE2" "$kbps" "$ok" "$SIM" "$RAT" "${ECO:-0}" "${POOR:-0}" "$((BUDGET_B / 1048576))" "$now" > $D/live
+    "$NR1" "$LTE1" "$NR2" "$LTE2" "$kbps" "$ok" "$VSIM" "$RAT" "${ECO:-0}" "${POOR:-0}" "$((BUDGET_B / 1048576))" "$now" > $D/live
   [ $((loops % 60)) -eq 1 ] && log "sig NR1=$NR1 LTE1=$LTE1 NR2=$NR2 LTE2=$LTE2 ping=$ok kbps=$kbps SIM=$SIM RAT=$RAT ECO=$ECO"
   if [ $((loops % 360)) -eq 1 ] && [ "$NR1" -eq 0 ] && [ "$LTE1" -eq 0 ]; then
     echo "raw signal lines:" >> $LOG; dumpsys telephony.registry 2>/dev/null | grep -m2 'mSignalStrength=' | cut -c1-900 >> $LOG
@@ -231,7 +255,7 @@ while true; do
     if [ $lbad -ge $DOWN_CHECKS ] && [ $ECO = 1 ]; then
       # 4G is bad while eco has it locked: let 5G in again before giving up on SIM 1
       if set_nr $PRIMARY_SLOT on; then ECO=0; light=0; lbad=0; last_switch=$now; save; msg="4G is weak - back on 5G"; fi
-    elif [ $lbad -ge $DOWN_CHECKS ] && [ $dwell_ok = 1 ] && [ $probing = 0 ]; then
+    elif [ $lbad -ge $DOWN_CHECKS ] && [ $dwell_ok = 1 ] && [ $probing = 0 ] && ! sys_auto_on; then
       if [ "${SIM2_DATA:-1}" != 1 ]; then
         [ $((loops % 60)) -eq 1 ] && log "SIM 1 weak, but SIM 2 is set as having no data - staying on SIM 1"
       elif [ $now -lt ${s2_block_until:-0} ]; then
@@ -285,6 +309,8 @@ while true; do
     fi
   fi
 
+  [ -z "$msg" ] && [ -n "$sysmsg" ] && msg=$sysmsg
+
   # ---- symbol state
   if [ "$SIM" = 1 ]; then
     if [ $bad -ge 1 ] || [ $lbad -ge 1 ]; then POOR=1; else POOR=0; fi
@@ -292,7 +318,7 @@ while true; do
     if [ $ok = 0 ]; then POOR=1; else POOR=0; fi
   fi
 
-  key="$SIM$RAT$ECO$POOR"
+  key="$VSIM$RAT$ECO$POOR"
   if [ -n "$msg" ] || [ "$key" != "$last_key" ] || { [ $((now - last_emit)) -ge 60 ] && ! screen_off; }; then
     emit "$msg"; last_emit=$now; last_key=$key
   fi

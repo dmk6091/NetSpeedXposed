@@ -4,8 +4,12 @@ import java.lang.reflect.Method;
 /**
  * Root helper, run with app_process (no Android jar needed: everything by reflection).
  * subid SLOT | getdata | setdata SUBID | getnt SUBID | setnt SUBID MASK
+ * activesub | getautosw SUBID | setautosw SUBID 0|1   (Android's hidden "switch mobile data automatically")
  */
 public class NetHelper {
+    /** TelephonyManager.MOBILE_DATA_POLICY_AUTO_DATA_SWITCH (Android 13+) */
+    static final int AUTO_DATA_SWITCH = 3;
+
     static Object stub(String svc, String iface) throws Exception {
         Class<?> sm = Class.forName("android.os.ServiceManager");
         Object b = sm.getMethod("getService", String.class).invoke(null, svc);
@@ -70,7 +74,7 @@ public class NetHelper {
         try {
             String cmd = a.length > 0 ? a[0] : "";
             Object isub = null, tel = null;
-            if (cmd.equals("subid") || cmd.endsWith("data")) isub = stub("isub", "com.android.internal.telephony.ISub");
+            if (cmd.equals("subid") || cmd.equals("activesub") || cmd.endsWith("data")) isub = stub("isub", "com.android.internal.telephony.ISub");
             else tel = stub("phone", "com.android.internal.telephony.ITelephony");
             switch (cmd) {
                 case "subid": {
@@ -91,6 +95,18 @@ public class NetHelper {
                     call(isub, "setDefaultDataSubId", Integer.parseInt(a[1]));
                     System.out.println("ok");
                     break;
+                case "activesub":
+                    // the SIM that really carries data now (differs from the default one while
+                    // Android's auto data switch has moved data to the other SIM)
+                    System.out.println(call(isub, "getActiveDataSubscriptionId"));
+                    break;
+                case "getautosw":
+                    System.out.println(call(tel, "isMobileDataPolicyEnabled", Integer.parseInt(a[1]), AUTO_DATA_SWITCH));
+                    break;
+                case "setautosw":
+                    call(tel, "setMobileDataPolicyEnabled", Integer.parseInt(a[1]), AUTO_DATA_SWITCH, a[2].equals("1"));
+                    System.out.println("ok");
+                    break;
                 case "getnt":
                     System.out.println(call(tel, "getAllowedNetworkTypesForReason", Integer.parseInt(a[1]), 0));
                     break;
@@ -98,7 +114,7 @@ public class NetHelper {
                     System.out.println(callTypes(tel, "setAllowedNetworkTypesForReason", Integer.parseInt(a[1]), Long.parseLong(a[2])));
                     break;
                 default:
-                    System.err.println("usage: subid SLOT | getdata | setdata SUBID | getnt SUBID | setnt SUBID MASK");
+                    System.err.println("usage: subid SLOT | getdata | setdata SUBID | activesub | getnt SUBID | setnt SUBID MASK | getautosw SUBID | setautosw SUBID 0|1");
                     System.exit(2);
             }
         } catch (Throwable t) {
