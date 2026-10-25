@@ -76,6 +76,7 @@ jobs:
             NetSpeedXposed/wifiactivity/build/outputs/apk/release/*.apk
             NetSpeedXposed/sliderpercent/build/outputs/apk/release/*.apk
             NetSpeedXposed/immersivenav/build/outputs/apk/release/*.apk
+            NetSpeedXposed/autodataswitch/build/outputs/apk/release/*.apk
       - name: Publish as the "latest" release (used by the app's Update button)
         if: github.ref == 'refs/heads/main'
         env:
@@ -86,6 +87,7 @@ jobs:
           cp NetSpeedXposed/wifiactivity/build/outputs/apk/release/*.apk WiFiActivity.apk
           cp NetSpeedXposed/sliderpercent/build/outputs/apk/release/*.apk SliderPercent.apk
           cp NetSpeedXposed/immersivenav/build/outputs/apk/release/*.apk ImmersiveNavX.apk
+          cp NetSpeedXposed/autodataswitch/build/outputs/apk/release/*.apk AutoDataSwitch.apk
           printf 'build=%s\n%s\n' "$((GITHUB_RUN_NUMBER + 1000))" "$MSG" > notes.txt
           R=${{ github.repository }}
           # update.json: the KernelSU/Magisk manager reads this to offer the module update
@@ -96,8 +98,8 @@ jobs:
           printf '%s\n' "$MSG" > changelog.md
           cat update.json
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --clobber -R "$R"
+            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
           fi
