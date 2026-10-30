@@ -84,8 +84,28 @@ apply() { # level.  On a level change (FROM != lv) set exactly; otherwise only p
 
 # battery health for NetSpeed's status bar: System UI may not read the battery driver's files
 pub_health() {
-  local h=""
-  [ -r /sys/class/qcom-battery/soh ] && read h < /sys/class/qcom-battery/soh
+  local h="" f v full design
+  # Xiaomi / Qualcomm, OPlus (OxygenOS / ColorOS) and generic driver files, first valid one wins
+  for f in /sys/class/qcom-battery/soh /sys/class/power_supply/bms/soh /sys/class/power_supply/battery/soh \
+           /sys/class/power_supply/battery/state_of_health /sys/class/oplus_chg/battery/battery_soh \
+           /sys/class/power_supply/battery/battery_soh /sys/class/power_supply/bms/battery_soh; do
+    [ -r $f ] || continue
+    v=""; read v < $f
+    case "$v" in ''|*[!0-9]*) continue;; esac
+    [ "$v" -gt 0 ] && [ "$v" -le 120 ] && { h=$v; break; }
+  done
+  # otherwise full charge capacity against design capacity
+  if [ -z "$h" ]; then
+    for f in battery bms; do
+      full=""; design=""
+      [ -r /sys/class/power_supply/$f/charge_full ] && read full < /sys/class/power_supply/$f/charge_full
+      [ -r /sys/class/power_supply/$f/charge_full_design ] && read design < /sys/class/power_supply/$f/charge_full_design
+      case "$full$design" in ''|*[!0-9]*) continue;; esac
+      [ -n "$full" ] && [ -n "$design" ] && [ "$design" -gt 0 ] || continue
+      v=$(( full * 100 / design ))
+      [ "$v" -gt 0 ] && [ "$v" -le 120 ] && { h=$v; break; }
+    done
+  fi
   case "$h" in ''|*[!0-9]*) return;; esac
   [ "$h" -gt 0 ] && [ "$h" -le 120 ] && [ "$h" != "$LAST_SOH" ] || return
   [ -z "$R" ] && settings put global netspeed_battery_soh "$h" >/dev/null 2>&1 && LAST_SOH=$h
