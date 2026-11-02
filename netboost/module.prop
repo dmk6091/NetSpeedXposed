@@ -1,0 +1,6 @@
+id=netboost
+name=Net Boost
+version=v1.0
+versionCode=1
+author=dmk
+description=Faster mobile data under load: BBR congestion control with fq queueing (falls back to the best available), TCP Fast Open, bigger TCP buffers for fast 5G, ECN with fallback, no slow restart after idle, MTU probing. Kernel network settings only; the modem and signal are not touched. Log in /data/adb/netboost/log.txt.
