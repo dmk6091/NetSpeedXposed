@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
       - run: unzip -q NetSpeedXposed.zip
       - uses: actions/setup-java@v4
         with:
@@ -95,6 +97,8 @@ jobs:
           cp NetSpeedXposed/btbatfix/build/outputs/apk/release/*.apk BtBatteryFix.apk
           cp NetSpeedXposed/ostweaks/build/outputs/apk/release/*.apk OxygenOSTweaks.apk
           printf 'build=%s\n%s\n' "$((GITHUB_RUN_NUMBER + 1000))" "$MSG" > notes.txt
+          # the changes of the builds just before this one too, so skipping an update doesn't lose its notes
+          { echo; echo "Earlier builds:"; git log -n 12 --skip=1 --pretty='- %s'; } >> notes.txt || true
           R=${{ github.repository }}
           # update.json: the KernelSU/Magisk manager reads this to offer the module update
           MV=$(sed -n 's/^version=//p' netswitch/module.prop)
