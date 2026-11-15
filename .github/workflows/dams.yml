@@ -13,10 +13,17 @@ jobs:
       - name: Fetch today's report
         run: |
           sudo apt-get install -y -qq poppler-utils >/dev/null
-          curl -fsSL --retry 3 -A "Mozilla/5.0 (FieldAtlas dam data)" -o report.pdf "https://mwrdpravah.in/damsafety/control/pdfLatestReportEng"
-          ls -l report.pdf; head -c 8 report.pdf; echo
-          pdftotext -layout report.pdf report.txt
-          wc -l report.txt
+          curl -sSL --connect-timeout 20 --max-time 90 --retry 2 -A "Mozilla/5.0 (FieldAtlas dam data)" -o report.pdf -w "http %{http_code} %{size_download} bytes\n" "https://mwrdpravah.in/damsafety/control/pdfLatestReportEng" || echo "curl failed $?"
+          ls -l report.pdf || true; head -c 8 report.pdf || true; echo
+          pdftotext -layout report.pdf report.txt || true
+          wc -l report.txt || true
+      - name: Keep the raw report for checking
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view dams >/dev/null 2>&1 || gh release create dams --title "Maharashtra dam readings" --notes "Daily readings from the Maharashtra Water Resources Department report, read by the app."
+          [ -s report.txt ] && gh release upload dams report.txt --clobber || echo "no report text"
       - name: Convert to JSON
         run: python3 tools/dams_parse.py report.txt data/mh_dams_coords.csv mh_dams.json
       - name: Publish
