@@ -1,0 +1,27 @@
+name: Maharashtra dams
+on:
+  schedule:
+    - cron: '20 2,4 * * *'   # 07:50 and 09:50 IST, after the department's morning update
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  dams:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch today's report
+        run: |
+          sudo apt-get install -y -qq poppler-utils >/dev/null
+          curl -fsSL --retry 3 -A "Mozilla/5.0 (FieldAtlas dam data)" -o report.pdf "https://mwrdpravah.in/damsafety/control/pdfLatestReportEng"
+          ls -l report.pdf; head -c 8 report.pdf; echo
+          pdftotext -layout report.pdf report.txt
+          wc -l report.txt
+      - name: Convert to JSON
+        run: python3 tools/dams_parse.py report.txt data/mh_dams_coords.csv mh_dams.json
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view dams >/dev/null 2>&1 || gh release create dams --title "Maharashtra dam readings" --notes "Daily readings from the Maharashtra Water Resources Department report, read by the app." 
+          gh release upload dams mh_dams.json --clobber

@@ -1,0 +1,139 @@
+region,district,name,date,time,dead,live_cap,gross_cap,live,gross,pct,pct_last_year,lat,lon,coord_source,coord_confidence
+Nagpur,Bhandara,Bawanthadi,15/11/2026,07:51 AM,25.56,254.69,280.24,38.42,63.98,15.09,96.6,21.5431,79.5328,Exact (Rajiv Sagar Dam axis),B
+Nagpur,Bhandara,Gosikhurd,15/11/2026,08:30 AM,405.91,740.17,1146.08,740.17,1146.26,100.0,78.48,20.8738,79.6082,Wikipedia (Gose Khurd Dam article; project entry is ~10 km away),B
+Nagpur,Chandrapur,Asolamendha,15/11/2026,08:24 AM,10.64,52.33,62.97,33.33,43.97,63.69,84.12,20.242,79.822,Wikidata (exact name),B
+Nagpur,Gadchiroli,Dina,15/11/2026,07:35 AM,5.21,67.54,72.75,15.68,20.89,23.22,65.58,19.7542,80.1282,Wikidata (exact name),B
+Nagpur,Gondiya,Dhapewada,15/11/2026,07:31 AM,0.0,44.05,44.05,44.05,44.05,100.0,87.92,21.4481,80.0253,Exact (Wainganga Barrage),B
+Nagpur,Gondiya,Itiadoh,15/11/2026,08:00 AM,63.71,317.87,381.59,291.45,355.16,91.69,100.0,20.801,80.167,Wikidata (exact name),B
+Nagpur,Gondiya,Kalisarar,15/11/2026,08:00 AM,2.47,26.04,28.52,13.05,15.53,50.12,100.0,21.1766,80.453,Wikidata (exact name),B
+Nagpur,Gondiya,Pujaritola P.U.Weir,15/11/2026,08:00 AM,14.93,43.53,58.46,26.38,41.3,60.6,93.43,21.2122,80.424,"Wikidata (name match, district-checked)",B
+Nagpur,Gondiya,Sirpur,15/11/2026,08:00 AM,11.32,159.78,171.1,126.01,137.33,78.86,100.0,21.0316,80.4501,Wikidata (exact name),B
+Nagpur,Nagpur,Kamthi Khairy,15/11/2026,07:22 AM,39.0,141.98,180.98,112.34,151.34,79.12,86.95,21.4608,79.1903,Wikipedia (Kamthikhairy Dam),B
+Nagpur,Nagpur,Khindsi,15/11/2026,08:00 AM,0.0,103.0,103.0,39.72,39.72,38.56,99.53,21.404,79.3635,"Wikidata (name match, district-checked)",B
+Nagpur,Nagpur,Nand,15/11/2026,08:00 AM,9.0,53.18,62.18,32.01,41.01,60.19,100.0,20.7358,79.1319,"Exact (Nand Dam, Umred)",B
+Nagpur,Nagpur,Totladoh,15/11/2026,08:00 AM,150.0,1016.93,1166.93,228.43,378.43,22.46,88.07,21.6588,79.232,Wikidata (exact name),B
+Nagpur,Nagpur,Wadgaon,15/11/2026,08:00 AM,16.6,134.9,151.5,66.12,82.72,49.01,100.0,20.8936,78.9486,"Exact (Vena River, Hingna)",B
+Nagpur,Wardha,Bor,15/11/2026,07:55 AM,11.32,127.42,138.74,69.72,81.04,54.72,93.2,20.973,78.6992,"Wikidata (name match, district-checked)",B
+Nagpur,Wardha,Lower Wardha,15/11/2026,07:30 AM,36.47,216.87,253.34,132.3,168.78,61.0,100.0,20.8783,78.2594,Wikidata (exact name),B
+Amravati,Akola,Katepurna,15/11/2026,08:00 AM,11.32,86.35,97.67,10.15,21.47,11.75,97.69,20.4802,77.1568,Wikidata (exact name),B
+Amravati,Akola,Wan,15/11/2026,07:35 AM,1.51,81.96,83.46,65.4,66.91,79.8,99.4,21.186,76.7768,"Wikidata (name match, district-checked)",B
+Amravati,Amravati,Upper Wardha,15/11/2026,08:00 AM,114.22,564.05,678.27,232.1,346.32,41.15,100.0,21.2753,78.0572,CWC,A
+Amravati,Buldhana,Khadakpurna,15/11/2026,08:00 AM,67.21,93.4,160.61,0.0,52.75,0.0,100.0,20.0469,76.1264,Exact (Deulgaon Raja),B
+Amravati,Buldhana,Nalganga,15/11/2026,08:00 AM,2.54,69.32,71.86,49.99,52.53,72.11,100.0,20.7261,76.1803,Wikidata (exact name),B
+Amravati,Buldhana,Pentakli,15/11/2026,08:00 AM,7.38,59.98,67.36,36.33,43.71,60.57,99.99,20.2581,76.4719,"Exact (Penganga River, Mehkar)",B
+Amravati,Yavatmal,Arunavati,15/11/2026,07:00 AM,28.72,169.67,198.39,81.39,110.11,47.97,100.0,20.1313,77.7493,"Wikipedia (Arunawati Dam, Digras)",B
+Amravati,Yavatmal,Bembla,15/11/2026,08:00 AM,19.39,183.94,203.34,96.77,116.16,52.61,91.73,20.6064,78.1286,Exact (Babhulgaon),B
+Amravati,Yavatmal,Isapur,15/11/2026,07:00 AM,315.0,964.0,1279.0,585.35,900.35,60.72,100.0,19.726,77.437,CWC,A
+Amravati,Yavatmal,Pus,14/11/2026,08:49 AM,22.66,91.26,113.92,67.19,89.85,73.62,99.99,19.9917,77.5083,"Exact (Upper Pus Dam, Pusad)",B
+Chhatrapati Sambhajinagar,Chhatrapati Sambhajinagar,Apegaon H L B,15/11/2026,01:59 AM,0.0,7.0,7.0,3.47,3.47,49.57,100.0,19.4425,75.505,"Exact (Godavari Barrage, Apegaon)",B
+Chhatrapati Sambhajinagar,Chhatrapati Sambhajinagar,Paithan (Jayakwadi),15/11/2026,08:00 AM,738.11,2170.93,2909.04,1489.87,2227.97,68.63,100.0,19.4857,75.37,"Wikidata (name match, district-checked)",B
+Chhatrapati Sambhajinagar,Beed,Borgaon Anjanpur,13/11/2026,06:02 AM,0.01,1.5,1.51,0.0,0.0,0.0,0.0,18.852,76.154,Approx (Village/project vicinity),C
+Chhatrapati Sambhajinagar,Beed,Dhanegaon High Level Barrage,15/11/2026,08:00 AM,0.34,10.98,11.32,1.98,2.32,18.03,82.69,18.6186,76.0914,"Exact (Manjara River, Dhanegaon)",B
+Chhatrapati Sambhajinagar,Beed,Dongargaon H L B,15/11/2026,07:07 AM,0.01,7.89,7.9,0.0,0.0,0.0,100.0,18.785,76.182,Approx (Beed basin stretch),C
+Chhatrapati Sambhajinagar,Beed,Majalgaon,15/11/2026,08:00 AM,142.3,311.34,453.64,56.86,199.16,18.26,100.0,19.16,76.1879,CWC,A
+Chhatrapati Sambhajinagar,Beed,Manjara,14/11/2026,07:41 AM,47.13,176.96,224.09,7.89,55.02,4.46,100.0,18.6599,75.6198,CWC,A
+Chhatrapati Sambhajinagar,Beed,Roshanpuri H L B,15/11/2026,07:45 AM,0.03,6.3,6.33,0.0,0.0,0.0,99.33,19.3858,75.7894,"Exact (Godavari River, Gevrai)",B
+Chhatrapati Sambhajinagar,Beed,Sirasmarg L L B,15/11/2026,07:45 AM,0.0,2.06,2.06,0.0,0.0,0.0,95.0,18.6783,76.2847,"Exact (Manjara River, Sirasmarg)",B
+Chhatrapati Sambhajinagar,Beed,Wangdari L T B,14/11/2026,07:42 AM,0.0,0.84,0.84,0.0,0.0,0.0,100.0,18.6014,76.4389,"Exact (Manjara River, Wangdari)",B
+Chhatrapati Sambhajinagar,Hingoli,Siddeshwar,15/11/2026,08:19 AM,169.89,80.96,250.85,7.84,177.73,9.68,100.0,19.5905,76.9561,Wikipedia (Siddheshwar Dam),B
+Chhatrapati Sambhajinagar,Hingoli,Yeldari,15/11/2026,07:43 AM,124.67,809.77,934.44,425.13,549.8,52.5,100.0,19.7143,76.7121,CWC,A
+Chhatrapati Sambhajinagar,Nanded,Amdura,15/11/2026,07:17 AM,0.51,23.2,23.71,22.25,22.76,95.91,100.0,19.0489,77.5853,"Exact (Godavari Barrage, Amdura)",B
+Chhatrapati Sambhajinagar,Nanded,Dhalegaon H L B,15/11/2026,03:06 AM,1.37,13.5,14.87,3.24,4.61,24.0,100.0,19.1931,76.5356,"Exact (Godavari River, Dhalegaon)",B
+Chhatrapati Sambhajinagar,Nanded,Digadi H L B,15/11/2026,07:09 AM,0.0,10.44,10.44,6.58,6.58,63.03,68.45,19.635,78.11,"Approx (Penganga River, Kinwat)",C
+Chhatrapati Sambhajinagar,Nanded,Digras H L B,15/11/2026,08:00 AM,0.28,63.57,63.85,13.15,13.43,20.69,84.34,19.1319,77.1583,"Exact (Godavari River, Digras)",B
+Chhatrapati Sambhajinagar,Nanded,Hiradpuri H L B,15/11/2026,01:59 AM,0.0,9.69,9.69,1.97,1.97,20.33,99.97,19.4125,75.6611,"Exact (Godavari River, Hiradpuri)",B
+Chhatrapati Sambhajinagar,Nanded,Jogladevi H L B,15/11/2026,07:39 AM,0.0,10.0,10.0,1.41,1.41,14.1,100.0,19.0264,76.8458,"Exact (Godavari River, Jogladevi)",B
+Chhatrapati Sambhajinagar,Nanded,Kinwat ( Mangrul ) H LB,15/11/2026,06:21 AM,0.0,10.57,10.57,7.22,7.22,68.31,93.89,19.615,78.185,"Approx (Penganga River, Mangrul)",C
+Chhatrapati Sambhajinagar,Nanded,Lonisawangi H L B,15/11/2026,07:39 AM,0.0,29.98,29.98,7.96,7.96,26.55,100.0,19.0861,77.0189,"Exact (Godavari River, Lonisawangi)",B
+Chhatrapati Sambhajinagar,Nanded,Lower Manar,15/11/2026,08:00 AM,8.71,138.21,146.92,107.59,116.3,77.85,100.0,18.8424,77.3236,CWC,A
+Chhatrapati Sambhajinagar,Nanded,Mangrul H L B,15/11/2026,07:40 AM,0.0,25.0,25.0,8.92,8.92,35.68,99.95,19.115,76.685,"Approx (Godavari River, Mangrul)",C
+Chhatrapati Sambhajinagar,Nanded,Mudgal H L B,15/11/2026,08:00 AM,0.51,11.36,11.87,8.12,8.63,71.48,100.0,19.2486,76.3958,"Exact (Godavari River, Mudgal)",B
+Chhatrapati Sambhajinagar,Nanded,Rajatakli H L B,15/11/2026,07:40 AM,0.0,25.0,25.0,10.28,10.28,41.12,100.0,19.3458,76.0486,"Exact (Godavari River, Rajatakli)",B
+Chhatrapati Sambhajinagar,Nanded,Vishnupuri,15/11/2026,07:18 AM,2.76,80.79,83.55,46.73,49.49,57.84,100.0,19.1047,77.2722,Exact (Shankarrao Chavan Barrage),B
+Chhatrapati Sambhajinagar,Dharashiv,Aurad K.T. Weir,14/11/2026,08:41 AM,0.0,3.67,3.67,0.21,0.21,5.72,99.97,18.0419,76.6853,"Exact (Terna River, Aurad)",B
+Chhatrapati Sambhajinagar,Dharashiv,Gunjarga L T B,14/11/2026,08:41 AM,0.0,1.37,1.37,0.01,0.01,0.73,99.85,18.025,76.615,"Approx (Terna River, Gunjarga)",C
+Chhatrapati Sambhajinagar,Dharashiv,Killari 2 L T B,14/11/2026,08:47 AM,0.0,1.3,1.3,0.0,0.0,0.0,100.0,18.0558,76.5789,"Exact (Terna River, Killari)",B
+Chhatrapati Sambhajinagar,Dharashiv,Limbala L T B,15/11/2026,07:11 AM,0.0,0.29,0.29,0.0,0.0,0.0,97.24,18.095,76.485,"Approx (Terna basin, Limbala)",C
+Chhatrapati Sambhajinagar,Dharashiv,Lower Terna,15/11/2026,08:09 AM,29.97,91.22,121.19,14.86,44.83,16.29,100.0,18.0286,76.4304,CWC,A
+Chhatrapati Sambhajinagar,Dharashiv,Madansuri L T B,14/11/2026,08:41 AM,0.0,1.74,1.74,0.0,0.0,0.0,75.29,18.0683,76.6417,"Exact (Terna River, Madansuri)",B
+Chhatrapati Sambhajinagar,Dharashiv,Rajegaon L T B,15/11/2026,07:11 AM,0.0,0.59,0.59,0.0,0.0,0.0,99.49,18.045,76.525,Approx (Terna/Sina basin),C
+Chhatrapati Sambhajinagar,Dharashiv,Sina kolegaon,15/11/2026,07:08 AM,61.14,89.35,150.49,0.0,33.56,0.0,85.26,18.3188,75.3958,Wikidata (exact name),B
+Chhatrapati Sambhajinagar,Dharashiv,Tagarkheda L T B,14/11/2026,08:41 AM,0.0,0.77,0.77,0.0,0.0,0.0,100.0,18.0819,76.7153,"Exact (Terna River, Tagarkheda)",B
+Chhatrapati Sambhajinagar,Latur,Bhusani,15/11/2026,07:50 AM,0.0,1.49,1.49,0.78,0.78,52.35,100.0,18.415,76.825,Approx (Bhusani village tank),C
+Chhatrapati Sambhajinagar,Latur,Bindgihal L T B,15/11/2026,07:25 AM,0.0,1.35,1.35,0.0,0.0,0.0,100.0,18.4986,76.6853,"Exact (Manjara River, Bindgihal)",B
+Chhatrapati Sambhajinagar,Latur,Karsa Pohregaon,15/11/2026,07:00 AM,0.0,3.41,3.41,0.01,0.01,0.29,100.0,18.545,76.645,Approx (Renapur taluka tank),C
+Chhatrapati Sambhajinagar,Latur,Khulgapur,15/11/2026,08:00 AM,0.0,9.72,9.72,0.2,0.2,2.06,100.0,18.645,76.985,Approx (Ahmedpur/Udgir vicinity),C
+Chhatrapati Sambhajinagar,Latur,Nagzari L T B,13/11/2026,06:02 AM,0.0,3.48,3.48,0.0,0.0,0.0,100.0,18.445,76.595,"Approx (Manjara River, Nagzari)",C
+Chhatrapati Sambhajinagar,Latur,Sai,15/11/2026,06:21 AM,0.0,3.47,3.47,0.0,0.0,0.0,96.05,18.4589,76.5417,"Exact (Manjara Barrage, Sai)",B
+Chhatrapati Sambhajinagar,Latur,Shivni,13/11/2026,06:02 AM,0.04,9.77,9.81,0.0,0.04,0.0,100.0,18.185,76.655,Approx (Ausa/Nilanga vicinity),C
+Chhatrapati Sambhajinagar,Latur,Takalgaon-Deola,15/11/2026,08:00 AM,0.09,1.83,1.92,0.25,0.34,13.66,70.6,18.475,76.745,Approx (Latur taluka vicinity),C
+Chhatrapati Sambhajinagar,Latur,Wanjarkheda High level Barrage,15/11/2026,08:00 AM,0.0,3.6,3.6,0.02,0.02,0.56,100.0,18.5286,76.5519,"Exact (Manjara River, Wanjarkheda)",B
+Chhatrapati Sambhajinagar,Parbhani,Lower Dudhana,15/11/2026,08:00 AM,102.6,242.2,344.8,27.89,130.49,11.52,75.05,19.5316,76.3933,CWC,A
+Nashik,Ahilyanagar,Bhandardara,15/11/2026,08:00 AM,8.5,304.1,312.6,274.99,283.49,90.43,100.0,19.5453,73.7583,CWC,A
+Nashik,Ahilyanagar,Mula,15/11/2026,08:12 AM,127.42,608.81,736.23,326.77,454.2,53.67,98.47,19.34,74.61,CWC,A
+Nashik,Ahilyanagar,Nilwande-2,15/11/2026,07:00 AM,3.82,232.18,236.0,151.27,155.09,65.15,98.42,19.5461,73.9014,"Wikidata (name match, district-checked)",B
+Nashik,Jalgaon,Upper Tapi Hatnur,15/11/2026,08:13 AM,133.0,255.0,388.0,243.2,376.2,95.37,100.0,21.0731,75.9457,CWC (Upper Tapi); same as Wikidata Hatnur Dam,A
+Nashik,Jalgaon,Waghur,15/11/2026,08:22 AM,76.79,248.21,325.0,160.79,237.58,64.78,100.0,20.9268,75.7098,CWC,A
+Nashik,Nashik,Arjunsagar,15/11/2026,06:48 AM,2.76,36.99,39.75,36.52,39.28,98.73,100.0,20.4719,73.9286,"Exact (Punad Dam, Kalwan)",B
+Nashik,Nashik,Bham Dam,15/11/2026,08:00 AM,5.66,69.76,75.42,69.09,74.75,99.04,100.0,19.6592,73.6453,Wikidata (exact name),B
+Nashik,Nashik,Bhavali,15/11/2026,07:04 AM,3.96,40.79,44.75,40.06,44.02,98.21,99.59,19.6351,73.5906,Wikidata (exact name),B
+Nashik,Nashik,Chankapur,15/11/2026,08:05 AM,0.0,68.72,68.72,67.4,67.4,98.08,100.0,20.4989,73.8834,Wikidata (exact name),B
+Nashik,Nashik,Darna,15/11/2026,07:04 AM,0.0,202.42,202.42,187.34,187.34,92.55,99.2,19.8055,73.74,CWC,A
+Nashik,Nashik,Gangapur,15/11/2026,08:00 AM,0.68,159.42,160.1,135.06,135.74,84.72,95.37,20.0261,73.6671,Wikidata (exact name),B
+Nashik,Nashik,Girna,15/11/2026,08:00 AM,84.9,523.55,608.45,486.62,571.52,92.95,100.0,20.4766,74.7153,CWC,A
+Nashik,Nashik,Kadwa,15/11/2026,08:00 AM,6.68,47.79,54.47,44.92,51.6,93.99,99.65,19.7555,73.7938,Wikidata (exact name),B
+Nashik,Nashik,Karanjwan,15/11/2026,08:43 AM,9.34,152.09,161.43,145.59,154.93,95.73,99.89,20.291,73.764,Wikidata (exact name),B
+Nashik,Nashik,Mukane,15/11/2026,08:00 AM,9.18,204.98,214.16,160.34,169.53,78.22,95.78,19.8143,73.6431,Wikidata (exact name),B
+Nashik,Nashik,Ozarkhed,15/11/2026,08:12 AM,7.64,60.32,67.96,56.05,63.69,92.92,100.0,20.28,73.8759,Wikidata (exact name),B
+Nashik,Nashik,Palkhed,15/11/2026,08:00 AM,1.64,18.49,20.13,12.76,14.4,69.01,100.0,20.1911,73.8834,Wikidata (exact name),B
+Nashik,Nashik,Punegaon,15/11/2026,08:00 AM,2.82,17.57,20.39,15.08,17.9,85.83,100.0,20.3599,73.8347,Wikidata (exact name),B
+Nashik,Nashik,Tisgaon,15/11/2026,06:48 AM,2.7,12.76,15.46,11.51,14.21,90.2,100.0,20.2581,73.9528,Wikidata (exact name),B
+Nashik,Nashik,Upper Vaitarna,15/11/2026,08:00 AM,22.65,331.31,353.96,312.98,335.63,94.47,99.83,19.8181,73.5055,CWC,A
+Nashik,Nashik,Waghad,15/11/2026,06:54 AM,2.54,65.18,67.72,61.36,63.9,94.14,100.0,20.2221,73.7166,Wikidata (exact name),B
+Nashik,Nashik,Waki Dam,15/11/2026,07:00 AM,5.23,70.57,75.8,66.48,71.71,94.2,100.0,19.7083,73.6819,"Exact (Waki River, Igatpuri)",B
+Pune,Kolhapur,Dudhaganga,15/11/2026,07:29 AM,40.01,679.11,719.12,594.39,634.4,87.52,83.52,16.3533,74.0158,Exact (Kalamwadi Dam),B
+Pune,Kolhapur,Radhanagari H E P,15/11/2026,07:54 AM,16.82,219.97,236.79,189.55,206.37,86.17,98.18,16.4061,73.96,"Wikidata (name match, district-checked)",B
+Pune,Kolhapur,Tillari (Dhamne),15/11/2026,06:43 AM,21.24,85.41,106.65,78.17,99.41,91.52,95.34,15.8114,74.1619,"Exact (Dhamne Forebay, Chandgad)",B
+Pune,Kolhapur,Tulshi,15/11/2026,07:35 AM,6.37,91.92,98.29,83.02,89.39,90.32,97.47,16.5333,74.0189,"Exact (Tulshi Dam, Radhanagari)",B
+Pune,Pune,Nira Deoghar,15/11/2026,05:52 AM,5.26,332.13,337.39,318.58,323.84,95.92,100.0,18.0964,73.7253,CWC,A
+Pune,Pune,Dimbhe,15/11/2026,08:02 AM,28.3,353.75,382.05,338.64,366.95,95.73,100.0,19.096,73.742,CWC,A
+Pune,Pune,Bhama Askhed,15/11/2026,08:48 AM,13.37,217.1,230.47,168.02,181.39,77.39,99.51,18.835,73.723,CWC,A
+Pune,Pune,Yedgaon,15/11/2026,08:02 AM,14.15,79.28,93.43,54.4,68.55,68.62,99.99,19.1718,74.0036,Wikidata (exact name),B
+Pune,Pune,Chaskaman,15/11/2026,07:45 AM,27.19,214.5,241.69,185.16,212.35,86.32,100.0,18.9608,73.7854,CWC,A
+Pune,Pune,Pimpalgaon Joge,15/11/2026,08:03 AM,125.19,110.15,235.34,92.73,217.92,84.19,93.32,19.3247,73.8368,Wikidata (exact name),B
+Pune,Pune,Wadaj,15/11/2026,08:02 AM,2.83,33.11,35.94,29.42,32.25,88.86,100.0,19.1523,73.8491,Wikidata (exact name),B
+Pune,Pune,Manikdoh,15/11/2026,08:02 AM,19.81,288.1,307.91,246.09,265.9,85.42,83.99,19.2357,73.8144,CWC,A
+Pune,Pune,Ghod (Chinchani),15/11/2026,07:00 AM,61.5,154.8,216.3,139.13,200.63,89.88,100.0,18.678,74.4924,"Wikidata (name match, district-checked)",B
+Pune,Pune,Pawana,15/11/2026,07:00 AM,31.16,240.97,272.11,208.01,239.17,86.32,94.72,18.6794,73.4753,"Wikidata (name match, district-checked)",B
+Pune,Pune,Bhatghar,15/11/2026,05:52 AM,7.08,665.57,672.65,634.33,641.41,95.31,99.71,18.1744,73.8701,CWC,A
+Pune,Pune,Khadakwasla,15/11/2026,06:30 AM,30.0,55.91,85.91,39.27,69.27,70.24,39.85,18.4417,73.7681,Wikidata (exact name),B
+Pune,Pune,Panshet,15/11/2026,07:31 AM,9.0,301.61,310.61,208.86,217.86,69.25,100.0,18.3784,73.613,Wikidata (exact name),B
+Pune,Pune,Warasgaon,15/11/2026,07:00 AM,12.23,363.13,375.36,292.24,304.46,80.48,99.1,18.3842,73.6114,Exact (Veer Baji Pasalkar Dam),B
+Pune,Pune,Gunjawani,15/11/2026,05:49 AM,0.21,104.48,104.69,95.85,96.06,91.74,100.0,18.3014,73.6719,"Exact (Kanand River, Velhe)",B
+Pune,Pune,Temghar,15/11/2026,07:11 AM,2.95,105.01,107.96,78.1,81.05,74.37,99.27,18.4526,73.5558,Wikidata (exact name),B
+Pune,Pune,Mulshi Tata,14/11/2026,07:00 AM,230.0,522.76,752.76,398.69,628.69,76.27,97.5,18.5441,73.465,Wikidata (exact name),B
+Pune,Pune,Lonavala Tata,15/11/2026,06:53 AM,0.06,11.72,11.78,2.9,2.96,24.74,4.55,18.7364,73.3958,Exact (Lonavala Lake Dam),B
+Pune,Pune,Walwan Tata,15/11/2026,06:54 AM,0.28,71.84,72.12,65.6,65.88,91.31,88.34,18.7718,73.4272,Wikidata (exact name),B
+Pune,Pune,Shirawta Tata,15/11/2026,06:54 AM,0.87,197.28,198.15,135.04,135.91,68.45,96.42,18.8286,73.4419,"Exact (Shirawta Dam, Lonavala)",B
+Pune,Pune,Thokerwadi Tata,15/11/2026,06:56 AM,11.06,352.64,363.7,330.75,341.81,93.79,100.0,18.9004,73.5353,Wikipedia (Thokarwadi Dam),B
+Pune,Pune,Kundali Tata,14/11/2026,07:36 AM,0.8,6.34,7.14,5.27,6.07,83.12,85.9,18.6789,73.3917,"Exact (Kundali Dam, Mulshi/Lonavala)",B
+Pune,Sangli,Warna,15/11/2026,06:59 AM,194.84,779.35,974.19,692.55,887.39,88.86,98.96,17.1361,73.8583,"Exact (Chandoli Dam, Shirala)",B
+Pune,Satara,Dhom Balkawadi,15/11/2026,06:41 AM,3.4,112.13,115.53,90.76,94.16,80.94,100.0,17.9942,73.7389,"Exact (Krishna River, Wai)",B
+Pune,Satara,Tarali,15/11/2026,06:40 AM,0.25,165.46,165.71,126.89,127.14,76.69,88.69,17.4458,73.8953,"Exact (Tarali River, Patan)",B
+Pune,Satara,Dhom,15/11/2026,06:46 AM,51.27,331.05,382.32,287.45,338.72,86.83,100.0,17.982,73.8183,CWC,A
+Pune,Satara,Koyna,15/11/2026,08:00 AM,145.14,2835.54,2980.68,2293.55,2438.69,80.89,97.25,17.4017,73.7522,"Wikidata (name match, district-checked)",B
+Pune,Satara,Kanher,15/11/2026,06:52 AM,14.32,271.68,286.0,210.08,224.4,77.33,98.96,17.7375,73.9159,CWC,A
+Pune,Satara,Urmodi,15/11/2026,06:56 AM,8.87,273.27,282.14,220.69,229.55,80.76,99.89,17.6671,73.9093,CWC,A
+Pune,Satara,Veer,15/11/2026,07:34 AM,12.09,266.4,278.49,109.36,121.45,41.05,100.0,18.1268,74.0966,CWC,A
+Pune,Solapur,Bhima (Ujjani),15/11/2026,06:54 AM,1802.81,1517.2,3320.01,954.58,2757.39,62.92,100.0,18.0739,75.12,"Wikidata (name match, district-checked)",B
+Kokan,Palghar,Dhamni,15/11/2026,08:00 AM,8.96,276.35,285.31,251.47,260.43,91.0,99.29,19.9251,73.0608,Wikidata (exact name),B
+Kokan,Palghar,Kawdas P. U. Weir,14/11/2026,06:37 AM,3.74,9.96,13.7,6.3,10.04,63.25,49.97,19.7958,73.0389,"Exact (Surya River, Vikramgad)",B
+Kokan,Palghar,Middle Vaitarna,15/11/2026,08:29 AM,8.57,193.53,202.1,149.66,158.23,77.33,99.5,19.7049,73.4341,Wikidata (exact name),B
+Kokan,Raigad,Dolwahal weir,15/11/2026,07:50 AM,8.23,6.5,14.74,3.44,11.67,52.92,43.28,18.426,73.2204,Wikidata (exact name),B
+Kokan,Sindhudurg,Tillari,15/11/2026,08:00 AM,14.8,447.37,462.17,362.84,377.64,81.11,97.93,15.7599,74.0886,CWC,A
+Kokan,Thane,Barvi,15/11/2026,06:55 AM,1.64,338.84,340.48,307.24,308.88,90.67,97.04,19.19,73.3363,CWC,A
+Kokan,Thane,Bhatsa,15/11/2026,08:28 AM,34.0,942.1,976.1,818.39,852.39,86.87,94.32,19.5127,73.4178,CWC,A
+Kokan,Thane,Lower Chondhe,15/11/2026,07:20 AM,0.48,2.73,3.21,1.38,1.86,50.55,52.56,19.5619,73.4286,Exact (Shahapur/Khardi),B
+Kokan,Thane,Modaksagar,15/11/2026,08:31 AM,76.06,128.92,204.98,60.67,136.72,47.06,81.39,19.6923,73.3443,Wikipedia (Modak Sagar reservoir),B
+Kokan,Thane,Tansa,15/11/2026,08:32 AM,12.08,172.52,184.6,138.08,150.15,80.04,97.21,19.5589,73.2624,Wikidata (exact name),B
+Kokan,Thane,Upper Ghatghar,14/11/2026,06:12 AM,0.68,5.14,5.82,3.93,4.61,76.46,81.4,19.5442,73.6689,Exact (Ghatghar Upper Dam),B
