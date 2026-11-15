@@ -88,7 +88,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           MSG: ${{ github.event.head_commit.message }}
         run: |
-          cp NetSpeedXposed/app/build/outputs/apk/release/*.apk NetSpeedXposed.apk
+          cp NetSpeedXposed/app/build/outputs/apk/release/*.apk FieldAtlas.apk
+          cp FieldAtlas.apk NetSpeedXposed.apk   # old name kept so installed builds can still update
           cp NetSpeedXposed/wifiactivity/build/outputs/apk/release/*.apk WiFiActivity.apk
           cp NetSpeedXposed/sliderpercent/build/outputs/apk/release/*.apk SliderPercent.apk
           cp NetSpeedXposed/immersivenav/build/outputs/apk/release/*.apk ImmersiveNavX.apk
@@ -108,8 +109,8 @@ jobs:
           printf '%s\n' "$MSG" > changelog.md
           cat update.json
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --clobber -R "$R"
+            gh release upload latest FieldAtlas.apk NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest FieldAtlas.apk NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
           fi
