@@ -1,23 +1,20 @@
 package com.netspeed.xposed;
 
-import android.content.res.Resources;
-import android.graphics.Insets;
-import android.view.WindowInsets;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import android.inputmethodservice.InputMethodService;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
- * Keyboard without the blank strip under its keys. With gesture navigation the keyboard (Gboard) pads its
- * bottom by the gesture pill's height, which it reads itself, so zeroing the system's navigation bar inset
- * doesn't remove it. Inside the keyboard's own process only, those heights read as 0; the pill, its window
- * and the swipe area everywhere else are untouched. Follows immersive navigation (same property).
+ * Keyboard without the blank strip under its keys. With gesture navigation Gboard puts an empty spacer view
+ * (about 48 dp) below the key rows, inside its own window; no system inset or dimension controls it
+ * (zeroing those in Gboard's process changed nothing), so the spacer itself is collapsed. Only inside the
+ * keyboard's process: the pill, its window and the swipe area are untouched. Follows immersive navigation
+ * (same property).
  */
 final class KbSpace {
     private static final String TAG = "NetSpeedXposed: [kb] ";
@@ -29,86 +26,75 @@ final class KbSpace {
         try { android.util.Log.e("KbSpace", m); } catch (Throwable ignored) { }
     }
 
+    private static boolean said;
+
     static void install(final String pkg) {
-        log(TAG + pkg + ": loaded");
         if (!NavImmersive.enabled()) {
             log(TAG + pkg + ": immersive navigation is off, keyboard left alone");
             return;
         }
-        Resources sys = Resources.getSystem();
-        final Map<Integer, String> ids = new HashMap<>();
-        for (String n : new String[]{"navigation_bar_height", "navigation_bar_height_landscape", "navigation_bar_frame_height",
-                "navigation_bar_frame_height_landscape", "navigation_bar_gesture_height", "navigation_bar_gesture_larger_height",
-                "navigation_bar_width"}) {
-            int id = sys.getIdentifier(n, "dimen", "android");
-            if (id != 0) ids.put(id, n);
-        }
-        final Set<Integer> seen = new HashSet<>();
-        XC_MethodHook zero = new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam p) {
-                if (!(p.args[0] instanceof Integer)) return;
-                String n = ids.get(p.args[0]);
-                if (n == null) return;
-                Object r = p.getResult();
-                if (seen.add((Integer) p.args[0])) log(TAG + pkg + " reads " + n + " = " + r + " -> 0");
-                if (r instanceof Integer) p.setResult(0);
-                else if (r instanceof Float) p.setResult(0f);
-            }
-        };
-        int k = 0;
-        for (String m : new String[]{"getDimensionPixelSize", "getDimensionPixelOffset", "getDimension"}) {
-            try { XposedHelpers.findAndHookMethod(Resources.class, m, int.class, zero); k++; } catch (Throwable t) {
-                log(TAG + "hook " + m + " failed: " + t);
-            }
-        }
-        // the same heights as the keyboard window gets them: gesture / navigation insets at the bottom
-        final int ime = WindowInsets.Type.ime();
-        final boolean[] said = {false};
-        XC_MethodHook noBottom = new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam p) {
-                if (p.args.length == 1 && p.args[0] instanceof Integer && (((Integer) p.args[0]) & ime) != 0) return;
-                Object r = p.getResult();
-                if (!(r instanceof Insets)) return;
-                Insets i = (Insets) r;
-                if (i.bottom <= 0) return;
-                if (!said[0]) { said[0] = true; log(TAG + pkg + " " + p.method.getName() + " bottom " + i.bottom + " -> 0"); }
-                p.setResult(Insets.of(i.left, i.top, i.right, 0));
-            }
-        };
-        try { XposedHelpers.findAndHookMethod(WindowInsets.class, "getInsets", int.class, noBottom); k++; } catch (Throwable ignored) { }
-        try { XposedHelpers.findAndHookMethod(WindowInsets.class, "getInsetsIgnoringVisibility", int.class, noBottom); k++; } catch (Throwable ignored) { }
-        for (String m : new String[]{"getSystemGestureInsets", "getMandatorySystemGestureInsets", "getTappableElementInsets", "getSystemWindowInsets", "getStableInsets"}) {
-            try { XposedHelpers.findAndHookMethod(WindowInsets.class, m, noBottom); k++; } catch (Throwable ignored) { }
-        }
-        // Gboard adds its own gap when the system says "gesture navigation": tell it buttons (the system reserves nothing for them here)
-        final int modeId = sys.getIdentifier("config_navBarInteractionMode", "integer", "android");
-        final boolean[] saidM = {false, false};
         try {
-            XposedHelpers.findAndHookMethod(Resources.class, "getInteger", int.class, new XC_MethodHook() {
+            XposedHelpers.findAndHookMethod(InputMethodService.class, "onWindowShown", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam p) {
-                    if (modeId == 0 || !Integer.valueOf(modeId).equals(p.args[0])) return;
-                    if (!saidM[0]) { saidM[0] = true; log(TAG + pkg + " reads config_navBarInteractionMode = " + p.getResult() + " -> 0"); }
-                    p.setResult(0);
+                    try {
+                        final InputMethodService ims = (InputMethodService) p.thisObject;
+                        final View decor = ims.getWindow().getWindow().getDecorView();
+                        fix(ims, decor);
+                        if (decor.getTag(0x7f0b7e57) == null) {
+                            decor.setTag(0x7f0b7e57, Boolean.TRUE);
+                            decor.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                                @Override
+                                public void onGlobalLayout() {
+                                    try { fix(ims, decor); } catch (Throwable ignored) { }
+                                }
+                            });
+                        }
+                    } catch (Throwable t) {
+                        log(TAG + "fix failed: " + t);
+                    }
                 }
             });
-            k++;
-        } catch (Throwable t) { log(TAG + "hook getInteger failed: " + t); }
-        XC_MethodHook navMode = new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam p) {
-                if (p.args.length < 2 || !"navigation_mode".equals(p.args[1])) return;
-                if (!saidM[1]) { saidM[1] = true; log(TAG + pkg + " reads setting navigation_mode = " + p.getResult() + " -> 0"); }
-                Object r = p.getResult();
-                if (r instanceof Integer) p.setResult(0);
-                else if (r instanceof String) p.setResult("0");
-            }
-        };
-        for (String m : new String[]{"getInt", "getIntForUser", "getString", "getStringForUser"}) {
-            try { k += XposedBridge.hookAllMethods(android.provider.Settings.Secure.class, m, navMode).size(); } catch (Throwable ignored) { }
+            log(TAG + pkg + ": keyboard space hook ready");
+        } catch (Throwable t) {
+            log(TAG + "hook failed: " + t);
         }
-        log(TAG + pkg + ": keyboard space hooks ready (" + k + ")");
+    }
+
+    private static void fix(InputMethodService ims, View decor) {
+        int id = ims.getResources().getIdentifier("keyboard_holder", "id", ims.getPackageName());
+        View holder = id != 0 ? decor.findViewById(id) : null;
+        if (!(holder instanceof ViewGroup) || holder.getHeight() <= 0) return;
+        float dp = ims.getResources().getDisplayMetrics().density;
+        int[] hl = new int[2];
+        holder.getLocationInWindow(hl);
+        View s = spacer((ViewGroup) holder, hl[1] + holder.getHeight(), holder.getWidth(), dp, 0);
+        if (s == null) return;
+        if (!said) { said = true; log(TAG + "spacer under the keys " + s.getWidth() + "x" + s.getHeight() + " px -> gone"); }
+        s.setVisibility(View.GONE);
+    }
+
+    /** The empty full-width view, 20-90 dp tall, that is the last child of its parent and ends at the keyboard's bottom edge. */
+    private static View spacer(ViewGroup g, int bottom, int width, float dp, int depth) {
+        if (depth > 6) return null;
+        int n = g.getChildCount();
+        if (n >= 2) {
+            View last = g.getChildAt(n - 1);
+            if (last.getVisibility() == View.VISIBLE && last.getWidth() == width
+                    && last.getHeight() >= 20 * dp && last.getHeight() <= 90 * dp
+                    && (!(last instanceof ViewGroup) || ((ViewGroup) last).getChildCount() == 0)) {
+                int[] l = new int[2];
+                last.getLocationInWindow(l);
+                if (Math.abs(l[1] + last.getHeight() - bottom) <= 2) return last;
+            }
+        }
+        for (int i = n - 1; i >= 0; i--) {
+            View c = g.getChildAt(i);
+            if (c instanceof ViewGroup && c.getVisibility() == View.VISIBLE) {
+                View r = spacer((ViewGroup) c, bottom, width, dp, depth + 1);
+                if (r != null) return r;
+            }
+        }
+        return null;
     }
 }
