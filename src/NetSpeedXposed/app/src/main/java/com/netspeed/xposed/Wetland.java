@@ -75,6 +75,16 @@ final class Wetland {
         return "[out:json][timeout:" + (halfKm <= 3 ? 20 : halfKm <= 10 ? 30 : 50) + "];(nwr[\"natural\"=\"wetland\"]" + b + ";nwr[\"natural\"=\"water\"][\"name\"]" + b + ";);out center tags 600;";
     }
 
+    /** True for things OpenStreetMap files as water but that are man-made basins: pools, fountains, tanks, treatment ponds. */
+    private static boolean notNature(org.json.JSONObject tg) {
+        String w = tg.optString("water", "");
+        if (w.equals("pool") || w.equals("swimming_pool") || w.equals("basin") || w.equals("wastewater") || w.equals("fountain")
+                || w.equals("water_park") || w.equals("tank")) return true;
+        if (tg.has("leisure") && (tg.optString("leisure").contains("pool") || tg.optString("leisure").equals("water_park"))) return true;
+        String nm = (tg.optString("name:en", "") + " " + tg.optString("name", "")).toLowerCase(Locale.US);
+        return nm.matches(".*(swimming|\\bpool\\b|aqua ?park|water ?park|fountain|jym|\\bgym\\b|sewage|\\btank\\b).*");
+    }
+
     private static String typeOf(org.json.JSONObject tg) {
         String n = tg.optString("natural", "");
         if (n.equals("wetland")) {
@@ -107,6 +117,7 @@ final class Wetland {
             org.json.JSONObject tg = e.optJSONObject("tags");
             double[] c = center(e);
             if (tg == null || c == null || Double.isNaN(c[0])) continue;
+            if (notNature(tg)) continue;   // swimming pools, fountains and the like are not wetlands
             Hit h = new Hit();
             String nmv = tg.optString("name:en", tg.optString("name", "")).trim();
             h.type = typeOf(tg);
