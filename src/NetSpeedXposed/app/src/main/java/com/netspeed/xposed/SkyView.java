@@ -833,11 +833,11 @@ final class SkyView extends View {
                 new float[]{0f, 0.3f, 0.62f, 0.9f, 1f}, Shader.TileMode.CLAMP));
         c.drawCircle(x, y, r * (1f + edge * 0.25f), p);
         p.setShader(null);
-        glowX = x; glowR = r * 3.2f; glowOn = 1f;
+        glowX = x; glowY = y; glowR = r * 3.2f; glowOn = 1f;
     }
 
-    /** Where the Sun's glow is on the bar (view px) so the status bar text over it gets a soft dark edge; glowOn 0 when it isn't drawn. */
-    static volatile float glowX, glowR, glowOn;
+    /** Where the Sun's glow is on the bar (view px): the status bar's haze veil leaves a hole there and its text gets a soft dark edge; glowOn 0 when it isn't drawn. */
+    static volatile float glowX, glowY, glowR, glowOn;
 
     /** The Moon with its real phase, lit side turned to the Sun, faint grey seas; very faint behind weather. */
     private void drawMoon(Canvas c, int w, int h, float vis, boolean faint) {

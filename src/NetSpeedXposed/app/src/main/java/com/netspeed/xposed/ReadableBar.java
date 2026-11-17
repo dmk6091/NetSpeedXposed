@@ -1052,6 +1052,29 @@ final class ReadableBar extends View {
 
     /** Haze from the air quality and a tint from the temperature, over the sky and under the map. */
     private void wxVeil(Canvas c) {
+        // the Sun is drawn under this veil: cut a soft hole in the haze where it is, so it shines instead of looking dull
+        boolean hole = SkyView.glowOn > 0f && s > 0f;
+        int lyr = -1;
+        if (hole) {
+            try { lyr = c.saveLayer(null, null); } catch (Throwable t) { lyr = -1; }
+        }
+        try {
+            wxVeil2(c);
+        } finally {
+            if (lyr >= 0) {
+                float gx = SkyView.glowX / s, gy = SkyView.glowY / s, gr = SkyView.glowR / s * 1.15f;
+                gp.setStyle(Paint.Style.FILL);
+                gp.setShader(new android.graphics.RadialGradient(gx, gy, gr, new int[]{0xFF000000, 0xE0000000, 0}, new float[]{0f, 0.5f, 1f}, android.graphics.Shader.TileMode.CLAMP));
+                gp.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_OUT));
+                c.drawCircle(gx, gy, gr, gp);
+                gp.setXfermode(null);
+                gp.setShader(null);
+                c.restoreToCount(lyr);
+            }
+        }
+    }
+
+    private void wxVeil2(Canvas c) {
         final float H = PRO_H;
         if (wxAqi > 60) {
             float k = Math.min(1f, (wxAqi - 60) / 140f);
