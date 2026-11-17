@@ -82,6 +82,33 @@ final class KbSpace {
         for (String m : new String[]{"getSystemGestureInsets", "getMandatorySystemGestureInsets", "getTappableElementInsets", "getSystemWindowInsets", "getStableInsets"}) {
             try { XposedHelpers.findAndHookMethod(WindowInsets.class, m, noBottom); k++; } catch (Throwable ignored) { }
         }
+        // Gboard adds its own gap when the system says "gesture navigation": tell it buttons (the system reserves nothing for them here)
+        final int modeId = sys.getIdentifier("config_navBarInteractionMode", "integer", "android");
+        final boolean[] saidM = {false, false};
+        try {
+            XposedHelpers.findAndHookMethod(Resources.class, "getInteger", int.class, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam p) {
+                    if (modeId == 0 || !Integer.valueOf(modeId).equals(p.args[0])) return;
+                    if (!saidM[0]) { saidM[0] = true; log(TAG + pkg + " reads config_navBarInteractionMode = " + p.getResult() + " -> 0"); }
+                    p.setResult(0);
+                }
+            });
+            k++;
+        } catch (Throwable t) { log(TAG + "hook getInteger failed: " + t); }
+        XC_MethodHook navMode = new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam p) {
+                if (p.args.length < 2 || !"navigation_mode".equals(p.args[1])) return;
+                if (!saidM[1]) { saidM[1] = true; log(TAG + pkg + " reads setting navigation_mode = " + p.getResult() + " -> 0"); }
+                Object r = p.getResult();
+                if (r instanceof Integer) p.setResult(0);
+                else if (r instanceof String) p.setResult("0");
+            }
+        };
+        for (String m : new String[]{"getInt", "getIntForUser", "getString", "getStringForUser"}) {
+            try { k += XposedBridge.hookAllMethods(android.provider.Settings.Secure.class, m, navMode).size(); } catch (Throwable ignored) { }
+        }
         log(TAG + pkg + ": keyboard space hooks ready (" + k + ")");
     }
 }
