@@ -581,6 +581,7 @@ final class SkyView extends View {
             if (bodyMoonV >= 0) drawMoon(c, w, h, bodyMoonV, bodyVis < 0.35f);
             if (bodySun) drawSun(c, w, h, bodyVis, bodyVis < 0.35f, bodyK);
         } catch (Throwable ignored) { }
+        if (!bodySun) glowOn = 0f;
         if (!sunBelowDue) belowSunF = -1f;
         if (!moonBelowDue) belowMoonF = -1f;
         if (sunBelowDue) try { drawSunBelow(c, w, h); } catch (Throwable ignored) { }
@@ -764,6 +765,7 @@ final class SkyView extends View {
     private void drawSun(Canvas c, int w, int h, float vis, boolean faint, int k) {
         // clearer sky = bigger, brighter Sun
         float r = h * (k == CLEAR ? 0.16f : 0.13f);
+        glowOn = 0f;
         float[] xy = place(sunPos.alt, sunPos.az, w, h, r);
         float x = xy[0], y = xy[1];
         float hi = sm((sunPos.alt - 1) / 20.0);               // 0 at the horizon .. 1 high
@@ -813,21 +815,29 @@ final class SkyView extends View {
             p.setShader(null);
             return;
         }
-        // clear: a hot white-gold corona hugging the disc, so it glows on a pale sky too
-        if (cover < 0.4f) {
-            float cr = r * 1.9f, ca = (1f - cover * 2f) * vis;
-            p.setShader(new RadialGradient(x, y, cr, new int[]{alpha(0xFFFFF4C8, ca), alpha(0xFFFFB000, 0.75f * ca), alpha(0xFFFF8A00, 0)},
-                    new float[]{0.45f, 0.62f, 1f}, Shader.TileMode.CLAMP));
+        // the disc stays clearly visible through ordinary haze / thin cloud (only heavy weather hides it, above)
+        float dv = Math.max(vis, 0.85f);
+        // white-hot corona hugging the disc, so it glows on a pale sky too
+        float hot = Math.max(0f, 1f - cover * 1.4f) * (1f - haze * 0.6f);   // how white the core is
+        {
+            float cr = r * 2.6f, ca = (0.55f + 0.45f * (1f - cover)) * dv;
+            p.setShader(new RadialGradient(x, y, cr, new int[]{alpha(0xFFFFE9A0, 0.55f * ca), alpha(0xFFFFC85A, 0.38f * ca), alpha(0xFFFFB000, 0)},
+                    new float[]{0.35f, 0.55f, 1f}, Shader.TileMode.CLAMP));
             c.drawCircle(x, y, cr, p);
         }
-        // disc with limb darkening; edge softer through haze / thin cloud
+        // disc: white-hot centre, yellow body, orange limb; edge softer through haze / thin cloud
         float edge = Math.min(0.6f, 0.15f * cover + 0.35f * haze);
+        int hotC = lerp(core, 0xFFFFFCE6, hot * 0.92f);
         p.setShader(new RadialGradient(x, y, r * (1f + edge * 0.25f),
-                new int[]{alpha(core, vis), alpha(core, vis), alpha(limb, vis * (0.95f - edge * 0.5f)), alpha(limb, 0)},
-                new float[]{0f, 0.5f, 0.8f, 1f}, Shader.TileMode.CLAMP));
+                new int[]{alpha(hotC, dv), alpha(lerp(core, hotC, 0.35f), dv), alpha(core, dv), alpha(limb, dv * (0.95f - edge * 0.5f)), alpha(limb, 0)},
+                new float[]{0f, 0.3f, 0.62f, 0.9f, 1f}, Shader.TileMode.CLAMP));
         c.drawCircle(x, y, r * (1f + edge * 0.25f), p);
         p.setShader(null);
+        glowX = x; glowR = r * 3.2f; glowOn = 1f;
     }
+
+    /** Where the Sun's glow is on the bar (view px) so the status bar text over it gets a soft dark edge; glowOn 0 when it isn't drawn. */
+    static volatile float glowX, glowR, glowOn;
 
     /** The Moon with its real phase, lit side turned to the Sun, faint grey seas; very faint behind weather. */
     private void drawMoon(Canvas c, int w, int h, float vis, boolean faint) {

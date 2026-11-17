@@ -276,7 +276,11 @@ final class ReadableBar extends View {
                 tp.setTypeface(p.tf);
                 tp.setTextSize(p.size);
                 tp.setColor(p.col);
+                // over the Sun's bright glow: a soft dark edge keeps the text readable
+                boolean sh = SkyView.glowOn > 0f && Math.abs(x + p.w * 0.5f - SkyView.glowX) < SkyView.glowR + p.w * 0.5f;
+                if (sh) tp.setShadowLayer(4f, 0f, 1f, 0xB0000000);
                 c.drawText(p.text, x, base, tp);
+                if (sh) tp.clearShadowLayer();
             } else if (p.glyph != G_SPACE) {
                 glyph(c, p.glyph, x, cy, p.w, p.col);
             }
