@@ -55,11 +55,36 @@ final class KbSpace {
                     }
                 }
             });
+            // the keyboard now starts lower: tell the system, so apps use the freed space and touches above the keys go to the app
+            XposedHelpers.findAndHookMethod(InputMethodService.class, "onComputeInsets", InputMethodService.Insets.class, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam p) {
+                    try {
+                        int h = shift;
+                        View m = moved;
+                        if (h <= 0 || m == null || !m.isShown() || m.getTranslationY() != h) return;
+                        InputMethodService.Insets in = (InputMethodService.Insets) p.args[0];
+                        int[] l = new int[2];
+                        m.getLocationInWindow(l);
+                        int top = l[1];
+                        if (in.contentTopInsets >= top) return;       // Gboard already counted the shift
+                        int old = Math.min(in.contentTopInsets, in.visibleTopInsets);
+                        in.contentTopInsets = Math.max(in.contentTopInsets, top);
+                        in.visibleTopInsets = Math.max(in.visibleTopInsets, top);
+                        if (in.touchableInsets == InputMethodService.Insets.TOUCHABLE_INSETS_REGION && in.touchableRegion != null)
+                            in.touchableRegion.op(0, old, m.getRootView().getWidth(), top, android.graphics.Region.Op.DIFFERENCE);
+                    } catch (Throwable ignored) { }
+                }
+            });
             log(TAG + pkg + ": keyboard space hook ready");
         } catch (Throwable t) {
             log(TAG + "hook failed: " + t);
         }
     }
+
+    /** Height of the spacer and the view that was pushed down by it (the keyboard), for onComputeInsets. */
+    private static volatile int shift;
+    private static volatile View moved;
 
     private static void fix(InputMethodService ims, View decor) {
         int id = ims.getResources().getIdentifier("keyboard_holder", "id", ims.getPackageName());
@@ -68,10 +93,15 @@ final class KbSpace {
         float dp = ims.getResources().getDisplayMetrics().density;
         int[] hl = new int[2];
         holder.getLocationInWindow(hl);
-        View s = spacer((ViewGroup) holder, hl[1] + holder.getHeight(), holder.getWidth(), dp, 0);
-        if (s == null) return;
-        if (!said) { said = true; log(TAG + "spacer under the keys " + s.getWidth() + "x" + s.getHeight() + " px -> gone"); }
-        s.setVisibility(View.GONE);
+        // the spacer is looked for where it would be without our shift
+        int bottom = hl[1] - Math.round(holder.getTranslationY()) + holder.getHeight();
+        View s = spacer((ViewGroup) holder, bottom + Math.round(holder.getTranslationY()), holder.getWidth(), dp, 0);
+        int h = s == null ? 0 : s.getHeight();
+        if (h > 0 && !said) { said = true; log(TAG + "spacer under the keys " + s.getWidth() + "x" + h + " px -> keyboard moved down by it"); }
+        // Gboard keeps the keyboard's height fixed, so hiding the spacer leaves a hole: slide the whole keyboard down instead
+        if (holder.getTranslationY() != h) holder.setTranslationY(h);
+        shift = h;
+        moved = holder;
     }
 
     /** The empty full-width view, 20-90 dp tall, that is the last child of its parent and ends at the keyboard's bottom edge. */
