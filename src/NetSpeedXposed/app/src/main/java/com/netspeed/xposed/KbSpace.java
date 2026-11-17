@@ -41,6 +41,7 @@ final class KbSpace {
                         final InputMethodService ims = (InputMethodService) p.thisObject;
                         final View decor = ims.getWindow().getWindow().getDecorView();
                         fix(ims, decor);
+                        hookInsets(ims.getClass());
                         if (decor.getTag(0x7f0b7e57) == null) {
                             decor.setTag(0x7f0b7e57, Boolean.TRUE);
                             decor.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -55,32 +56,53 @@ final class KbSpace {
                     }
                 }
             });
-            // the keyboard now starts lower: tell the system, so apps use the freed space and touches above the keys go to the app
-            XposedHelpers.findAndHookMethod(InputMethodService.class, "onComputeInsets", InputMethodService.Insets.class, new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam p) {
-                    try {
-                        int h = shift;
-                        View m = moved;
-                        if (h <= 0 || m == null || !m.isShown() || m.getTranslationY() != h) return;
-                        InputMethodService.Insets in = (InputMethodService.Insets) p.args[0];
-                        int[] l = new int[2];
-                        m.getLocationInWindow(l);
-                        int top = l[1];
-                        if (in.contentTopInsets >= top) return;       // Gboard already counted the shift
-                        int old = Math.min(in.contentTopInsets, in.visibleTopInsets);
-                        in.contentTopInsets = Math.max(in.contentTopInsets, top);
-                        in.visibleTopInsets = Math.max(in.visibleTopInsets, top);
-                        if (in.touchableInsets == InputMethodService.Insets.TOUCHABLE_INSETS_REGION && in.touchableRegion != null)
-                            in.touchableRegion.op(0, old, m.getRootView().getWidth(), top, android.graphics.Region.Op.DIFFERENCE);
-                    } catch (Throwable ignored) { }
-                }
-            });
             log(TAG + pkg + ": keyboard space hook ready");
         } catch (Throwable t) {
             log(TAG + "hook failed: " + t);
         }
     }
+
+    private static boolean insetsHooked;
+
+    /** The keyboard now starts lower: tell the system, so apps use the freed space and touches above the keys go to the app. */
+    private static void hookInsets(Class<?> c) {
+        if (insetsHooked) return;
+        insetsHooked = true;
+        XC_MethodHook h = new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam p) {
+                try {
+                    int sh = shift;
+                    View m = moved;
+                    if (sh <= 0 || m == null || !m.isShown() || m.getTranslationY() != sh) return;
+                    InputMethodService.Insets in = (InputMethodService.Insets) p.args[0];
+                    int[] l = new int[2];
+                    m.getLocationInWindow(l);
+                    int top = l[1];
+                    if (in.contentTopInsets >= top) return;       // already counted
+                    int old = Math.min(in.contentTopInsets, in.visibleTopInsets);
+                    in.contentTopInsets = Math.max(in.contentTopInsets, top);
+                    in.visibleTopInsets = Math.max(in.visibleTopInsets, top);
+                    if (in.touchableInsets == InputMethodService.Insets.TOUCHABLE_INSETS_REGION && in.touchableRegion != null)
+                        in.touchableRegion.op(0, old, m.getRootView().getWidth(), top, android.graphics.Region.Op.DIFFERENCE);
+                    if (!saidI) { saidI = true; log(TAG + "keyboard top reported " + old + " -> " + top); }
+                } catch (Throwable ignored) { }
+            }
+        };
+        int n = 0;
+        // Gboard overrides onComputeInsets (possibly without calling super): hook every override up the chain
+        for (Class<?> k = c; k != null && k != Object.class; k = k.getSuperclass()) {
+            try {
+                java.lang.reflect.Method mm = k.getDeclaredMethod("onComputeInsets", InputMethodService.Insets.class);
+                XposedBridge.hookMethod(mm, h);
+                n++;
+            } catch (NoSuchMethodException ignored) {
+            } catch (Throwable t) { log(TAG + "insets hook failed: " + t); }
+        }
+        log(TAG + "insets hooks " + n);
+    }
+
+    private static boolean saidI;
 
     /** Height of the spacer and the view that was pushed down by it (the keyboard), for onComputeInsets. */
     private static volatile int shift;
