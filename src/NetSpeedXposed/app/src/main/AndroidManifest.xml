@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Only the settings app uses this, to check GitHub for updates. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- Integrity watcher: a notification when an app checks Play Integrity. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Update checker: starts again after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Reservoir watch: nearest dam from where the phone is. -->
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- App suggestions: ranks apps from usage history (granted with root, stays on the phone). -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <!-- To list launchable apps on Android 11+. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <application
+        android:label="Field Atlas"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:allowBackup="false"
+        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+
+        <activity
+            android:name=".SettingsActivity"
+            android:label="Field Atlas settings"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".MapActivity" android:label="Field Atlas map" android:exported="false" />
+
+        <service
+            android:name=".WallpaperJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- Lets System UI read the settings. Read-only. -->
+        <provider
+            android:name=".SettingsProvider"
+            android:authorities="com.netspeed.xposed.settings"
+            android:directBootAware="true"
+            android:exported="true" />
+
+        <!-- App suggestions for the launcher (dock and app drawer), like Pixel's. -->
+        <service
+            android:name=".PredictionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_APP_PREDICTION_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.appprediction.AppPredictionService" />
+            </intent-filter>
+        </service>
+
+        <!-- Quick Settings tile: screen timeout toggle (add it from the tile editor). -->
+        <service
+            android:name=".ScreenTimeoutTile"
+            android:exported="true"
+            android:label="Screen timeout"
+            android:icon="@drawable/ic_tile_timeout"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Quick Settings tile: touch rate 120 / 240 Hz (add it from the tile editor). -->
+        <service
+            android:name=".TouchRateTile"
+            android:exported="true"
+            android:label="Touch rate"
+            android:icon="@drawable/ic_tile_timeout"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Heat throttle with root (asked for by System UI). -->
+        <receiver
+            android:name=".ThrottleReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.netspeed.xposed.THROTTLE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Reads the top kernel wakelock with root for the status bar (asked for by System UI). -->
+        <receiver
+            android:name=".WakeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.netspeed.xposed.WAKE_READ" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Reads the battery health with root for the status bar (asked for by System UI). -->
+        <receiver
+            android:name=".BattHealthReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.netspeed.xposed.BATT_HEALTH" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Play Integrity checks reported from the Play Store (watch only). -->
+        <receiver
+            android:name=".IntegrityReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.netspeed.xposed.INTEGRITY_CHECK" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Checks for a new build every ~30 min and posts a notification. -->
+        <service
+            android:name=".UpdateJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <receiver android:name=".UpdateJob$Boot" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Reservoir watch: one check a day and a notification when the dam changes state. -->
+        <service
+            android:name=".DamJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <receiver android:name=".DamJob$Boot" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <meta-data android:name="xposedmodule" android:value="true" />
+        <meta-data android:name="xposeddescription"
+            android:value="Field Atlas: status bar with signal, towers, weather, sky and earth facts" />
+        <meta-data android:name="xposedminversion" android:value="82" />
+        <meta-data android:name="xposedscope" android:resource="@array/xposed_scope" />
+    </application>
+</manifest>

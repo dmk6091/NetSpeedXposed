@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="xposed_scope">
+        <item>com.android.systemui</item>
+        <item>com.android.settings</item>
+        <item>com.android.phone</item>
+        <item>com.oplus.eyeprotect</item>
+        <item>com.android.launcher</item>
+        <item>com.android.launcher3</item>
+        <item>com.google.android.inputmethod.latin</item>
+    </string-array>
+</resources>

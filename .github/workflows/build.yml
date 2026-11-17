@@ -70,6 +70,17 @@ jobs:
           cd cleanboot
           zip -qr ../CleanBoot.zip .
           unzip -l ../CleanBoot.zip
+      - name: Build the Net Boost Magisk module
+        run: |
+          cd netboost
+          zip -qr ../NetBoost.zip .
+          unzip -l ../NetBoost.zip
+      - name: Build the Touch Rate 240 Magisk module
+        run: |
+          cd touch240
+          chmod 755 bin/xt service.sh uninstall.sh
+          zip -qr ../Touch240.zip .
+          unzip -l ../Touch240.zip
       - uses: actions/upload-artifact@v4
         with:
           name: NetSpeedXposed-apk
@@ -109,8 +120,8 @@ jobs:
           printf '%s\n' "$MSG" > changelog.md
           cat update.json
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest FieldAtlas.apk NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --clobber -R "$R"
+            gh release upload latest FieldAtlas.apk NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip NetBoost.zip Touch240.zip update.json changelog.md --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest FieldAtlas.apk NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest FieldAtlas.apk NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip NetBoost.zip Touch240.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
           fi

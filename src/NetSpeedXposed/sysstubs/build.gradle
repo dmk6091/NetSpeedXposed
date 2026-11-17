@@ -1,0 +1,17 @@
+// Compile-only copies of hidden system APIs (app prediction). Never packaged into the APK:
+// the phone's framework provides the real classes.
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.netspeed.sysstubs'
+    compileSdk 35
+    defaultConfig {
+        minSdk 30
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

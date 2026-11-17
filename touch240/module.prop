@@ -1,0 +1,6 @@
+id=touch240
+name=Touch Rate 240
+version=1.0
+versionCode=1
+author=Claude
+description=Forces Poco F7 touch report rate to 240 Hz in all apps (re-applies whenever the system resets it)

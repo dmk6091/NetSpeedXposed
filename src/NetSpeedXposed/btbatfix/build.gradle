@@ -1,0 +1,42 @@
+// BT Battery Fix: LSPosed module that refreshes the status bar Bluetooth headset battery icon after boot.
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.dmk.btbatfix'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.dmk.btbatfix'
+        minSdk 30
+        targetSdk 35
+        versionCode Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1') + 1000
+        versionName '1.' + (System.getenv('GITHUB_RUN_NUMBER') ?: 'local')
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('../app/release.jks')
+            storePassword 'netspeedxposed'
+            keyAlias 'netspeed'
+            keyPassword 'netspeedxposed'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    compileOnly files('../app/libs/xposed-api-82-stubs.jar')
+}

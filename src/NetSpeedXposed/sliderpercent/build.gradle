@@ -1,0 +1,42 @@
+// Slider Percent: LSPosed module that shows the level on the OxygenOS / ColorOS brightness and volume sliders.
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.dmk.sliderpercent'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.dmk.sliderpercent'
+        minSdk 30
+        targetSdk 35
+        versionCode Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1') + 1000
+        versionName '1.' + (System.getenv('GITHUB_RUN_NUMBER') ?: 'local')
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('../app/release.jks')
+            storePassword 'netspeedxposed'
+            keyAlias 'netspeed'
+            keyPassword 'netspeedxposed'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    compileOnly files('../app/libs/xposed-api-82-stubs.jar')
+}
