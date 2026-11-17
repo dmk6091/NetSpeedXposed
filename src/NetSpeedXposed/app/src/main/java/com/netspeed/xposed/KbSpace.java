@@ -24,9 +24,15 @@ final class KbSpace {
 
     private KbSpace() {}
 
+    private static void log(String m) {
+        XposedBridge.log(m);
+        try { android.util.Log.e("KbSpace", m); } catch (Throwable ignored) { }
+    }
+
     static void install(final String pkg) {
+        log(TAG + pkg + ": loaded");
         if (!NavImmersive.enabled()) {
-            XposedBridge.log(TAG + pkg + ": immersive navigation is off, keyboard left alone");
+            log(TAG + pkg + ": immersive navigation is off, keyboard left alone");
             return;
         }
         Resources sys = Resources.getSystem();
@@ -45,7 +51,7 @@ final class KbSpace {
                 String n = ids.get(p.args[0]);
                 if (n == null) return;
                 Object r = p.getResult();
-                if (seen.add((Integer) p.args[0])) XposedBridge.log(TAG + pkg + " reads " + n + " = " + r + " -> 0");
+                if (seen.add((Integer) p.args[0])) log(TAG + pkg + " reads " + n + " = " + r + " -> 0");
                 if (r instanceof Integer) p.setResult(0);
                 else if (r instanceof Float) p.setResult(0f);
             }
@@ -53,7 +59,7 @@ final class KbSpace {
         int k = 0;
         for (String m : new String[]{"getDimensionPixelSize", "getDimensionPixelOffset", "getDimension"}) {
             try { XposedHelpers.findAndHookMethod(Resources.class, m, int.class, zero); k++; } catch (Throwable t) {
-                XposedBridge.log(TAG + "hook " + m + " failed: " + t);
+                log(TAG + "hook " + m + " failed: " + t);
             }
         }
         // the same heights as the keyboard window gets them: gesture / navigation insets at the bottom
@@ -67,7 +73,7 @@ final class KbSpace {
                 if (!(r instanceof Insets)) return;
                 Insets i = (Insets) r;
                 if (i.bottom <= 0) return;
-                if (!said[0]) { said[0] = true; XposedBridge.log(TAG + pkg + " " + p.method.getName() + " bottom " + i.bottom + " -> 0"); }
+                if (!said[0]) { said[0] = true; log(TAG + pkg + " " + p.method.getName() + " bottom " + i.bottom + " -> 0"); }
                 p.setResult(Insets.of(i.left, i.top, i.right, 0));
             }
         };
@@ -76,6 +82,6 @@ final class KbSpace {
         for (String m : new String[]{"getSystemGestureInsets", "getMandatorySystemGestureInsets", "getTappableElementInsets", "getSystemWindowInsets", "getStableInsets"}) {
             try { XposedHelpers.findAndHookMethod(WindowInsets.class, m, noBottom); k++; } catch (Throwable ignored) { }
         }
-        XposedBridge.log(TAG + pkg + ": keyboard space hooks ready (" + k + ")");
+        log(TAG + pkg + ": keyboard space hooks ready (" + k + ")");
     }
 }
