@@ -9,5 +9,6 @@
         <item>com.android.vending</item>
         <item>com.android.launcher3</item>
         <item>com.google.android.apps.nexuslauncher</item>
+        <item>com.google.android.inputmethod.latin</item>
     </string-array>
 </resources>

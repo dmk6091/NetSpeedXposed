@@ -70,6 +70,11 @@ public class Hook implements IXposedHookLoadPackage {
             }
             return;
         }
+        if ("com.google.android.inputmethod.latin".equals(lp.packageName)) {
+            // the keyboard: no blank strip under its keys with immersive navigation
+            if (lp.isFirstApplication) KbSpace.install(lp.packageName);
+            return;
+        }
         if (!SYSTEMUI.equals(lp.packageName)) {
             // Any other process in scope is the launcher (it draws the gesture pill on
             // Android 16 ROMs like Lunaris): immersive navigation there.
