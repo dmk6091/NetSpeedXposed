@@ -766,6 +766,10 @@ final class SkyView extends View {
         // clearer sky = bigger, brighter Sun
         float r = h * (k == CLEAR ? 0.16f : 0.13f);
         glowOn = 0f;
+        // the paint still carries the readability wash's alpha (a shader's colours are multiplied by it): back to opaque
+        p.setColor(0xFFFFFFFF);
+        p.setAlpha(255);
+        p.setXfermode(null);
         float[] xy = place(sunPos.alt, sunPos.az, w, h, r);
         float x = xy[0], y = xy[1];
         float hi = sm((sunPos.alt - 1) / 20.0);               // 0 at the horizon .. 1 high
