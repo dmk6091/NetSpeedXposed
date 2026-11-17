@@ -16,8 +16,6 @@ Device: Poco F7 (onyx), root with KernelSU, Zygisk + LSPosed. Magisk/KernelSU zi
 | `VolumeSteps.zip` | Finer or coarser volume steps for every stream (set in Field Atlas or the module page, then reboot) | zip |
 | `NfcOff.zip` | Stops the NFC driver once after boot (it can loop and heat the CPU on some ROMs even with NFC off) | zip |
 | `Touch240.zip` | 240 Hz touch reporting in all apps, re-applied when the system resets it. **Poco F7 only** | zip |
-| `ImmersiveNav.zip` | Gesture navigation: apps draw to the bottom edge, pill floats over them (overlay) | zip |
-| `ImmersiveNavX.apk` | Same idea as an LSPosed module (use one or the other) | LSPosed |
 | `WiFiActivity.apk` | Wi-Fi in/out arrows inside the Wi-Fi icon | LSPosed |
 | `RideCool.zip` | Stepwise CPU/GPU/charging limits by battery temperature (needs Xiaomi thermal files) | zip |
 | `CleanBoot.zip` | Hides traces a custom ROM leaves on a Xiaomi phone (OEM-unlock prop, LineageOS SELinux files) | zip |
@@ -26,6 +24,7 @@ Device: Poco F7 (onyx), root with KernelSU, Zygisk + LSPosed. Magisk/KernelSU zi
 
 | File | ROM | What it does |
 |---|---|---|
+| `ImmersiveNav.zip`, `ImmersiveNavX.apk` | any, only if Field Atlas is not used | Gesture navigation: apps draw to the bottom edge, pill floats over them. **Not needed with Field Atlas**, which already does this on its own |
 | `NetSwitch.zip` | HyperOS | 5G weak to 4G, SIM 1 weak to SIM 2 through the hidden auto data switch |
 | `AutoDataSwitch.apk` | HyperOS | Brings back "Switch mobile data automatically" and other hidden SIM options |
 | `ScreenRes.apk` | HyperOS | Unhides screen resolution, DC dimming and glove mode |
