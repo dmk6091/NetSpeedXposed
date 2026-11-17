@@ -1908,6 +1908,25 @@ public class SettingsActivity extends Activity {
         LinearLayout opts = new LinearLayout(this);
         opts.setOrientation(LinearLayout.VERTICAL);
         c.addView(opts);
+        Switch dn = new Switch(this);
+        dn.setText("Day and night wallpapers (sunrise / sunset, automatic)");
+        dn.setTextColor(fg);
+        dn.setTextSize(15);
+        dn.setPadding(0, dp(12), 0, dp(4));
+        dn.setChecked(wp.getBoolean("daynight", false));
+        dn.setOnCheckedChangeListener((v, on) -> {
+            wp.edit().putBoolean("daynight", on).commit();
+            DayNight.schedule(getApplicationContext(), on);
+            if (on) {
+                wp.edit().putBoolean("auto", false).commit();
+                WallpaperJob.schedule(getApplicationContext(), false);
+                new Thread(() -> {
+                    String r = DayNight.apply(getApplicationContext(), true);
+                    runOnUiThread(() -> android.widget.Toast.makeText(this, r, android.widget.Toast.LENGTH_LONG).show());
+                }).start();
+            }
+        });
+        opts.addView(dn);
         Switch sw = new Switch(this);
         sw.setText("Keep the wallpaper on where I am");
         sw.setTextColor(fg);
@@ -1917,6 +1936,7 @@ public class SettingsActivity extends Activity {
         sw.setOnCheckedChangeListener((v, on) -> {
             wp.edit().putBoolean("auto", on).commit();
             WallpaperJob.schedule(getApplicationContext(), on);
+            if (on) { wp.edit().putBoolean("daynight", false).commit(); DayNight.schedule(getApplicationContext(), false); dn.setChecked(false); }
         });
         opts.addView(sw);
         wpChoice(opts, wp, "Redraw after I move", "km", 1, new String[]{"1 km", "2 km", "5 km", "10 km"});
