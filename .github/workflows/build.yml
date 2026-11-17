@@ -119,9 +119,48 @@ jobs:
           printf '{\n  "version": "%s",\n  "versionCode": %s,\n  "zipUrl": "%s/NetSwitch.zip",\n  "changelog": "%s/changelog.md"\n}\n' "$MV" "$MC" "$BASE" "$BASE" > update.json
           printf '%s\n' "$MSG" > changelog.md
           cat update.json
+          # "latest" keeps only what the app and the NetSwitch update link need
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest FieldAtlas.apk NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip NetBoost.zip Touch240.zip update.json changelog.md --clobber -R "$R"
+            gh release upload latest FieldAtlas.apk NetSpeedXposed.apk NetSwitch.zip update.json changelog.md --clobber -R "$R"
             gh release edit latest --notes-file notes.txt -R "$R"
           else
-            gh release create latest FieldAtlas.apk NetSpeedXposed.apk WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk NetSwitch.zip ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip NetBoost.zip Touch240.zip update.json changelog.md --title "Latest build" --notes-file notes.txt -R "$R"
+            gh release create latest FieldAtlas.apk NetSpeedXposed.apk NetSwitch.zip update.json changelog.md --title "Field Atlas (latest build)" --notes-file notes.txt -R "$R"
           fi
+          for a in WiFiActivity.apk SliderPercent.apk ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk BtBatteryFix.apk OxygenOSTweaks.apk ImmersiveNav.zip VolumeSteps.zip NfcOff.zip RideCool.zip CleanBoot.zip NetBoost.zip Touch240.zip; do
+            gh release delete-asset latest "$a" -y -R "$R" >/dev/null 2>&1 || true
+          done
+          cat > notes_aosp.md <<'EON'
+          Modules for AOSP-based ROMs (Lunaris and similar). Install the zips from the root manager (Modules > Install, then reboot).
+
+          - NetBoost.zip: BBR + fq, TCP Fast Open, bigger buffers, ECN, MTU probing
+          - VolumeSteps.zip: finer or coarser volume steps for every stream
+          - NfcOff.zip: stops the NFC driver once after boot (for ROMs where it loops)
+          - Touch240.zip: 240 Hz touch reporting (Poco F7 only)
+          - RideCool.zip: optional stepwise heat caps and slower charging (Xiaomi thermal files)
+          - CleanBoot.zip: hides traces a custom ROM leaves on a Xiaomi phone
+          - WiFiActivity.apk: Wi-Fi in/out arrows in the Wi-Fi icon (LSPosed)
+
+          Field Atlas itself is in the "Field Atlas (latest build)" release.
+          EON
+          cat > notes_other.md <<'EON'
+          Modules for other ROMs (HyperOS, OxygenOS / ColorOS). Not needed on an AOSP ROM with Field Atlas.
+
+          - NetSwitch.zip (HyperOS): 5G weak to 4G, SIM 1 weak to SIM 2 via the hidden auto data switch
+          - AutoDataSwitch.apk (HyperOS): brings back "Switch mobile data automatically"
+          - ScreenRes.apk (HyperOS): screen resolution, DC dimming, glove mode
+          - SliderPercent.apk (OxygenOS / ColorOS): percent on brightness and volume sliders
+          - OxygenOSTweaks.apk (OxygenOS / ColorOS): VoNR / VoLTE icons, Eye Care, IMS status
+          - BtBatteryFix.apk: Bluetooth headset battery after reboot (for StatusbarTemp)
+          - ImmersiveNav.zip, ImmersiveNavX.apk: gesture navigation edge-to-edge (Field Atlas already does this)
+          EON
+
+          rel() { # tag title notes files...
+            t=$1; ti=$2; nf=$3; shift 3
+            if gh release view "$t" -R "$R" >/dev/null 2>&1; then
+              gh release upload "$t" "$@" --clobber -R "$R"; gh release edit "$t" --title "$ti" --notes-file "$nf" -R "$R"
+            else
+              gh release create "$t" "$@" --title "$ti" --notes-file "$nf" -R "$R"
+            fi
+          }
+          rel modules-aosp "Modules for AOSP ROMs" notes_aosp.md NetBoost.zip VolumeSteps.zip NfcOff.zip Touch240.zip RideCool.zip CleanBoot.zip WiFiActivity.apk
+          rel modules-other "Modules for HyperOS / OxygenOS" notes_other.md ImmersiveNav.zip ImmersiveNavX.apk AutoDataSwitch.apk ScreenRes.apk SliderPercent.apk OxygenOSTweaks.apk BtBatteryFix.apk

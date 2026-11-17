@@ -1,8 +1,14 @@
 # My phone modules (dmk)
 
-Everything is built automatically and published on one page, the **latest release**:
-**https://github.com/dmk6091/NetSpeedXposed/releases/tag/latest**
-Download links below are direct: `https://github.com/dmk6091/NetSpeedXposed/releases/download/latest/<file>`
+Everything is built automatically and published in three separate releases:
+
+| Release | Contents | Link |
+|---|---|---|
+| **Field Atlas (latest build)** | `FieldAtlas.apk` (the app's Update button uses this) | https://github.com/dmk6091/NetSpeedXposed/releases/tag/latest |
+| **Modules for AOSP ROMs** | NetBoost, VolumeSteps, NfcOff, Touch240, RideCool, CleanBoot, WiFiActivity | https://github.com/dmk6091/NetSpeedXposed/releases/tag/modules-aosp |
+| **Modules for HyperOS / OxygenOS** | NetSwitch, AutoDataSwitch, ScreenRes, SliderPercent, OxygenOSTweaks, BtBatteryFix, ImmersiveNav | https://github.com/dmk6091/NetSpeedXposed/releases/tag/modules-other |
+
+(`NetSwitch.zip` also stays in the Field Atlas release, because the module's own update link points there.)
 
 Device: Poco F7 (onyx), root with KernelSU, Zygisk + LSPosed. Magisk/KernelSU zips are installed from the root manager
 (Modules > Install, then reboot). `.apk` files are LSPosed modules (install, enable in LSPosed, tick the scope, restart System UI).
