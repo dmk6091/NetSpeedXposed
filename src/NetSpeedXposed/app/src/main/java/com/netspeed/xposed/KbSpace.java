@@ -115,15 +115,24 @@ final class KbSpace {
         float dp = ims.getResources().getDisplayMetrics().density;
         int[] hl = new int[2];
         holder.getLocationInWindow(hl);
-        // the spacer is looked for where it would be without our shift
-        int bottom = hl[1] - Math.round(holder.getTranslationY()) + holder.getHeight();
-        View s = spacer((ViewGroup) holder, bottom + Math.round(holder.getTranslationY()), holder.getWidth(), dp, 0);
+        View s = spacer((ViewGroup) holder, hl[1] + holder.getHeight(), holder.getWidth(), dp, 0);
         int h = s == null ? 0 : s.getHeight();
         if (h > 0 && !said) { said = true; log(TAG + "spacer under the keys " + s.getWidth() + "x" + h + " px -> keyboard moved down by it"); }
-        // Gboard keeps the keyboard's height fixed, so hiding the spacer leaves a hole: slide the whole keyboard down instead
-        if (holder.getTranslationY() != h) holder.setTranslationY(h);
+        // Gboard keeps the keyboard's height fixed, so hiding the spacer leaves a hole: slide the whole keyboard down instead.
+        // Its background (and blur) are siblings of the same size, so every same-sized layer moves together.
+        View top = holder;
+        while (top.getParent() instanceof View && ((View) top.getParent()).getHeight() == holder.getHeight()) top = (View) top.getParent();
+        if (top.getParent() instanceof ViewGroup) {
+            ViewGroup pg = (ViewGroup) top.getParent();
+            for (int i = 0; i < pg.getChildCount(); i++) {
+                View c = pg.getChildAt(i);
+                if (c == top || (c.getHeight() == top.getHeight() && c.getTop() == top.getTop())) {
+                    if (c.getTranslationY() != h) c.setTranslationY(h);
+                }
+            }
+        } else if (top.getTranslationY() != h) top.setTranslationY(h);
         shift = h;
-        moved = holder;
+        moved = top;
     }
 
     /** The empty full-width view, 20-90 dp tall, that is the last child of its parent and ends at the keyboard's bottom edge. */
