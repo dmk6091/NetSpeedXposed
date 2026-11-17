@@ -1051,30 +1051,27 @@ final class ReadableBar extends View {
     }
 
     /** Haze from the air quality and a tint from the temperature, over the sky and under the map. */
-    private void wxVeil(Canvas c) {
-        // the Sun is drawn under this veil: cut a soft hole in the haze where it is, so it shines instead of looking dull
-        boolean hole = SkyView.glowOn > 0f && s > 0f;
-        int lyr = -1;
-        if (hole) {
-            try { lyr = c.saveLayer(null, null); } catch (Throwable t) { lyr = -1; }
+    /** The Sun is drawn under the haze veil and the world-map shading: cut a soft hole in them where it is, so it shines instead of looking dull. */
+    private int holeBegin(Canvas c) {
+        if (SkyView.glowOn > 0f && s > 0f) {
+            try { return c.saveLayer(null, null); } catch (Throwable t) { return -1; }
         }
-        try {
-            wxVeil2(c);
-        } finally {
-            if (lyr >= 0) {
-                float gx = SkyView.glowX / s, gy = SkyView.glowY / s, gr = SkyView.glowR / s * 1.15f;
-                gp.setStyle(Paint.Style.FILL);
-                gp.setShader(new android.graphics.RadialGradient(gx, gy, gr, new int[]{0xFF000000, 0xE0000000, 0}, new float[]{0f, 0.5f, 1f}, android.graphics.Shader.TileMode.CLAMP));
-                gp.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_OUT));
-                c.drawCircle(gx, gy, gr, gp);
-                gp.setXfermode(null);
-                gp.setShader(null);
-                c.restoreToCount(lyr);
-            }
-        }
+        return -1;
     }
 
-    private void wxVeil2(Canvas c) {
+    private void holeEnd(Canvas c, int lyr) {
+        if (lyr < 0) return;
+        float gx = SkyView.glowX / s, gy = SkyView.glowY / s, gr = SkyView.glowR / s * 1.15f;
+        gp.setStyle(Paint.Style.FILL);
+        gp.setShader(new android.graphics.RadialGradient(gx, gy, gr, new int[]{0xFF000000, 0xE0000000, 0}, new float[]{0f, 0.5f, 1f}, android.graphics.Shader.TileMode.CLAMP));
+        gp.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_OUT));
+        c.drawCircle(gx, gy, gr, gp);
+        gp.setXfermode(null);
+        gp.setShader(null);
+        c.restoreToCount(lyr);
+    }
+
+    private void wxVeil(Canvas c) {
         final float H = PRO_H;
         if (wxAqi > 60) {
             float k = Math.min(1f, (wxAqi - 60) / 140f);
@@ -1249,8 +1246,13 @@ final class ReadableBar extends View {
     private void fxBackdrop(Canvas c) {
         if (!graphsOn()) return;
         boolean extras = Cfg.b(Cfg.WX_FX, Cfg.D_WX_FX);
-        if (extras) { try { wxVeil(c); } catch (Throwable ignored) { } }
-        try { if (Cfg.b(Cfg.BG_MAP, Cfg.D_BG_MAP)) fxMap(c); } catch (Throwable ignored) { }
+        int hl = holeBegin(c);
+        try {
+            if (extras) { try { wxVeil(c); } catch (Throwable ignored) { } }
+            try { if (Cfg.b(Cfg.BG_MAP, Cfg.D_BG_MAP)) fxMap(c); } catch (Throwable ignored) { }
+        } finally {
+            try { holeEnd(c, hl); } catch (Throwable ignored) { }
+        }
         // wxSkyline() (city/town/village/hills/coast buildings along the bottom edge) dropped
         // 2026-11-14 per request: weather tint and stars stay, the skyline doesn't.
         try { belowDots(c); } catch (Throwable ignored) { }
