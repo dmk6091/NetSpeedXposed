@@ -509,6 +509,7 @@ final class SkyView extends View {
         float x = (w - m) - f * (w - 2 * m);
         float y = h - 3f * dens;                 // right on the bottom edge, under the last text line
         float r = 3.8f * dens;
+        p.setColor(0xFFFFFFFF);
         p.setStyle(Paint.Style.FILL);
         p.setShader(new RadialGradient(x, y, r * 4.5f, new int[]{0xAAFF9A40, 0}, null, Shader.TileMode.CLAMP));
         c.drawCircle(x, y, r * 4.5f, p);
@@ -577,6 +578,10 @@ final class SkyView extends View {
                 c.restoreToCount(layer);
             }
         }
+        // the paint still carries the last wash's alpha (a shader's colours are multiplied by it): opaque for the Sun / Moon and their glows
+        p.setShader(null);
+        p.setXfermode(null);
+        p.setColor(0xFFFFFFFF);
         try {
             if (bodyMoonV >= 0) drawMoon(c, w, h, bodyMoonV, bodyVis < 0.35f);
             if (bodySun) drawSun(c, w, h, bodyVis, bodyVis < 0.35f, bodyK);
@@ -622,6 +627,7 @@ final class SkyView extends View {
         float x = (w - m) - f * (w - 2 * m);
         float y = h - 3f * dens;
         float r = 4.2f * dens;
+        p.setColor(0xFFFFFFFF);
         p.setStyle(Paint.Style.FILL);
         p.setShader(new RadialGradient(x, y, r * 4.5f, new int[]{0x99C9D8FF, 0}, null, Shader.TileMode.CLAMP));
         c.drawCircle(x, y, r * 4.5f, p);
