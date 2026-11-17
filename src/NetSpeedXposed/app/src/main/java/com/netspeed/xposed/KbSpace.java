@@ -93,8 +93,8 @@ final class KbSpace {
         // Gboard overrides onComputeInsets (possibly without calling super): hook every override up the chain
         for (Class<?> k = c; k != null && k != Object.class; k = k.getSuperclass()) {
             try {
-                java.lang.reflect.Method mm = k.getDeclaredMethod("onComputeInsets", InputMethodService.Insets.class);
-                XposedBridge.hookMethod(mm, h);
+                k.getDeclaredMethod("onComputeInsets", InputMethodService.Insets.class);
+                XposedHelpers.findAndHookMethod(k, "onComputeInsets", InputMethodService.Insets.class, h);
                 n++;
             } catch (NoSuchMethodException ignored) {
             } catch (Throwable t) { log(TAG + "insets hook failed: " + t); }
