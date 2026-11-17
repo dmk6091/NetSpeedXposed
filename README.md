@@ -17,7 +17,7 @@ Device: Poco F7 (onyx), root with KernelSU, Zygisk + LSPosed. Magisk/KernelSU zi
 | `NfcOff.zip` | Stops the NFC driver once after boot (it can loop and heat the CPU on some ROMs even with NFC off) | zip |
 | `Touch240.zip` | 240 Hz touch reporting in all apps, re-applied when the system resets it. **Poco F7 only** | zip |
 | `WiFiActivity.apk` | Wi-Fi in/out arrows inside the Wi-Fi icon | LSPosed |
-| `RideCool.zip` | Stepwise CPU/GPU/charging limits by battery temperature (needs Xiaomi thermal files) | zip |
+| `RideCool.zip` | **Optional.** Stepwise CPU/GPU/charging limits at 40/42/45 C battery temperature (needs Xiaomi thermal files). Field Atlas already has a one-step emergency heat throttle (44 C battery / 85 C CPU: caps CPU+GPU, 60 Hz, clears apps) but does not slow charging; Ride Cool adds earlier steps and slower charging | zip |
 | `CleanBoot.zip` | Hides traces a custom ROM leaves on a Xiaomi phone (OEM-unlock prop, LineageOS SELinux files) | zip |
 
 ## For other ROMs only
