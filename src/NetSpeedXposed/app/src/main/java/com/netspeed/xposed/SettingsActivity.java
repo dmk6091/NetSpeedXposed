@@ -1887,6 +1887,7 @@ public class SettingsActivity extends Activity {
     /** Map screen and map wallpaper (own settings in the "wp" file; the wallpaper job runs in this app, not in System UI). */
     private void mapCard() {
         final android.content.SharedPreferences wp = WallpaperMaker.sp(this);
+        if (wp.getBoolean("daynight", false)) DayNight.schedule(getApplicationContext(), true);
         LinearLayout c = infoCard("\uD83D\uDDFA\uFE0F", "Map and wallpaper", "your place on a map with rock, soil, faults and relief");
         c.addView(wpButton("Open live map", true, () -> startActivity(new android.content.Intent(this, MapActivity.class))));
         TextView st = text("", 12, sub);
