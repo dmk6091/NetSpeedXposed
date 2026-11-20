@@ -50,6 +50,7 @@
             android:name=".DayNight"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <receiver android:name=".DayNight$Cmd" android:exported="false" />
 
         <!-- Lets System UI read the settings. Read-only. -->
         <provider

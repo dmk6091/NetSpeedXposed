@@ -1910,7 +1910,7 @@ public class SettingsActivity extends Activity {
         opts.setOrientation(LinearLayout.VERTICAL);
         c.addView(opts);
         Switch dn = new Switch(this);
-        dn.setText("Day and night wallpapers (sunrise / sunset, automatic)");
+        dn.setText("Day and night wallpapers, automatic (Sahyadri pictures near Pune, live terrain map elsewhere)");
         dn.setTextColor(fg);
         dn.setTextSize(15);
         dn.setPadding(0, dp(12), 0, dp(4));
