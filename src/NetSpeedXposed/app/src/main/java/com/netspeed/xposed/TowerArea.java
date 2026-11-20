@@ -171,8 +171,13 @@ final class TowerArea {
 
     private static void placeName(Context ctx) {
         android.location.Location me = TowerDb.myLocation(ctx);
-        if (me == null) return;
-        double[] p = {me.getLatitude(), me.getLongitude()};
+        double[] p;
+        if (me != null) p = new double[]{me.getLatitude(), me.getLongitude()};
+        else {
+            double[] lk = TowerDb.lastKnown(ctx);   // no fresh fix: name the last real one
+            if (lk == null) return;
+            p = new double[]{lk[0], lk[1]};
+        }
         String k = String.format(Locale.US, "%.3f,%.3f", p[0], p[1]);
         String n = NAMES.get(k);
         if (n == null) n = geocode(ctx, k, p);

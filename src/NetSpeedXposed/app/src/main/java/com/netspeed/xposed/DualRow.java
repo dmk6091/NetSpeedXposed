@@ -2719,6 +2719,9 @@ final class DualRow {
             rb.amps = amps;
             rb.watts = watts;
             rb.powerColor = Float.isNaN(amps) ? color : powerColor(color);
+            try {   // no fresh fix: the last real one beats the built-in default
+                if (TowerDb.myLocation(ctx) == null) { double[] k = TowerDb.lastKnown(ctx); if (k != null) lastLatLon = new double[]{k[0], k[1]}; }
+            } catch (Throwable ignored) { }
             rb.latLon = lastLatLon;
             rb.gpu = gpuTemp;
             rb.ghz = cpuGhz;
