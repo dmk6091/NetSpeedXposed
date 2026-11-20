@@ -20,7 +20,7 @@ final class TerrainMaker {
     private static final float S = 2f;                    // grid pixel -> screen pixels
     static final int LAND = 0, FOREST = 1, WATER = 2, GRASS = 3, SCRUB = 4;
 
-    private static byte[] get(String url, int tries) {
+    static byte[] get(String url, int tries) {
         for (int t = 0; t < tries; t++) {
             try {
                 java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
@@ -349,16 +349,16 @@ final class TerrainMaker {
         cv.drawCircle(px, py, 17 * u, dot);
 
         if (info != null) { info.forestKm = bestF; info.wetKm = bestW; info.wetCount = wetN; }
-        if (card) drawCard(cv, W, H, lat, lon, day, faultTxt, bestF, bestW, info, mx - mn);
+        if (card) drawCard(c, cv, W, H, lat, lon, day, faultTxt, bestF, bestW, info, mx - mn);
         drawLegend(cv, W, H, day);
         Paint at = new Paint(Paint.ANTI_ALIAS_FLAG);
         at.setColor(day ? Color.argb(210, 40, 40, 30) : Color.argb(190, 255, 255, 255));
         at.setTextSize(W * 0.019f);
-        cv.drawText("Elevation: Mapzen / AWS terrain tiles · Forest, grass, scrub, water, wetlands, mangroves: © OpenStreetMap contributors · Faults: GSI", W * 0.06f, H * 0.80f, at);
+        cv.drawText("Elevation: Mapzen / AWS terrain tiles · Land cover: © OpenStreetMap · Plants: iNaturalist · Faults: GSI", W * 0.06f, H * 0.80f, at);
         return bmp;
     }
 
-    private static String overpass(String q) {
+    static String overpass(String q) {
         String[] hosts = {"https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter", "https://overpass.kumi.systems/api/interpreter"};
         for (String h : hosts) {
             try {
@@ -408,7 +408,7 @@ final class TerrainMaker {
         }
     }
 
-    private static void drawCard(Canvas cv, int W, int H, double lat, double lon, boolean day, String fault, double forestKm, double wetKm, Info info, double relief) {
+    private static void drawCard(Context ctx, Canvas cv, int W, int H, double lat, double lon, boolean day, String fault, double forestKm, double wetKm, Info info, double relief) {
         String rock = Geo.rockText(lat, lon), soil = Geo.soilText(lat, lon);
         double el = WallpaperMaker.elevation(lat, lon);
         String place = "";
@@ -423,11 +423,20 @@ final class TerrainMaker {
             }
         } catch (Throwable ignored) { }
         if (info != null) info.place = place;
+        String habEco = "no data", habPlants = "no records nearby";
+        try {
+            Habitat.Data hd = Habitat.load(ctx, lat, lon, false);
+            if (hd != null) {
+                if (!hd.eco.isEmpty()) habEco = hd.eco;
+                if (!hd.names.isEmpty()) habPlants = android.text.TextUtils.join(" \u00b7 ", hd.top(4));
+            }
+        } catch (Throwable ignored) { }
         String[][] rows = {{"Rock", rock.isEmpty() ? "no data" : rock}, {"Soil", soil.isEmpty() ? "no data" : soil},
                 {"Fault", fault.isEmpty() ? "none in the list" : fault},
                 {"Forest", Double.isNaN(forestKm) ? "none in view" : String.format(Locale.US, "%.0f km away", forestKm)},
                 {"Wetland", Double.isNaN(wetKm) ? "none mapped in view" : String.format(Locale.US, "%.0f km away", wetKm)},
-                {"Relief", Double.isNaN(el) ? "no data" : Math.round(el) + " m above sea level"}};
+                {"Relief", Double.isNaN(el) ? "no data" : Math.round(el) + " m above sea level"},
+                {"Region", habEco}, {"Plants", habPlants}};
         float u = W / 1080f;
         float left = 150 * u, right = W - 150 * u, top = H * 0.545f, rowH = 54 * u, head = 66 * u;
         float bottom = top + head + rows.length * rowH * 1.2f + 20 * u;
@@ -451,7 +460,7 @@ final class TerrainMaker {
             t.setColor(Color.argb(255, 150, 165, 180));
             cv.drawText(r[0], left + 28 * u, y, t);
             t.setColor(r[0].equals("Fault") ? Color.rgb(255, 140, 120) : r[0].equals("Forest") ? Color.rgb(140, 225, 150)
-                    : r[0].equals("Wetland") ? Color.rgb(120, 235, 205) : Color.rgb(224, 230, 236));
+                    : r[0].equals("Wetland") ? Color.rgb(120, 235, 205) : r[0].equals("Plants") || r[0].equals("Region") ? Color.rgb(140, 225, 150) : Color.rgb(224, 230, 236));
             String v = r[1];
             while (v.length() > 4 && t.measureText(v) > maxW) v = v.substring(0, v.length() - 2).trim();
             if (!v.equals(r[1])) v += "…";

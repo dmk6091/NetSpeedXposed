@@ -4314,6 +4314,9 @@ final class DualRow {
                     EarthLine.background("river", () -> {
                         try { if (Cfg.b(Cfg.RIVER, Cfg.D_RIVER)) RiverFlow.tick(u -> httpGet(u), wla, wlo); } catch (Throwable ignored) { }
                     });
+                    if (Cfg.b(Cfg.EL_HABITAT, Cfg.D_EL_HABITAT)) EarthLine.background("habitat", () -> {
+                        try { Habitat.tick(ctx, wla, wlo); } catch (Throwable ignored) { }
+                    });
                     EarthLine.background("earth", () -> {
                         try {
                             EarthLine.tick(u -> httpGet(u), wla, wlo, Cfg.b(Cfg.EL_RAIN, Cfg.D_EL_RAIN), Cfg.b(Cfg.EL_LAND, Cfg.D_EL_LAND),

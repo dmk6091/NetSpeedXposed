@@ -102,6 +102,7 @@ final class Cfg {
     static final String EL_EARTH = "el_earth"; static final boolean D_EL_EARTH = true;    // ground temperature, sun height, district
     static final String EL_ROCK = "el_rock";   static final boolean D_EL_ROCK = true;     // bedrock type (Macrostrat)
     static final String EL_SOIL = "el_soil";   static final boolean D_EL_SOIL = true;     // soil texture (SoilGrids)
+    static final String EL_HABITAT = "el_habitat"; static final boolean D_EL_HABITAT = true;   // ecoregion, land cover and plants
     static final String EL_WETLAND = "el_wetland"; static final boolean D_EL_WETLAND = true;   // nearest wetland and Ramsar site
     static final String EL_POWER = "el_power"; static final boolean D_EL_POWER = true;   // nearest power line, substation
     static final String EL_SPEED = "el_speed"; static final int D_EL_SPEED = 5;            // seconds per frame

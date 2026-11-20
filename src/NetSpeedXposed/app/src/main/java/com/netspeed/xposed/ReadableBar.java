@@ -1715,8 +1715,8 @@ final class ReadableBar extends View {
                 // rotating frames: each shows the place, then one group of earth facts; empty frames are skipped
                 java.util.List<String> fr = new java.util.ArrayList<>();
                 double fla = fix != null ? fix[0] : latLon[0], flo = fix != null ? fix[1] : latLon[1];
-                java.util.List<String>[] fs = new java.util.List[10];
-                for (int q = 0; q < 10; q++) fs[q] = new java.util.ArrayList<>();
+                java.util.List<String>[] fs = new java.util.List[11];
+                for (int q = 0; q < 11; q++) fs[q] = new java.util.ArrayList<>();
                 if (Cfg.b(Cfg.RIVER, Cfg.D_RIVER)) {
                     String rv0 = RiverFlow.text(), dm0 = EarthLine.dam;
                     if (rv0 != null && !rv0.isEmpty() && dm0 != null && !dm0.isEmpty()) {
@@ -1734,6 +1734,23 @@ final class ReadableBar extends View {
                         }
                     } catch (Throwable ignored) { }
                 }
+                try {   // forest region, what the map shows around you, and the plants people have logged here
+                    Habitat.Data hb = Habitat.cur;
+                    if (Cfg.b(Cfg.EL_HABITAT, Cfg.D_EL_HABITAT) && hb != null && Dam.km(fla, flo, hb.lat, hb.lon) <= 8) {
+                        if (!hb.eco.isEmpty()) addFrame(fs[10], "\uD83C\uDF33 " + hb.eco);
+                        if (hb.coverOk) {
+                            String ct = hb.coverText(4);
+                            if (!ct.isEmpty()) addFrame(fs[10], ("\uD83C\uDF33 " + ct.replace(" \u00b7 ", "\u0001")).split("\u0001"));
+                        }
+                        if (!Double.isNaN(hb.leafKm) && hb.leafKm <= 15 && !hb.leaf.isEmpty())
+                            addFrame(fs[10], "\uD83C\uDF33 Forest " + Math.round(hb.leafKm) + " km " + hb.leafDir, hb.leaf);
+                        if (!hb.names.isEmpty()) {
+                            java.util.List<String> pn = hb.top(5);
+                            pn.set(0, "\uD83C\uDF3F " + pn.get(0));
+                            addFrame(fs[10], pn.toArray(new String[0]));
+                        }
+                    }
+                } catch (Throwable ignored) { }
                 if (Cfg.b(Cfg.EL_RAIN, Cfg.D_EL_RAIN)) addFrame(fs[1], EarthLine.rain);
                 if (Cfg.b(Cfg.EL_SOIL, Cfg.D_EL_SOIL) && !EarthLine.soilType.isEmpty()) addFrame(fs[2], "\uD83C\uDF31 " + EarthLine.soilType, EarthLine.soilMoist, EarthLine.soilSplit);
                 if (Cfg.b(Cfg.EL_ROCK, Cfg.D_EL_ROCK) && !EarthLine.rockType.isEmpty()) addFrame(fs[2], "\uD83E\uDEA8 " + EarthLine.rockType, EarthLine.rockAge, EarthLine.rockUnit);
@@ -1786,7 +1803,7 @@ final class ReadableBar extends View {
                     }
                 } catch (Throwable ignored) { }
                 // order presets over: 0 river 1 rain 2 soil 3 power 4 land 5 quake 6 earth 7 dam 8 faults 9 wetland
-                final int[][] ORD = {{0, 7, 9, 1, 2, 3, 4, 5, 6, 8}, {6, 4, 0, 7, 9, 1, 2, 3, 5, 8}, {0, 7, 9, 1, 2, 4, 3, 5, 6, 8}, {5, 1, 0, 7, 9, 3, 4, 2, 6, 8}};
+                final int[][] ORD = {{0, 7, 9, 1, 2, 10, 3, 4, 5, 6, 8}, {6, 4, 0, 7, 9, 10, 1, 2, 3, 5, 8}, {0, 7, 9, 10, 1, 2, 4, 3, 5, 6, 8}, {5, 1, 0, 7, 9, 3, 4, 2, 10, 6, 8}};
                 int[] od = ORD[Math.max(0, Math.min(ORD.length - 1, Cfg.i(Cfg.EL_ORDER, Cfg.D_EL_ORDER)))];
                 for (int q : od) fr.addAll(fs[q]);
                 if (fr.isEmpty()) addFrame(fr, alt, cl);

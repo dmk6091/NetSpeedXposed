@@ -545,6 +545,8 @@ public class SettingsActivity extends Activity {
                 Cfg.EL_SOIL, Cfg.D_EL_SOIL);
         toggle(c, "Rock frame", "Place line frame: the kind of bedrock under you (basalt, granite, sandstone...) with its age, from Macrostrat's world geology map. Coarse: a regional rock type, not a local survey",
                 Cfg.EL_ROCK, Cfg.D_EL_ROCK);
+        toggle(c, "Habitat and plants frames", "Place line frames: the forest region you are in, what the map shows within 5 km (built-up, farmland, forest, grassland...) and the plants people have logged within 10 km (iNaturalist). Records are what was logged, not a full survey",
+                Cfg.EL_HABITAT, Cfg.D_EL_HABITAT);
         toggle(c, "Wetland frame", "Place line frames: the nearest wetland or lake within 25 km, and the nearest Ramsar site within 200 km. From OpenStreetMap, so only what mappers have drawn; a Ramsar site shows only if OpenStreetMap has it under its official name",
                 Cfg.EL_WETLAND, Cfg.D_EL_WETLAND);
         toggle(c, "Power frame", "Place line frame: nearest power line (voltage, operator if mapped) and substation within 5 km, from OpenStreetMap. Only what mappers have drawn",
@@ -1574,6 +1576,7 @@ public class SettingsActivity extends Activity {
         infoLat = lat; infoLon = lon;
         beachCard();
         wetlandCard();
+        habitatCard();
         riverCard(E);
         mapCard();
         soilCard();
@@ -1879,6 +1882,42 @@ public class SettingsActivity extends Activity {
     }
 
     /** Nearest wetland / marsh / Ramsar site (OpenStreetMap), filled in after the lookup. */
+    /** Forest region, land cover within 5 km and the plants people have logged within 10 km. */
+    private void habitatCard() {
+        final LinearLayout c = infoCard("\uD83C\uDF33", "Habitat and flora", "ecoregion, map land cover and iNaturalist plant records");
+        final double la = infoLat, lo = infoLon;
+        final TextView t = text(Double.isNaN(la) ? "No position yet" : "Looking up\u2026", 13, sub);
+        c.addView(t);
+        if (Double.isNaN(la)) return;
+        new Thread(() -> {
+            String r;
+            try {
+                Habitat.Data d = Habitat.load(getApplicationContext(), la, lo, false);
+                StringBuilder sb = new StringBuilder();
+                if (!d.eco.isEmpty()) sb.append("REGION\n").append(d.eco).append(d.biome.isEmpty() ? "" : "\n" + d.biome).append("\nBroad type for the area, not the patch next to you.\n\n");
+                if (d.coverOk) {
+                    sb.append("MAP LAND COVER WITHIN 5 KM\n");
+                    Integer[] ix = {0, 1, 2, 3, 4, 5, 6};
+                    java.util.Arrays.sort(ix, (a, b) -> Float.compare(d.cover[b], d.cover[a]));
+                    for (int i : ix) if (d.cover[i] >= 1) sb.append(Habitat.COVER[i]).append(' ').append(Math.round(d.cover[i])).append("%   ");
+                    sb.append("\nColours of the OpenStreetMap tiles; \"open land\" means nothing mapped there.\n");
+                    if (!Double.isNaN(d.leafKm) && !d.leaf.isEmpty()) sb.append("Nearest tagged forest: ").append(Math.round(d.leafKm)).append(" km ").append(d.leafDir).append(" · ").append(d.leaf).append('\n');
+                    sb.append('\n');
+                }
+                if (!d.names.isEmpty()) {
+                    sb.append("PLANTS LOGGED WITHIN 10 KM (").append(d.species).append(" species)\n");
+                    for (int i = 0; i < d.names.size(); i++) sb.append(d.names.get(i)).append("  ·  ").append(d.sci.get(i)).append("  ·  ").append(d.counts.get(i)).append(" records\n");
+                    sb.append("What people logged, not a full survey. One species is capped so a single project cannot dominate.");
+                }
+                r = sb.length() == 0 ? "No data from the servers just now. Try again later." : sb.toString().trim();
+            } catch (Throwable e) {
+                r = "Couldn't reach the servers: " + e.getClass().getSimpleName();
+            }
+            final String fr = r;
+            runOnUiThread(() -> { t.setText(fr); t.setTextSize(14); t.setTextColor(fg); });
+        }).start();
+    }
+
     private void wetlandCard() {
         final LinearLayout c = infoCard("\uD83E\uDD86", "Wetlands near you", "OpenStreetMap, plus the Ramsar list of India");
         final double la = infoLat, lo = infoLon;
