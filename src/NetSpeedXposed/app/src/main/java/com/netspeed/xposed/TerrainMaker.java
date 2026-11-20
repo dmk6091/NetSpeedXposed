@@ -175,7 +175,7 @@ final class TerrainMaker {
             float k = day ? 0.62f + 0.62f * shade : 0.50f + 0.72f * shade;
             int[] cc = grad(pal, Math.max(0f, e2[i]));
             float r = cc[0] * k, g = cc[1] * k, b = cc[2] * k;
-            if (cls[i] == WATER) {
+            if (cls[i] == WATER || e2[i] < -1f) {
                 float wk = day ? 0.92f + 0.10f * shade : 0.9f + 0.2f * shade;
                 if (day) { r = 70 * wk; g = 140 * wk; b = 210 * wk; } else { r = 18 * wk; g = 54 * wk; b = 104 * wk; }
             } else {
