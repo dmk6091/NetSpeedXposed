@@ -2938,6 +2938,7 @@ final class DualRow {
                 try {
                     android.location.Location l = TowerDb.myLocation(ctx);
                     if (l != null) lastLatLon = new double[]{l.getLatitude(), l.getLongitude()};
+                    else { double[] k = TowerDb.lastKnown(ctx); if (k != null) lastLatLon = new double[]{k[0], k[1]}; }
                 } catch (Throwable ignored) { }
                 double[] sun = SunTimes.today(lastLatLon[0], lastLatLon[1]);
                 java.util.Calendar nc = java.util.Calendar.getInstance();
@@ -3092,7 +3093,7 @@ final class DualRow {
 
         // ---- Row 2: date, timezone, week, day of year, sunrise -> sunset.
 
-        double[] lastLatLon = {18.62, 73.80};   // Pune until the phone knows better
+        double[] lastLatLon = {18.62, 73.80};   // the last real fix if there is one, else Pune, until the phone knows better
         String dateLevelLog = "";
 
         android.text.SpannableStringBuilder dateText(int level, int color) {
@@ -3125,6 +3126,7 @@ final class DualRow {
                     try {
                         android.location.Location l = TowerDb.myLocation(ctx);
                         if (l != null) lastLatLon = new double[]{l.getLatitude(), l.getLongitude()};
+                    else { double[] k = TowerDb.lastKnown(ctx); if (k != null) lastLatLon = new double[]{k[0], k[1]}; }
                     } catch (Throwable ignored) { }
                     double[] sun = SunTimes.today(lastLatLon[0], lastLatLon[1]);
                     sb.append(" \u00B7 ");
@@ -4293,6 +4295,7 @@ final class DualRow {
             try {
                 android.location.Location l0 = TowerDb.myLocation(ctx);
                 if (l0 != null) wxLatLon = new double[]{l0.getLatitude(), l0.getLongitude()};
+                else { double[] k = TowerDb.lastKnown(ctx); if (k != null) { wxLatLon = new double[]{k[0], k[1]}; wxHaveFix = true; } }
                 fetchMetar(wxLatLon[0], wxLatLon[1]);
             } catch (Throwable t) {
                 logOnce("metar", "airport weather failed (will retry): " + t);
@@ -4300,6 +4303,7 @@ final class DualRow {
             try {
                 android.location.Location l = TowerDb.myLocation(ctx);
                 if (l != null) wxLatLon = new double[]{l.getLatitude(), l.getLongitude()};
+                else { double[] k = TowerDb.lastKnown(ctx); if (k != null) { wxLatLon = new double[]{k[0], k[1]}; wxHaveFix = true; } }
                 wxHaveFix = wxHaveFix || l != null;
                 String ll = String.format(Locale.US, "latitude=%.4f&longitude=%.4f", wxLatLon[0], wxLatLon[1]);
                 {   // the map and soil lookups can take a minute: own thread, so the weather never waits for them

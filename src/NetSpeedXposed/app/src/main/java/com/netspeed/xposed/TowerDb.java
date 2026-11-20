@@ -79,6 +79,9 @@ final class TowerDb {
         if (Double.isNaN(t[0]) || t[2] > MAX_ACCURACY_M) return -1;
         Location me = myLocation(ctx);
         if (me == null) return -1;
+        // a fix that is old (you may have moved a few km) or loose would give a wrong distance: show none instead
+        long fixAge = (SystemClock.elapsedRealtimeNanos() - me.getElapsedRealtimeNanos()) / 1_000_000;
+        if (fixAge > 3 * 60_000 || (me.hasAccuracy() && me.getAccuracy() > 500)) return -1;
         float[] res = new float[1];
         Location.distanceBetween(me.getLatitude(), me.getLongitude(), t[0], t[1], res);
         return Math.round(res[0]);
@@ -221,6 +224,44 @@ final class TowerDb {
 
     private static Location sLoc;
     private static long sLocRequested = 0;
+    private static int sLocMisses = 0;      // requests in a row that brought no fix (indoors, no sky)
+    private static long sSavedAt = 0;
+    private static double[] sLast;          // {lat, lon, accuracy, epochMs} of the last real fix, also kept on disk
+
+    private static File lastFile(Context ctx) { return new File(ctx.getCacheDir(), "netspeed_lastfix.txt"); }
+
+    private static void rememberFix(Context ctx, Location l) {
+        try {
+            long now = System.currentTimeMillis();
+            sLast = new double[]{l.getLatitude(), l.getLongitude(), l.hasAccuracy() ? l.getAccuracy() : 0, now};
+            if (now - sSavedAt < 60_000) return;
+            sSavedAt = now;
+            try (FileWriter w = new FileWriter(lastFile(ctx))) {
+                w.write(sLast[0] + " " + sLast[1] + " " + sLast[2] + " " + (long) sLast[3]);
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    /**
+     * The last real fix this phone had, however old (up to 14 days): {lat, lon, ageMinutes}, or null. For places where an
+     * approximate position beats the built-in default (weather, sun times, nearest dam); never for distances to towers.
+     */
+    static synchronized double[] lastKnown(Context ctx) {
+        try {
+            if (sLast == null) {
+                File f = lastFile(ctx);
+                if (!f.exists()) return null;
+                String[] p = new String(java.nio.file.Files.readAllBytes(f.toPath()), "UTF-8").trim().split(" ");
+                if (p.length < 4) return null;
+                sLast = new double[]{Double.parseDouble(p[0]), Double.parseDouble(p[1]), Double.parseDouble(p[2]), Double.parseDouble(p[3])};
+            }
+            double ageMin = (System.currentTimeMillis() - sLast[3]) / 60000.0;
+            if (ageMin > 14 * 24 * 60) return null;
+            return new double[]{sLast[0], sLast[1], ageMin};
+        } catch (Throwable t) {
+            return null;
+        }
+    }
     private static boolean sPassive = false;
 
     /**
@@ -266,13 +307,17 @@ final class TowerDb {
             }
             long ageMs = best == null ? Long.MAX_VALUE
                     : (SystemClock.elapsedRealtimeNanos() - best.getElapsedRealtimeNanos()) / 1_000_000;
-            // Stale: ask once a minute for a fresh, low-power (network) fix.
-            if (ageMs > 60_000 && SystemClock.elapsedRealtime() - sLocRequested > 60_000) {
+            if (best != null && ageMs <= 10 * 60_000) { sLocMisses = 0; rememberFix(ctx, best); }
+            // Stale: ask for a fresh fix once a minute; after misses in a row (indoors) back off to every 5 minutes
+            // so GPS is not switched on all night for nothing.
+            long gap = sLocMisses >= 3 ? 300_000 : 60_000;
+            if (ageMs > 60_000 && SystemClock.elapsedRealtime() - sLocRequested > gap) {
                 sLocRequested = SystemClock.elapsedRealtime();
                 String provider = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
                         ? LocationManager.NETWORK_PROVIDER : LocationManager.GPS_PROVIDER;
                 lm.getCurrentLocation(provider, null, ctx.getMainExecutor(), l -> {
-                    if (l != null) sLoc = l;
+                    if (l != null) { sLoc = l; sLocMisses = 0; rememberFix(ctx, l); }
+                    else sLocMisses++;
                 });
             }
             return ageMs <= 10 * 60_000 ? best : null;
