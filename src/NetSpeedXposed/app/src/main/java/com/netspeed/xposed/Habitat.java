@@ -18,7 +18,7 @@ import java.util.Locale;
 final class Habitat {
     private Habitat() {}
 
-    static final String[] COVER = {"Built-up", "Farmland", "Forest", "Grassland", "Scrub", "Water", "Open land"};
+    static final String[] COVER = {"Built-up", "Farmland", "Forest", "Grassland", "Scrub", "Water", "Open / unmapped"};
     private static final long TTL = 7L * 86400_000L;
 
     static final class Data {
@@ -129,10 +129,16 @@ final class Habitat {
             for (int[] k : rank) { if (d.names.size() >= 10) break; d.names.add(nm.get(k[2])[0]); d.sci.add(nm.get(k[2])[1]); d.counts.add(k[1]); }
         } catch (Throwable ignored) { }
         try { cover(d); } catch (Throwable ignored) { }
-        try { leaf(d); } catch (Throwable ignored) { }
         if (d.any()) {
             cur = d;
             try { save(c, d); } catch (Throwable ignored) { }
+            // the forest-patch tag lookup (Overpass) can take minutes: it fills in later and is saved again
+            final Context ac = c;
+            Thread t = new Thread(() -> {
+                try { leaf(d); if (!d.leaf.isEmpty()) save(ac, d); } catch (Throwable ignored) { }
+            }, "nsx-leaf");
+            t.setDaemon(true);
+            t.start();
         }
         return d;
     }
