@@ -18,7 +18,7 @@ final class TerrainMaker {
 
     private static final String UA = "FieldAtlas/1.0 (github.com/dmk6091/NetSpeedXposed)";
     private static final float S = 2f;                    // grid pixel -> screen pixels
-    static final int LAND = 0, FOREST = 1, WATER = 2;
+    static final int LAND = 0, FOREST = 1, WATER = 2, GRASS = 3, SCRUB = 4;
 
     private static byte[] get(String url, int tries) {
         for (int t = 0; t < tries; t++) {
@@ -57,6 +57,18 @@ final class TerrainMaker {
     static boolean isForest(int c) {
         int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
         return g - r >= 28 && g - b >= 40 && r < 190 && g > 150;
+    }
+
+    /** OSM standard grass / meadow / park green (#cdebb0 and its neighbours). */
+    static boolean isGrass(int c) {
+        int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+        return Math.abs(r - 205) <= 7 && Math.abs(g - 235) <= 7 && Math.abs(b - 176) <= 8;
+    }
+
+    /** OSM scrub (#c8d7ab). */
+    static boolean isScrub(int c) {
+        int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+        return Math.abs(r - 200) <= 5 && Math.abs(g - 215) <= 5 && Math.abs(b - 171) <= 6;
     }
 
     static boolean isWater(int c) {
@@ -126,7 +138,7 @@ final class TerrainMaker {
                                 if (gx < 0 || gx >= gw) continue;
                                 int p = pix[v * 256 + u];
                                 if (pass == 0) el[gy * gw + gx] = (((p >> 16) & 255) * 256f + ((p >> 8) & 255) + (p & 255) / 256f) - 32768f;
-                                else cls[gy * gw + gx] = isWater(p) ? (byte) WATER : isForest(p) ? (byte) FOREST : (byte) LAND;
+                                else cls[gy * gw + gx] = isWater(p) ? (byte) WATER : isForest(p) ? (byte) FOREST : isGrass(p) ? (byte) GRASS : isScrub(p) ? (byte) SCRUB : (byte) LAND;
                             }
                         }
                     }
@@ -143,6 +155,10 @@ final class TerrainMaker {
         byte[] fo = new byte[gw * gh];
         for (int i = 0; i < fo.length; i++) fo[i] = cls[i] == FOREST ? (byte) FOREST : 0;
         fo = majority(majority(fo, gw, gh, FOREST), gw, gh, FOREST);
+        byte[] gr = new byte[gw * gh], sc = new byte[gw * gh];
+        for (int i = 0; i < gr.length; i++) { gr[i] = cls[i] == GRASS ? (byte) GRASS : 0; sc[i] = cls[i] == SCRUB ? (byte) SCRUB : 0; }
+        gr = majority(gr, gw, gh, GRASS);
+        sc = majority(sc, gw, gh, SCRUB);
 
         // smooth elevation (two box passes), then gradient
         float[] e2 = el.clone(), tmp = new float[el.length];
@@ -184,6 +200,15 @@ final class TerrainMaker {
                     float fr = day ? 52 : 20, fg = day ? 128 : 74, fb = day ? 62 : 40;
                     r = lerp(r, fr * fk, 0.82f); g = lerp(g, fg * fk, 0.82f); b = lerp(b, fb * fk, 0.82f);
                 }
+                if (fo[i] != FOREST && gr[i] == GRASS) {      // grassland and parks: light yellow-green
+                    float gk = day ? 0.75f + 0.45f * shade : 0.6f + 0.8f * shade;
+                    float fr = day ? 176 : 70, fg = day ? 206 : 112, fb = day ? 92 : 44;
+                    r = lerp(r, fr * gk, 0.6f); g = lerp(g, fg * gk, 0.6f); b = lerp(b, fb * gk, 0.6f);
+                } else if (fo[i] != FOREST && sc[i] == SCRUB) {   // scrub: olive
+                    float gk = day ? 0.7f + 0.45f * shade : 0.6f + 0.8f * shade;
+                    float fr = day ? 150 : 76, fg = day ? 146 : 84, fb = day ? 74 : 40;
+                    r = lerp(r, fr * gk, 0.55f); g = lerp(g, fg * gk, 0.55f); b = lerp(b, fb * gk, 0.55f);
+                }
                 // contours
                 float a = e2[i], rr = e2[y * gw + xp], dd = e2[yp * gw + x];
                 int la = (int) Math.floor(a / step), lr = (int) Math.floor(rr / step), ld = (int) Math.floor(dd / step);
@@ -216,21 +241,26 @@ final class TerrainMaker {
 
         // wetlands (OpenStreetMap, Overpass): best effort
         double halfLat = (H / S * mpp / 2000.0) / 111.2, halfLon = (W / S * mpp / 2000.0) / (111.3 * Math.cos(Math.toRadians(lat)));
-        int wetN = 0;
+        int wetN = 0, mangN = 0;
         double bestW = Double.NaN;
         float wbx = 0, wby = 0;
         try {
-            String q = String.format(Locale.US, "[out:json][timeout:25][maxsize:60000000];(way[natural=wetland](%.4f,%.4f,%.4f,%.4f);relation[natural=wetland](%.4f,%.4f,%.4f,%.4f););out geom qt;",
-                    lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon);
+            String q = String.format(Locale.US, "[out:json][timeout:25][maxsize:60000000];(way[natural=wetland](%.4f,%.4f,%.4f,%.4f);relation[natural=wetland](%.4f,%.4f,%.4f,%.4f);way[wetland=mangrove][natural!=wetland](%.4f,%.4f,%.4f,%.4f););out geom qt;",
+                    lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon);
             String js = overpass(q);
             if (js != null) {
                 Paint wp = new Paint(Paint.ANTI_ALIAS_FLAG);
                 wp.setStyle(Paint.Style.FILL);
-                wp.setColor(day ? Color.argb(185, 30, 170, 150) : Color.argb(150, 70, 225, 170));
+                final int wetCol = day ? Color.argb(185, 30, 170, 150) : Color.argb(150, 70, 225, 170);
+                final int mangCol = day ? Color.argb(225, 120, 60, 150) : Color.argb(215, 200, 120, 235);   // mangrove: purple, so it is not mistaken for forest or marsh
                 org.json.JSONArray els = new org.json.JSONObject(js).getJSONArray("elements");
                 double bd = 1e18;
                 for (int i = 0; i < els.length(); i++) {
                     org.json.JSONObject e = els.getJSONObject(i);
+                    org.json.JSONObject tg = e.optJSONObject("tags");
+                    boolean mang = tg != null && ("mangrove".equals(tg.optString("wetland")) || "mangrove".equals(tg.optString("leaf_type")));
+                    wp.setColor(mang ? mangCol : wetCol);
+                    if (mang) mangN++;
                     List<org.json.JSONArray> rings = new ArrayList<>();
                     if (e.has("geometry")) rings.add(e.getJSONArray("geometry"));
                     else if (e.has("members")) {
@@ -324,7 +354,7 @@ final class TerrainMaker {
         Paint at = new Paint(Paint.ANTI_ALIAS_FLAG);
         at.setColor(day ? Color.argb(210, 40, 40, 30) : Color.argb(190, 255, 255, 255));
         at.setTextSize(W * 0.019f);
-        cv.drawText("Elevation: Mapzen / AWS terrain tiles · Forest, water, wetlands: © OpenStreetMap contributors · Faults: GSI", W * 0.06f, H * 0.80f, at);
+        cv.drawText("Elevation: Mapzen / AWS terrain tiles · Forest, grass, scrub, water, wetlands, mangroves: © OpenStreetMap contributors · Faults: GSI", W * 0.06f, H * 0.80f, at);
         return bmp;
     }
 
@@ -356,23 +386,25 @@ final class TerrainMaker {
 
     private static void drawLegend(Canvas cv, int W, int H, boolean day) {
         float u = W / 1080f;
-        String[] names = {"Forest", "Marsh / wetland", "Water", "Fault line"};
-        int[] cols = day ? new int[]{Color.rgb(52, 128, 62), Color.rgb(30, 170, 150), Color.rgb(70, 140, 210), Color.rgb(210, 40, 30)}
-                : new int[]{Color.rgb(20, 74, 40), Color.rgb(70, 225, 170), Color.rgb(18, 54, 104), Color.rgb(255, 96, 72)};
-        float lx = 60 * u, ly = H * 0.185f, rh = 40 * u;
+        String[] names = {"Forest", "Grassland", "Scrub", "Marsh / swamp", "Mangrove", "Water", "Fault line"};
+        int[] cols = day ? new int[]{Color.rgb(52, 128, 62), Color.rgb(176, 206, 92), Color.rgb(150, 146, 74), Color.rgb(30, 170, 150), Color.rgb(120, 60, 150), Color.rgb(70, 140, 210), Color.rgb(210, 40, 30)}
+                : new int[]{Color.rgb(20, 74, 40), Color.rgb(70, 112, 44), Color.rgb(76, 84, 40), Color.rgb(70, 225, 170), Color.rgb(200, 120, 235), Color.rgb(18, 54, 104), Color.rgb(255, 96, 72)};
+        float lx = 60 * u, ly = H * 0.185f, rh = 40 * u, colW = 330 * u;
+        int rows = 4;
         Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
         bg.setColor(day ? Color.argb(215, 250, 248, 238) : Color.argb(190, 10, 14, 18));
-        cv.drawRoundRect(new RectF(lx - 20 * u, ly - 22 * u, lx + 400 * u, ly + names.length * rh + 4 * u), 16 * u, 16 * u, bg);
+        cv.drawRoundRect(new RectF(lx - 20 * u, ly - 22 * u, lx + 2 * colW - 40 * u, ly + rows * rh + 4 * u), 16 * u, 16 * u, bg);
         Paint t = new Paint(Paint.ANTI_ALIAS_FLAG);
         t.setTextSize(24 * u);
         t.setColor(day ? Color.rgb(30, 30, 25) : Color.rgb(224, 230, 236));
         Paint sw = new Paint(Paint.ANTI_ALIAS_FLAG);
         for (int i = 0; i < names.length; i++) {
-            float y = ly + i * rh + 14 * u;
+            float x0 = lx + (i / rows) * colW;
+            float y = ly + (i % rows) * rh + 14 * u;
             sw.setColor(cols[i]);
-            if (i == 3) { sw.setStrokeWidth(5 * u); cv.drawLine(lx, y, lx + 34 * u, y, sw); }
-            else cv.drawRect(lx, y - 10 * u, lx + 34 * u, y + 10 * u, sw);
-            cv.drawText(names[i], lx + 52 * u, y + 8 * u, t);
+            if (i == names.length - 1) { sw.setStrokeWidth(5 * u); cv.drawLine(x0, y, x0 + 34 * u, y, sw); }
+            else cv.drawRect(x0, y - 10 * u, x0 + 34 * u, y + 10 * u, sw);
+            cv.drawText(names[i], x0 + 52 * u, y + 8 * u, t);
         }
     }
 
