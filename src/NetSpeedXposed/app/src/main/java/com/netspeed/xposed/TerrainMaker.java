@@ -427,7 +427,7 @@ final class TerrainMaker {
         try {
             Habitat.Data hd = Habitat.load(ctx, lat, lon, false);
             if (hd != null) {
-                if (!hd.eco.isEmpty()) habEco = hd.eco;
+                if (!hd.region().isEmpty()) habEco = hd.region();
                 if (!hd.names.isEmpty()) habPlants = android.text.TextUtils.join(" \u00b7 ", hd.top(4));
             }
         } catch (Throwable ignored) { }

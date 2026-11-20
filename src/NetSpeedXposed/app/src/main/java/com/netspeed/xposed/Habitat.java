@@ -33,6 +33,25 @@ final class Habitat {
         float[] cover = new float[7];
         boolean coverOk;
 
+        /** The biome in few words, for the place line and the wallpaper: "Dry broadleaf forest region". Falls back to the ecoregion name. */
+        String region() {
+            String b = biome.toLowerCase(Locale.ROOT);
+            if (b.isEmpty()) return eco;
+            if (b.contains("dry broadleaf")) return "Dry broadleaf forest region";
+            if (b.contains("moist broadleaf")) return "Moist broadleaf forest region";
+            if (b.contains("flooded")) return "Flooded grassland region";
+            if (b.contains("montane grass")) return "Mountain grassland region";
+            if (b.contains("grassland")) return "Grassland and scrub region";
+            if (b.contains("mangrove")) return "Mangrove region";
+            if (b.contains("desert")) return "Desert and dry scrub region";
+            if (b.contains("coniferous") || b.contains("conifer")) return "Conifer forest region";
+            if (b.contains("temperate broadleaf")) return "Temperate mixed forest region";
+            if (b.contains("boreal")) return "Boreal forest region";
+            if (b.contains("tundra")) return "Tundra region";
+            if (b.contains("mediterranean")) return "Mediterranean scrub region";
+            return biome;
+        }
+
         boolean any() { return !eco.isEmpty() || !names.isEmpty() || coverOk; }
 
         /** "Built-up 42% · Farmland 24% · Forest 14% · Grassland 11%": the biggest shares, at least 3%. */

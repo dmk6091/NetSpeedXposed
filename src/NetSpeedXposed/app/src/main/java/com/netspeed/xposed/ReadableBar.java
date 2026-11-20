@@ -1737,7 +1737,7 @@ final class ReadableBar extends View {
                 try {   // forest region, what the map shows around you, and the plants people have logged here
                     Habitat.Data hb = Habitat.cur;
                     if (Cfg.b(Cfg.EL_HABITAT, Cfg.D_EL_HABITAT) && hb != null && Dam.km(fla, flo, hb.lat, hb.lon) <= 8) {
-                        if (!hb.eco.isEmpty()) addFrame(fs[10], "\uD83C\uDF33 " + hb.eco);
+                        if (!hb.region().isEmpty()) addFrame(fs[10], "\uD83C\uDF33 " + hb.region());
                         if (hb.coverOk) {
                             String ct = hb.coverText(4);
                             if (!ct.isEmpty()) addFrame(fs[10], ("\uD83C\uDF33 " + ct.replace(" \u00b7 ", "\u0001")).split("\u0001"));

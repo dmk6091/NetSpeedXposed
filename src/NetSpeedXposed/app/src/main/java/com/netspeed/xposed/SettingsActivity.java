@@ -1894,7 +1894,7 @@ public class SettingsActivity extends Activity {
             try {
                 Habitat.Data d = Habitat.load(getApplicationContext(), la, lo, false);
                 StringBuilder sb = new StringBuilder();
-                if (!d.eco.isEmpty()) sb.append("REGION\n").append(d.eco).append(d.biome.isEmpty() ? "" : "\n" + d.biome).append("\nBroad type for the area, not the patch next to you.\n\n");
+                if (!d.region().isEmpty()) sb.append("REGION\n").append(d.region()).append(d.biome.isEmpty() ? "" : "\nBiome: " + d.biome).append(d.eco.isEmpty() ? "" : "\nEcoregion on the map: " + d.eco).append("\nBroad type for the area, not the patch next to you. The ecoregion name can sound odd for your place; the biome is the safer reading.\n\n");
                 if (d.coverOk) {
                     sb.append("MAP LAND COVER WITHIN 5 KM\n");
                     Integer[] ix = {0, 1, 2, 3, 4, 5, 6};
