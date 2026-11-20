@@ -354,7 +354,7 @@ final class TerrainMaker {
         Paint at = new Paint(Paint.ANTI_ALIAS_FLAG);
         at.setColor(day ? Color.argb(210, 40, 40, 30) : Color.argb(190, 255, 255, 255));
         at.setTextSize(W * 0.019f);
-        cv.drawText("Elevation: Mapzen / AWS terrain tiles · Land cover: © OpenStreetMap · Plants: iNaturalist · Faults: GSI", W * 0.06f, H * 0.80f, at);
+        cv.drawText("Elevation: Mapzen / AWS terrain tiles · Land cover: © OpenStreetMap · Plants: iNaturalist · Faults: GSI", W * 0.06f, H * 0.972f, at);
         return bmp;
     }
 
