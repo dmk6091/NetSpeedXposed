@@ -42,6 +42,8 @@ final class Dam {
     static volatile String lastError = "";
     static volatile String lastHttp = "";
     static volatile String riverKeys = "";
+    /** Extra facts for a dam read from the national snapshot ("ALL:" ids): source line and flows, empty otherwise. */
+    static volatile String curSrc = "", curFlow = "";
 
     static int state(double pct) {
         return pct < 20 ? 0 : pct < 40 ? 1 : pct <= 90 ? 2 : pct <= 95 ? 3 : 4;
@@ -184,6 +186,7 @@ final class Dam {
      */
     static boolean refresh(File dir, double lat, double lon, long now) {
         triedAt = now;
+        curSrc = ""; curFlow = "";
         Res cr = null;
         Reading cg = null;
         double ck = 0;
@@ -202,6 +205,27 @@ final class Dam {
         }
         DamMh.Hit h = null;
         try { h = DamMh.find(lat, lon, now); } catch (Throwable t) { DamMh.why = "error: " + t; }
+        DamAll.Hit sn = null;
+        try {
+            java.util.List<DamAll.Hit> l = DamAll.nearest(lat, lon, 1, 100, true);
+            if (!l.isEmpty()) sn = l.get(0);
+        } catch (Throwable ignored) { }
+        double best = Math.min(cr == null ? 1e9 : ck, h == null ? 1e9 : h.km);
+        if (sn != null && sn.km < best - 2) {
+            Res r = new Res();
+            r.uid = "ALL:" + sn.name; r.name = sn.name; r.river = sn.river; r.lat = sn.lat; r.lon = sn.lon;
+            r.district = sn.state; r.approx = true;
+            Reading g = new Reading();
+            g.pct = sn.pct; g.storage = sn.pct; g.liveCap = 100; g.date = sn.date;
+            StringBuilder f = new StringBuilder();
+            if (!Double.isNaN(sn.inflow)) f.append(String.format(Locale.US, "in %.0f ", sn.inflow));
+            if (!Double.isNaN(sn.outRiver)) f.append(String.format(Locale.US, "out river %.0f ", sn.outRiver));
+            if (!Double.isNaN(sn.outCanal)) f.append(String.format(Locale.US, "out canal %.0f", sn.outCanal));
+            cur = r; curRead = g; curKm = sn.km; fetchedAt = now; lastError = "";
+            curSrc = sn.basis + " · " + sn.source + " · " + sn.date;
+            curFlow = f.toString().trim();
+            return true;
+        }
         if (h != null && (cr == null || h.km < ck - 0.5)) {
             cur = h.res; curRead = h.rd; curKm = h.km; fetchedAt = now; lastError = "";
             return true;
@@ -217,7 +241,7 @@ final class Dam {
     static boolean due(double lat, double lon, long now) {
         if (now - triedAt < 10 * 60_000L) return false;
         if (cur == null || curRead == null || now - fetchedAt > 3 * 3600_000L) return true;
-        if (cur.uid.startsWith("MH:")) return false;   // the OpenStreetMap dam is re-checked on the 3 h refresh
+        if (cur.uid.startsWith("MH:") || cur.uid.startsWith("ALL:")) return false;   // the OpenStreetMap dam is re-checked on the 3 h refresh
         Res[] n = nearest(lat, lon, 1);
         return n.length > 0 && !n[0].uid.equals(cur.uid);
     }

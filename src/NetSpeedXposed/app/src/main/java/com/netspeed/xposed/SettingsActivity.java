@@ -1312,7 +1312,8 @@ public class SettingsActivity extends Activity {
             float pct = d.getFloat("pct", 0);
             b.append(d.getString("name", "")).append("\n");
             b.append(String.format(java.util.Locale.US, "%.0f%% full: %s\n", pct, Dam.STATE_NAMES[st]));
-            b.append(String.format(java.util.Locale.US, "Live storage %.3f of %.3f BCM\n", d.getFloat("storage", 0), d.getFloat("liveCap", 0)));
+            if (d.getString("uid", "").startsWith("ALL:")) b.append(d.getString("src", "")).append(" (snapshot)\n");
+            else b.append(String.format(java.util.Locale.US, "Live storage %.3f of %.3f BCM\n", d.getFloat("storage", 0), d.getFloat("liveCap", 0)));
             if (!d.getString("river", "").isEmpty()) b.append("River: ").append(d.getString("river", "")).append("\n");
             else b.append(mh ? "River: not given by the Maharashtra source\n" : "River: not given by CWC for this dam\n");
             if (d.getFloat("frl", 0) > 0) b.append(String.format(java.util.Locale.US, "Full reservoir level %.2f m\n", d.getFloat("frl", 0)));
@@ -1468,7 +1469,9 @@ public class SettingsActivity extends Activity {
             bar.addView(fill, new LinearLayout.LayoutParams(0, dp(10), Math.max(1f, Math.min(100f, pct))));
             bar.addView(new View(this), new LinearLayout.LayoutParams(0, dp(10), Math.max(0f, 100f - pct)));
             c.addView(bar, new LinearLayout.LayoutParams(-1, dp(10)));
-            TextView sl = text(Dam.STATE_NAMES[s] + String.format(us, " · %.3f of %.3f BCM live storage", d.getFloat("storage", 0), d.getFloat("liveCap", 0)), 13, sub);
+            boolean snap = d.getString("uid", "").startsWith("ALL:");
+            TextView sl = text(Dam.STATE_NAMES[s] + (snap ? " · " + d.getString("src", "") + " (state report snapshot, not live)" + (d.getString("flow", "").isEmpty() ? "" : "\ncusecs: " + d.getString("flow", ""))
+                    : String.format(us, " · %.3f of %.3f BCM live storage", d.getFloat("storage", 0), d.getFloat("liveCap", 0))), 13, sub);
             sl.setPadding(0, dp(6), 0, dp(4));
             c.addView(sl);
             try {

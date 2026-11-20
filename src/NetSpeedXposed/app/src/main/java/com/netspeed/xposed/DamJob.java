@@ -154,6 +154,7 @@ public class DamJob extends JobService {
                 .putString("date", g.date).putFloat("ly", (float) g.ly).putBoolean("approx", r.approx).putString("rtime", g.time).putString("district", r.district)
                 .putString("hist", hist.toString()).putInt("state", st).putBoolean("steady", steady)
                 .putLong("okAt", now).putString("okDay", new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new java.util.Date(now)))
+                .putString("src", Dam.curSrc).putString("flow", Dam.curFlow)
                 .putString("err", "").putString("http", Dam.lastHttp).apply();
 
         boolean notify = SettingsProvider.prefs(c).getBoolean(Cfg.DAM_NOTIF, Cfg.D_DAM_NOTIF);
@@ -197,8 +198,9 @@ public class DamJob extends JobService {
             Intent open = new Intent(c, SettingsActivity.class).putExtra("show_dam", true)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             PendingIntent pi = PendingIntent.getActivity(c, 12, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-            String body = String.format(Locale.US, "%.3f of %.3f BCM live storage, %s away, reading %s. \"Danger\" means how full the "
-                            + "reservoir is, not a flood warning.", g.storage, g.liveCap, Dam.kmText(Dam.curKm), g.date);
+            String body = (r.uid.startsWith("ALL:") ? String.format(Locale.US, "%s, %s away. ", Dam.curSrc, Dam.kmText(Dam.curKm))
+                            : String.format(Locale.US, "%.3f of %.3f BCM live storage, %s away, reading %s. ", g.storage, g.liveCap, Dam.kmText(Dam.curKm), g.date))
+                            + "\"Danger\" means how full the reservoir is, not a flood warning.";
             Notification n = new Notification.Builder(c, danger ? CH_DANGER : CH)
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
                     .setColor(Dam.STATE_COLORS[st])
