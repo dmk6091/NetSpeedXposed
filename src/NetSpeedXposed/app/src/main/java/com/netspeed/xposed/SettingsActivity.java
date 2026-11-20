@@ -143,6 +143,7 @@ public class SettingsActivity extends Activity {
         try {
             UpdateJob.schedule(this);
             DamJob.schedule(this);
+            LocationWatch.schedule(this);
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
                 requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 41);
         } catch (Throwable ignored) { }
@@ -1405,6 +1406,22 @@ public class SettingsActivity extends Activity {
         TextView st = text("what the app knows about your place and sky right now", 13, sub);
         st.setPadding(dp(4), 0, 0, dp(10));
         infoPage.addView(st);
+        {
+            final android.content.SharedPreferences lw = getSharedPreferences(DamJob.PREFS, MODE_PRIVATE);
+            long at = lw.getLong("lwAt", 0);
+            final TextView pl = text(at == 0 ? "Dam, river and place data refresh when you move more than 15 km. Tap to refresh for here now."
+                    : "Showing: " + lw.getString("lwPlace", "your place") + " \u00b7 refreshed " + Math.max(0, (System.currentTimeMillis() - at) / 60000L)
+                    + " min ago \u00b7 refreshes itself when you move 15 km. Tap to refresh now.", 12, sub);
+            pl.setPadding(dp(4), 0, 0, dp(10));
+            pl.setOnClickListener(v -> {
+                pl.setText("Refreshing for your place\u2026");
+                new Thread(() -> {
+                    String r = LocationWatch.run(getApplicationContext(), true);
+                    runOnUiThread(() -> { android.widget.Toast.makeText(this, r, android.widget.Toast.LENGTH_LONG).show(); fillInfo(); });
+                }).start();
+            });
+            infoPage.addView(pl);
+        }
         java.util.List<String[]> A = new java.util.ArrayList<>(), E = new java.util.ArrayList<>(), D = new java.util.ArrayList<>(), LY = new java.util.ArrayList<>();
         double lat = Double.NaN, lon = Double.NaN;
         long feedAt = 0;

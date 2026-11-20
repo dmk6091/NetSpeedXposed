@@ -47,6 +47,11 @@
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <service
+            android:name=".LocationWatch"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <service
             android:name=".DayNight"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />

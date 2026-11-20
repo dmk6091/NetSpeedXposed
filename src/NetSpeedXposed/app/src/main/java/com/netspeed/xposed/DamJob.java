@@ -215,6 +215,6 @@ public class DamJob extends JobService {
     /** Puts the job back after a reboot or an app update. */
     public static class Boot extends BroadcastReceiver {
         @Override
-        public void onReceive(Context c, Intent i) { schedule(c); }
+        public void onReceive(Context c, Intent i) { schedule(c); LocationWatch.schedule(c); }
     }
 }
