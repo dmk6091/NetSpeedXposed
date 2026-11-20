@@ -187,6 +187,7 @@ final class Dam {
     static boolean refresh(File dir, double lat, double lon, long now) {
         triedAt = now;
         curSrc = ""; curFlow = "";
+        try { DamAll.download(dir, now); } catch (Throwable ignored) { }
         Res cr = null;
         Reading cg = null;
         double ck = 0;

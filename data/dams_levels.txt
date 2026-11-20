@@ -1,0 +1,656 @@
+# name|state|pct|basis|date|source|inflow|outRiver|outCanal
+Adavipalli Reservoir|Andhra Pradesh|22.1|gross storage|2026-11-14|APWRIMS|||
+Alaganuru Balancing Reservoir|Andhra Pradesh|0|gross storage|2026-11-16|APWRIMS|||
+Andra Reservoir|Andhra Pradesh|90.8|gross storage|2026-11-15|APWRIMS|6|6|
+Araniar Reservoir|Andhra Pradesh|26.5|gross storage|2026-11-15|APWRIMS||9|
+Badvel Tank|Andhra Pradesh|2.2|gross storage|2026-11-15|APWRIMS|||
+Bahuda Reservoir|Andhra Pradesh|32.5|gross storage|2026-11-15|APWRIMS|||
+Bhairavanithippa Project|Andhra Pradesh|8.5|gross storage|2026-11-15|APWRIMS||13|
+Bhupatipalem Reservoir|Andhra Pradesh|84.6|gross storage|2026-11-15|APWRIMS||1|
+Brahmamsagar Reservoir|Andhra Pradesh|26.3|gross storage|2026-11-16|APWRIMS||339|
+Buggavagu|Andhra Pradesh|49.1|gross storage|2026-11-15|APWRIMS||12|
+Buggavanka Reservoir|Andhra Pradesh|13.7|gross storage|2026-11-16|APWRIMS||3|
+Chagallu Balancing Reservoir|Andhra Pradesh|43.2|gross storage|2026-11-15|APWRIMS||15|
+Chennaraya Swami Gudi Project|Andhra Pradesh|47.1|gross storage|2026-11-15|APWRIMS||5|
+Cherlopalli Reservoir|Andhra Pradesh|80.7|gross storage|2026-11-15|APWRIMS|12|25|
+Chitravati Balancing Reservoir|Andhra Pradesh|29.8|gross storage|2026-11-15|APWRIMS||47|
+Cum Bum Tank|Andhra Pradesh|19.3|gross storage|2026-11-16|APWRIMS||7|
+Damodaram Sagaram|Andhra Pradesh|100|gross storage|2026-11-15|APWRIMS|11|3|
+Donkarayi Reservoir|Andhra Pradesh|89.3|gross storage|2026-11-14|APWRIMS|4715|3702|
+Gajjiligedda Reservoir|Andhra Pradesh|80|gross storage|2026-11-16|APWRIMS||5|
+Gajuladinne Project|Andhra Pradesh|54|gross storage|2026-11-15|APWRIMS||1|
+Gandikota Reservoir|Andhra Pradesh|68.7|gross storage|2026-11-15|APWRIMS||35|
+Gandipalem Reservoir Project|Andhra Pradesh|11.2|gross storage|2026-11-15|APWRIMS||1|
+Goddamvaripalli Sr3|Andhra Pradesh|86.7|gross storage|2026-11-15|APWRIMS|1||
+Goddumarri Anicut|Andhra Pradesh|0|gross storage|2026-11-15|APWRIMS|||
+Gollapalli Reservoir|Andhra Pradesh|90.1|gross storage|2026-11-15|APWRIMS||51|
+Gorakkalu Balancing Reservior|Andhra Pradesh|72.5|gross storage|2026-11-15|APWRIMS||133|
+Gotta Barrage|Andhra Pradesh|100|gross storage|2026-11-15|APWRIMS|3915|3915|
+Gundlakamma Reservoir|Andhra Pradesh|52.1|gross storage|2026-11-15|APWRIMS|||
+Hiramandalam Reservoir|Andhra Pradesh|71.6|gross storage|2026-11-16|APWRIMS||36|
+Jalleru Reservoir|Andhra Pradesh|90.7|gross storage|2026-11-15|APWRIMS|15|35|
+Jeedipalli Reservoir|Andhra Pradesh|94.6|gross storage|2026-11-15|APWRIMS|406|267|
+Kalangi Reservoir|Andhra Pradesh|12.5|gross storage|2026-11-15|APWRIMS|||
+Kalingadal Project|Andhra Pradesh|46.7|gross storage|2026-11-15|APWRIMS||39|
+Kalyani Dam|Andhra Pradesh|16.5|gross storage|2026-11-15|APWRIMS||1|
+Kandaleru Reservoir|Andhra Pradesh|24.4|gross storage|2026-11-16|APWRIMS||109|
+Kanigiri Reservoir|Andhra Pradesh|45.8|gross storage|2026-11-15|APWRIMS||3|
+Konam Reservoir|Andhra Pradesh|92.9|gross storage|2026-11-15|APWRIMS|3|4|
+Kovvadakalva Reservoir|Andhra Pradesh|84.1|gross storage|2026-11-16|APWRIMS|41|12|
+Krishnagiri Reservoir|Andhra Pradesh|100|gross storage|2026-11-15|APWRIMS|||
+Krishnapuram Project|Andhra Pradesh|0|gross storage|2026-11-15|APWRIMS|||
+Lower Sagileru Anicut|Andhra Pradesh|58.8|gross storage|2026-11-16|APWRIMS|||
+Maddigedda Project|Andhra Pradesh|83.3|gross storage|2026-11-15|APWRIMS|15|15|
+Madduvalasa Project|Andhra Pradesh|90.5|gross storage|2026-11-15|APWRIMS|2305|2305|
+Mallimadugu|Andhra Pradesh|27.8|gross storage|2026-11-16|APWRIMS|||
+Marala Reservoir|Andhra Pradesh|56.2|gross storage|2026-11-15|APWRIMS||24|
+Mehadrigadd Reservoir|Andhra Pradesh|94|gross storage|2026-11-16|APWRIMS||15|
+Mid Pennar Reservoir|Andhra Pradesh|34.8|gross storage|2026-11-15|APWRIMS|48|57|
+Mopadu Reservoir Project|Andhra Pradesh|0|gross storage|2026-11-16|APWRIMS|||
+Muniyeru Project|Andhra Pradesh|0|gross storage|2026-11-15|APWRIMS|||
+Musurimalli|Andhra Pradesh|35|gross storage|2026-11-16|APWRIMS|25|25|
+Mylavaram(Pennar) Reservoir|Andhra Pradesh|13.8|gross storage|2026-11-15|APWRIMS|25|354|
+Nagarjuna Sagar|Andhra Pradesh|57.3|gross storage|2026-11-15|APWRIMS|2|2|
+Nellore Anicut|Andhra Pradesh|89.5|gross storage|2026-11-15|APWRIMS||5|
+Nellore Tank|Andhra Pradesh|83.3|gross storage|2026-11-15|APWRIMS|1||
+NTR Jalasayam|Andhra Pradesh|27.3|gross storage|2026-11-15|APWRIMS|||
+Ntr Reservoir|Andhra Pradesh|35|gross storage|2026-11-15|APWRIMS|5|5|
+Owk Reservoir|Andhra Pradesh|69.4|gross storage|2026-11-15|APWRIMS|5|472|
+Paidipalem Balancing Reservoir|Andhra Pradesh|52.5|gross storage|2026-11-15|APWRIMS||27|
+Paleru Bitragunta Anicut|Andhra Pradesh|0|gross storage|2026-11-15|APWRIMS|||
+Pampa Reservoir|Andhra Pradesh|66.7|gross storage|2026-11-15|APWRIMS|24|415|
+Pathikonda Reservoir|Andhra Pradesh|72.6|gross storage|2026-11-16|APWRIMS||3|
+Peddagedda Reservoir|Andhra Pradesh|80.4|gross storage|2026-11-15|APWRIMS|136|378|
+Pedderu Reservoir|Andhra Pradesh|83.3|gross storage|2026-11-15|APWRIMS|5|5|
+Pedderu Reservoir Project|Andhra Pradesh|71.4|gross storage|2026-11-15|APWRIMS|||
+Pendekallu Reservoir|Andhra Pradesh|40|gross storage|2026-11-15|APWRIMS|||
+Penna Ahobilam Balancing Reservoir|Andhra Pradesh|76.5|gross storage|2026-11-15|APWRIMS||11|
+Pincha Project|Andhra Pradesh|24.2|gross storage|2026-11-15|APWRIMS|4|4|
+Prakasam Barrage|Andhra Pradesh|97.7|gross storage|2026-11-16|APWRIMS|413|2029|
+Pula Subbaiah Veligonda Project|Andhra Pradesh|12.8|gross storage|2026-11-15|APWRIMS|||
+Pulichinthala Project|Andhra Pradesh|61.4|gross storage|2026-11-15|APWRIMS||4|
+Raiwada Reservoir|Andhra Pradesh|96.9|gross storage|2026-11-15|APWRIMS|502|108|
+Rallapadu Reservoir|Andhra Pradesh|13.5|gross storage|2026-11-15|APWRIMS||7|
+Rama Thirtham|Andhra Pradesh|25.5|gross storage|2026-11-15|APWRIMS|||
+Sangam Anicut / Barrge|Andhra Pradesh|84.4|gross storage|2026-11-15|APWRIMS|4|55|
+Sarvaraja Sagar|Andhra Pradesh|26.4|gross storage|2026-11-15|APWRIMS|5|5|
+Sarvepalli Reservoir|Andhra Pradesh|84.5|gross storage|2026-11-15|APWRIMS|||
+Sileru (Guntawada) Reservoir|Andhra Pradesh|24|gross storage|2026-11-14|APWRIMS|3019|292|
+Sir Aurthur Cotton Barrage|Andhra Pradesh|100|gross storage|2026-11-15|APWRIMS|26571|26571|
+Somasila Reservoir|Andhra Pradesh|25.3|gross storage|2026-11-15|APWRIMS||116|
+Srinivasapuram Reservoir (Hnss)|Andhra Pradesh|2.9|gross storage|2026-11-16|APWRIMS|||
+Srisailam R|Andhra Pradesh|22.5|gross storage|2026-11-15|APWRIMS||3854|
+Subbareddy Sagar|Andhra Pradesh|95.8|gross storage|2026-11-15|APWRIMS|8|1|
+Subsidiary Reservoir -I|Andhra Pradesh|14.6|gross storage|2026-11-15|APWRIMS||16|
+Subsidiary Reservoir -Ii|Andhra Pradesh|24.9|gross storage|2026-11-15|APWRIMS||83|
+Sunkesula Barrage|Andhra Pradesh|86.3|gross storage|2026-11-15|APWRIMS||159|
+Surempalem Reservoir|Andhra Pradesh|100|gross storage|2026-11-15|APWRIMS|7|51|
+Swarnamukhi Barrage Cum Bridge|Andhra Pradesh|100|gross storage|2026-11-15|APWRIMS|6|6|
+Tammileru Reservoir|Andhra Pradesh|46.3|gross storage|2026-11-15|APWRIMS||8|
+Tandava Reservoir|Andhra Pradesh|82.1|gross storage|2026-11-16|APWRIMS|3|61|
+Thatipudi Reservoir|Andhra Pradesh|96.4|gross storage|2026-11-15|APWRIMS|24|95|
+Thimmapuram Sr1|Andhra Pradesh|86.7|gross storage|2026-11-15|APWRIMS|1||
+Thotapalli Regulator / Barrage|Andhra Pradesh|83.4|gross storage|2026-11-15|APWRIMS|1256|1106|
+Tungabadra Dam|Andhra Pradesh|28.3|gross storage|2026-11-15|APWRIMS||8675|
+Upper Pennar|Andhra Pradesh|0|gross storage|2026-11-15|APWRIMS|||
+Vamikonda Sagar Reservoir|Andhra Pradesh|28.3|gross storage|2026-11-15|APWRIMS||15|
+Varadarajaswamy Gudi Project|Andhra Pradesh|5.1|gross storage|2026-11-15|APWRIMS|||
+Varaha Reservoir|Andhra Pradesh|95.7|gross storage|2026-11-15|APWRIMS|5|1|
+Vattigedda Reservoir|Andhra Pradesh|81.2|gross storage|2026-11-16|APWRIMS|13|15|
+Veera Raghavani Kota Anicut|Andhra Pradesh|0|gross storage|2026-11-16|APWRIMS|||
+Veligallu Reservoir|Andhra Pradesh|54.1|gross storage|2026-11-15|APWRIMS||5|
+Velogodu Balancing Reservoir|Andhra Pradesh|39|gross storage|2026-11-15|APWRIMS||6|
+Vengalraya Sagaram|Andhra Pradesh|84.5|gross storage|2026-11-15|APWRIMS|17|17|
+Yeleru Reservoir|Andhra Pradesh|93.7|gross storage|2026-11-15|APWRIMS|991|16|
+Yellanur Sr2|Andhra Pradesh|77.4|gross storage|2026-11-15|APWRIMS|||
+Yerrakalva Reservoir|Andhra Pradesh|92.8|gross storage|2026-11-16|APWRIMS|5||
+Yogi Vemana (Maddileru) Reservoir|Andhra Pradesh|24.4|gross storage|2026-11-15|APWRIMS|68|1|
+Zurreru Reservoir|Andhra Pradesh|18.5|gross storage|2026-11-15|APWRIMS|||
+Umrong|Assam|50.3|live storage|2026-11-14|CWC weekly bulletin|||
+Badua Dam|Bihar|13.6|live storage|2026-11-14|CWC weekly bulletin|||
+Chandan Dam|Bihar|58.7|live storage|2026-11-14|CWC weekly bulletin|||
+Durgavati|Bihar|59.3|live storage|2026-11-14|CWC weekly bulletin|||
+Garhi Upper Kiul|Bihar|45|live storage|2026-11-14|CWC weekly bulletin|||
+Phulwaria|Bihar|45.4|live storage|2026-11-14|CWC weekly bulletin|||
+Dudhawa|Chhattisgarh|66.5|live storage|2026-11-12|CWC weekly bulletin|||
+Mahanadi|Chhattisgarh|78.7|live storage|2026-11-12|CWC weekly bulletin|||
+Minimata Bango|Chhattisgarh|74.2|live storage|2026-11-12|CWC weekly bulletin|||
+Sikasar|Chhattisgarh|26.5|live storage|2026-11-12|CWC weekly bulletin|||
+Tandula|Chhattisgarh|66.7|live storage|2026-11-12|CWC weekly bulletin|||
+Salaulim Dam|Goa|100|live storage|2026-11-12|CWC weekly bulletin|||
+Advana|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Aji - II|Gujarat|100|gross storage|2026-11-20|Gujarat WRD daily report|9|9|
+Aji-I|Gujarat|69.1|gross storage|2026-11-20|Gujarat WRD daily report|244||
+Aji-III|Gujarat|21.8|gross storage|2026-11-20|Gujarat WRD daily report|256|486|
+Aji-IV|Gujarat|3.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ambajal|Gujarat|29|gross storage|2026-11-20|Gujarat WRD daily report|||
+Amipur|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Bagad|Gujarat|86.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Baldeva|Gujarat|98.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Bangawadi|Gujarat|28.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Bantva-Kharo|Gujarat|38.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Berachia|Gujarat|25.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Bhadar|Gujarat|13.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Bhadar (P)|Gujarat|23.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Bhadar - II|Gujarat|75.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Bhimdad|Gujarat|3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Bhukhi|Gujarat|40.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Brahmani|Gujarat|85.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Brahmani-II|Gujarat|37|gross storage|2026-11-20|Gujarat WRD daily report|2|35|
+Chhaparwadi-II|Gujarat|5.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Chopadvav|Gujarat|69.2|gross storage|2026-11-20|Gujarat WRD daily report|||15
+Damanganga|Gujarat|91.8|gross storage|2026-11-20|Gujarat WRD daily report|2|336|675
+Dantiwada|Gujarat|21.8|gross storage|2026-11-20|Gujarat WRD daily report|||359
+Demi - I|Gujarat|0.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Demi - II|Gujarat|38.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Demi - III|Gujarat|2.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Deo|Gujarat|63.1|gross storage|2026-11-20|Gujarat WRD daily report|||3
+Dhari|Gujarat|7.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Dharoi|Gujarat|47.2|gross storage|2026-11-20|Gujarat WRD daily report|||43
+Dhatarvadi|Gujarat|92.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Dhatarwadi-II|Gujarat|81.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Dholi|Gujarat|96.3|gross storage|2026-11-20|Gujarat WRD daily report|||3
+Dholidhaja|Gujarat|85.9|gross storage|2026-11-20|Gujarat WRD daily report|||18
+Dia-Minsar|Gujarat|4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Don|Gujarat|39|gross storage|2026-11-20|Gujarat WRD daily report|||
+Dondi|Gujarat|5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Doswada|Gujarat|100|gross storage|2026-11-20|Gujarat WRD daily report|||
+Draphad|Gujarat|12.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Edalwada|Gujarat|73|gross storage|2026-11-20|Gujarat WRD daily report|||2
+Falku|Gujarat|59.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Fatehgadh|Gujarat|53.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Fulzar (KB)|Gujarat|19|gross storage|2026-11-20|Gujarat WRD daily report|55||
+Fulzar-I|Gujarat|5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Fulzar-II|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Gadhaki|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Gajansar|Gujarat|53.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Gajod|Gujarat|23.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ghee|Gujarat|21.5|gross storage|2026-11-20|Gujarat WRD daily report|47||
+Ghelo - S|Gujarat|24.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ghelo-I|Gujarat|19.8|gross storage|2026-11-20|Gujarat WRD daily report|||4
+Ghodadhroi|Gujarat|78.2|gross storage|2026-11-20|Gujarat WRD daily report|7||
+Godhatad|Gujarat|23.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Goma|Gujarat|52.9|gross storage|2026-11-20|Gujarat WRD daily report|||2
+Gondali|Gujarat|15.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Gorathiya|Gujarat|90.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Guhai|Gujarat|49.5|gross storage|2026-11-20|Gujarat WRD daily report|||146
+Hadaf|Gujarat|88.3|gross storage|2026-11-20|Gujarat WRD daily report|||6
+Hamirpara|Gujarat|67.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Hanol|Gujarat|86.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Harnav-II|Gujarat|36.6|gross storage|2026-11-20|Gujarat WRD daily report|||3
+Hasanapur|Gujarat|16.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Hathmati|Gujarat|46.5|gross storage|2026-11-20|Gujarat WRD daily report|||6
+Hiran-I|Gujarat|27.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Hiran-II|Gujarat|22.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ishwaria|Gujarat|12.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Jangdia|Gujarat|30.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Jaspara-Mandva|Gujarat|62.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Javanpura|Gujarat|100|gross storage|2026-11-20|Gujarat WRD daily report|||
+Jhanjeshri|Gujarat|21.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Jhuj|Gujarat|97|gross storage|2026-11-20|Gujarat WRD daily report|||63
+Kabarka|Gujarat|0.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kabir-Sarovar|Gujarat|2.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kabutari|Gujarat|93.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kadana|Gujarat|62|gross storage|2026-11-20|Gujarat WRD daily report|577||
+Kaila|Gujarat|0.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kakdi-Amba|Gujarat|76.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kalaghogha|Gujarat|64.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kali - II|Gujarat|95.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kalindri|Gujarat|3.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kalubhar|Gujarat|83.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kaniyad|Gujarat|25.6|gross storage|2026-11-20|Gujarat WRD daily report|44||
+Kankavati|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kankawati|Gujarat|15.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Karad|Gujarat|37.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Karjan|Gujarat|83.9|gross storage|2026-11-20|Gujarat WRD daily report||188|24
+Karmal|Gujarat|17.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Karnuki|Gujarat|2.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kaswati|Gujarat|10.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kelia|Gujarat|99.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Khambhada|Gujarat|100|gross storage|2026-11-20|Gujarat WRD daily report|||
+Khambhala|Gujarat|16.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Kharo|Gujarat|90.8|gross storage|2026-11-20|Gujarat WRD daily report|||8
+Khedva|Gujarat|57.4|gross storage|2026-11-20|Gujarat WRD daily report|||2
+Khodapipar|Gujarat|68.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Khodiyar|Gujarat|42.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Lakhanka|Gujarat|17.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Lakhigam|Gujarat|78.6|gross storage|2026-11-20|Gujarat WRD daily report|||1
+Lalpari|Gujarat|96.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Lank|Gujarat|16.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Lim-Bhogavo-I|Gujarat|50.5|gross storage|2026-11-20|Gujarat WRD daily report|44||7
+Lim-Bhogavo-II|Gujarat|51.7|gross storage|2026-11-20|Gujarat WRD daily report|1||
+Limbali|Gujarat|58|gross storage|2026-11-20|Gujarat WRD daily report|8||8
+Machchhanala|Gujarat|94.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Machchhu - I|Gujarat|53.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Machchhu-II|Gujarat|87.6|gross storage|2026-11-20|Gujarat WRD daily report|331|37|
+Machchhu-III|Gujarat|100|gross storage|2026-11-20|Gujarat WRD daily report|78|7|8
+Machhundri|Gujarat|50.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Madhuvanti|Gujarat|33.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Malan|Gujarat|91.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Malgadh|Gujarat|47.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Malpara|Gujarat|18|gross storage|2026-11-20|Gujarat WRD daily report|||
+Mathal|Gujarat|13.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Mazam|Gujarat|76.6|gross storage|2026-11-20|Gujarat WRD daily report|||29
+Meshwo|Gujarat|60.9|gross storage|2026-11-20|Gujarat WRD daily report|||12
+Minsar (V)|Gujarat|0.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Mitti|Gujarat|21.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Moj|Gujarat|30.9|gross storage|2026-11-20|Gujarat WRD daily report|||6
+Morshal|Gujarat|2.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Mota-Gujariya|Gujarat|13.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Motisar|Gujarat|4.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Mukteshwar|Gujarat|39|gross storage|2026-11-20|Gujarat WRD daily report|||
+Munjiasar|Gujarat|22.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Nara|Gujarat|18.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Nimbmani|Gujarat|1.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Niruna|Gujarat|10.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Nyari - I|Gujarat|44.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Nyari-II|Gujarat|92.9|gross storage|2026-11-20|Gujarat WRD daily report|||3
+Nyka|Gujarat|68.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ozat- Weir(Vanthali)|Gujarat|0.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ozat-II|Gujarat|32.1|gross storage|2026-11-20|Gujarat WRD daily report|15||
+Ozat-Weir|Gujarat|43.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Panam|Gujarat|52.5|gross storage|2026-11-20|Gujarat WRD daily report|||47
+Patadungari|Gujarat|33.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Phadangbeti|Gujarat|46.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Phodarness|Gujarat|15.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Phophal - I|Gujarat|37.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Phophal-II|Gujarat|1.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Pigut|Gujarat|96|gross storage|2026-11-20|Gujarat WRD daily report|||
+Pingli|Gujarat|93.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Prempara|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Puna|Gujarat|16|gross storage|2026-11-20|Gujarat WRD daily report|||
+Raidy|Gujarat|70.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Rajawal|Gujarat|89.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Rami|Gujarat|87.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Rana Khirasara|Gujarat|3.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ranghola|Gujarat|74.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Rangmati|Gujarat|0.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Raval|Gujarat|92|gross storage|2026-11-20|Gujarat WRD daily report|||
+Rojki|Gujarat|95.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Rudramata|Gujarat|6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ruparel|Gujarat|9.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Rupavati|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sabali|Gujarat|18.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Saburi|Gujarat|16.9|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sanandro|Gujarat|5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sani|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sankroli|Gujarat|15.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sapada|Gujarat|7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Saran|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sardar Sarovar|Gujarat|95.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sasoi|Gujarat|16|gross storage|2026-11-20|Gujarat WRD daily report|122||
+Sasoi-II|Gujarat|0.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Shedhabhadthari|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Shell-Dedumal|Gujarat|78.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Shetrunji|Gujarat|94.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Shingoda|Gujarat|40.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sindhani|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sipu|Gujarat|3.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sodvadar|Gujarat|13.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sonmati|Gujarat|0.7|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sorthi|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sukhbhadar|Gujarat|28.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Sukhi|Gujarat|81.9|gross storage|2026-11-20|Gujarat WRD daily report|||104
+Surajwadi|Gujarat|84.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Survo|Gujarat|27.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Suvi|Gujarat|36.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Tappar|Gujarat|83|gross storage|2026-11-20|Gujarat WRD daily report|||
+Thebi|Gujarat|36.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Triveni Thanga|Gujarat|59.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Uben|Gujarat|0.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Ukai|Gujarat|68.1|gross storage|2026-11-20|Gujarat WRD daily report|||108
+Umaria|Gujarat|94|gross storage|2026-11-20|Gujarat WRD daily report|||4
+Umiyasagar|Gujarat|15.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Und-I|Gujarat|9.7|gross storage|2026-11-20|Gujarat WRD daily report|3||
+Und-II|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Und-III|Gujarat|0.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Utavali|Gujarat|71|gross storage|2026-11-20|Gujarat WRD daily report|||
+Vachhapari|Gujarat|18|gross storage|2026-11-20|Gujarat WRD daily report|||
+Vadi|Gujarat|11.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Vadiya|Gujarat|29.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Vansal|Gujarat|92.2|gross storage|2026-11-20|Gujarat WRD daily report|81||
+Varansi|Gujarat|22.6|gross storage|2026-11-20|Gujarat WRD daily report|||
+Vartu-I|Gujarat|0.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Vartu-II|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Venu-II|Gujarat|43.8|gross storage|2026-11-20|Gujarat WRD daily report|||5
+Ver-II|Gujarat|78.2|gross storage|2026-11-20|Gujarat WRD daily report|||
+Veradi|Gujarat|0.3|gross storage|2026-11-20|Gujarat WRD daily report|||
+Veradi-II|Gujarat|0.5|gross storage|2026-11-20|Gujarat WRD daily report|||
+Veri|Gujarat|10|gross storage|2026-11-20|Gujarat WRD daily report|||
+Vijarkhi|Gujarat|1.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Vrajmi|Gujarat|2.4|gross storage|2026-11-20|Gujarat WRD daily report|||
+Wagadiya|Gujarat|4.8|gross storage|2026-11-20|Gujarat WRD daily report|||
+Waidy|Gujarat|95|gross storage|2026-11-20|Gujarat WRD daily report|||3
+Wanakbori|Gujarat|100|gross storage|2026-11-20|Gujarat WRD daily report|3|2|3
+Watrak|Gujarat|62.2|gross storage|2026-11-20|Gujarat WRD daily report|5||63
+WNKL.-BHEY|Gujarat|88.1|gross storage|2026-11-20|Gujarat WRD daily report|||
+Wodisang|Gujarat|0|gross storage|2026-11-20|Gujarat WRD daily report|||
+Gobind Sagar|Himachal Pradesh|56.5|live storage|2026-11-12|CWC weekly bulletin|||
+Kol Dam|Himachal Pradesh|87.6|live storage|2026-11-15|CWC weekly bulletin|||
+Pong Dam|Himachal Pradesh|54|live storage|2026-11-12|CWC weekly bulletin|||
+Getalsud|Jharkhand|83.5|live storage|2026-11-12|CWC weekly bulletin|||
+Konar|Jharkhand|100|live storage|2026-11-12|CWC weekly bulletin|||
+Maithon|Jharkhand|100|live storage|2026-11-12|CWC weekly bulletin|||
+Mayurakshi|Jharkhand|41.9|live storage|2026-11-12|CWC weekly bulletin|||
+Panchet Hill|Jharkhand|100|live storage|2026-11-12|CWC weekly bulletin|||
+Tenughat|Jharkhand|35.7|live storage|2026-11-12|CWC weekly bulletin|||
+Tilaiya|Jharkhand|100|live storage|2026-11-12|CWC weekly bulletin|||
+Almatti Dam|Karnataka|43.8|live storage|2026-11-13|KSNDMC/CWC|||
+Bennithora Dam|Karnataka|55.4|live storage|2026-11-12|KSNDMC/CWC|||
+Bhadra Dam|Karnataka|77.5|live storage|2026-11-13|KSNDMC/CWC|||
+Gerusoppa Dam|Karnataka|81.5|live storage|2026-11-12|KSNDMC/CWC|||
+Harangi Dam|Karnataka|55.5|live storage|2026-11-13|KSNDMC/CWC|||
+Hemavathy Dam|Karnataka|49.9|live storage|2026-11-13|KSNDMC/CWC|||
+Hidkal Dam|Karnataka|86.9|live storage|2026-11-13|KSNDMC/CWC|||
+Hirehalla Dam|Karnataka|74.4|live storage|2026-11-12|KSNDMC/CWC|||
+K.R.Sagara Dam|Karnataka|43.1|live storage|2026-11-13|KSNDMC/CWC|||
+Kabini Dam|Karnataka|62.7|live storage|2026-11-13|KSNDMC/CWC|||
+Karanja Dam|Karnataka|51.5|live storage|2026-11-12|KSNDMC/CWC|||
+Linganamakki Dam|Karnataka|49.2|live storage|2026-11-13|KSNDMC/CWC|||
+Malaprabha Dam|Karnataka|51|live storage|2026-11-13|KSNDMC/CWC|||
+Mani|Karnataka|48|live storage|2026-11-13|KSNDMC/CWC|||
+Narayanapur Dam|Karnataka|63.6|live storage|2026-11-13|KSNDMC/CWC|||
+Supa Dam|Karnataka|49.5|live storage|2026-11-13|KSNDMC/CWC|||
+Tattihalla Dam|Karnataka|22.5|live storage|2026-11-13|KSNDMC/CWC|||
+Tungabhadra Dam|Karnataka|29.7|live storage|2026-11-13|KSNDMC/CWC|||
+Vanivilasa Sagar Dam|Karnataka|64.5|live storage|2026-11-13|KSNDMC/CWC|||
+Anayirankal|Kerala|63.9|live storage|2026-11-20|KSEB daily report|||
+Banasurasagar|Kerala|78.8|live storage|2026-11-20|KSEB daily report|||
+Erattayar|Kerala|14.2|live storage|2026-11-20|KSEB daily report|||
+Idamalayar|Kerala|72.7|live storage|2026-11-20|KSEB daily report|||
+Idukki|Kerala|63.2|live storage|2026-11-20|KSEB daily report|||
+Kakki (Anathode)|Kerala|69.4|live storage|2026-11-20|KSEB daily report|||
+Kallarkutty|Kerala|74|live storage|2026-11-20|KSEB daily report|||
+Kundala|Kerala|85.6|live storage|2026-11-20|KSEB daily report|||
+Kuttiyadi|Kerala|50|live storage|2026-11-20|KSEB daily report|||
+Madupetty|Kerala|33.4|live storage|2026-11-20|KSEB daily report|||
+Moozhiyar|Kerala|27.4|live storage|2026-11-20|KSEB daily report|||
+Pamba|Kerala|29.5|live storage|2026-11-20|KSEB daily report|||
+Ponmudi|Kerala|81.8|live storage|2026-11-20|KSEB daily report|||
+Poringalkuthu|Kerala|42.9|live storage|2026-11-20|KSEB daily report|||
+Sholayar|Kerala|90.7|live storage|2026-11-20|KSEB daily report|||
+Atal Sagar|Madhya Pradesh|82.4|live storage|2026-11-12|CWC weekly bulletin|||
+Bansagar|Madhya Pradesh|95.4|live storage|2026-11-12|CWC weekly bulletin|||
+Bargi|Madhya Pradesh|95.4|live storage|2026-11-13|CWC weekly bulletin|||
+Barna Dam|Madhya Pradesh|62.1|live storage|2026-11-12|CWC weekly bulletin|||
+Gandhi Sagar|Madhya Pradesh|62.5|live storage|2026-11-12|CWC weekly bulletin|||
+Indira Sagar|Madhya Pradesh|81.6|live storage|2026-11-13|CWC weekly bulletin|||
+Kolar Dam|Madhya Pradesh|86.3|live storage|2026-11-12|CWC weekly bulletin|||
+Omkareshwar|Madhya Pradesh|11.7|live storage|2026-11-13|CWC weekly bulletin|||
+Rajghat Dam|Madhya Pradesh|97.7|live storage|2026-11-12|CWC weekly bulletin|||
+Rangawan|Madhya Pradesh|81.3|live storage|2026-11-12|CWC weekly bulletin|||
+Sanjay Sarovar|Madhya Pradesh|77.2|live storage|2026-11-12|CWC weekly bulletin|||
+Tawa|Madhya Pradesh|80.1|live storage|2026-11-13|CWC weekly bulletin|||
+Amdura|Maharashtra|95.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Apegaon H L B|Maharashtra|49.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Arjunsagar|Maharashtra|98.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Arunavati|Maharashtra|48|live storage|2026-11-15|Maharashtra WRD daily report|||
+Asolamendha|Maharashtra|63.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Aurad K.T. Weir|Maharashtra|5.7|live storage|2026-11-14|Maharashtra WRD daily report|||
+Barvi|Maharashtra|90.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bawanthadi|Maharashtra|15.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bembla|Maharashtra|52.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bham Dam|Maharashtra|99|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bhama Askhed|Maharashtra|77.4|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bhandardara|Maharashtra|90.4|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bhatghar|Maharashtra|95.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bhatsa|Maharashtra|86.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bhavali|Maharashtra|98.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bhima (Ujjani)|Maharashtra|62.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bhusani|Maharashtra|52.4|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bindgihal L T B|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Bor|Maharashtra|54.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Borgaon Anjanpur|Maharashtra|0|live storage|2026-11-13|Maharashtra WRD daily report|||
+Chankapur|Maharashtra|98.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Chaskaman|Maharashtra|86.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Darna|Maharashtra|92.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dhalegaon H L B|Maharashtra|24|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dhamni|Maharashtra|91|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dhanegaon High Level Barrage|Maharashtra|18|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dhapewada|Maharashtra|100|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dhom|Maharashtra|86.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dhom Balkawadi|Maharashtra|80.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Digadi H L B|Maharashtra|63|live storage|2026-11-15|Maharashtra WRD daily report|||
+Digras H L B|Maharashtra|20.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dimbhe|Maharashtra|95.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dina|Maharashtra|23.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dolwahal weir|Maharashtra|52.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dongargaon H L B|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Dudhaganga|Maharashtra|87.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Gangapur|Maharashtra|84.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Ghod (Chinchani)|Maharashtra|89.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Girna|Maharashtra|93|live storage|2026-11-15|Maharashtra WRD daily report|||
+Gosikhurd|Maharashtra|100|live storage|2026-11-15|Maharashtra WRD daily report|||
+Gunjarga L T B|Maharashtra|0.7|live storage|2026-11-14|Maharashtra WRD daily report|||
+Gunjawani|Maharashtra|91.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Hiradpuri H L B|Maharashtra|20.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Isapur|Maharashtra|60.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Itiadoh|Maharashtra|91.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Jogladevi H L B|Maharashtra|14.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Kadwa|Maharashtra|94|live storage|2026-11-15|Maharashtra WRD daily report|||
+Kalisarar|Maharashtra|50.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Kamthi Khairy|Maharashtra|79.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Kanher|Maharashtra|77.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Karanjwan|Maharashtra|95.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Karsa Pohregaon|Maharashtra|0.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Katepurna|Maharashtra|11.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Kawdas P. U. Weir|Maharashtra|63.2|live storage|2026-11-14|Maharashtra WRD daily report|||
+Khadakpurna|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Khadakwasla|Maharashtra|70.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Khindsi|Maharashtra|38.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Khulgapur|Maharashtra|2.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Killari 2 L T B|Maharashtra|0|live storage|2026-11-14|Maharashtra WRD daily report|||
+Kinwat ( Mangrul ) H LB|Maharashtra|68.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Koyna|Maharashtra|80.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Kundali Tata|Maharashtra|83.1|live storage|2026-11-14|Maharashtra WRD daily report|||
+Limbala L T B|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Lonavala Tata|Maharashtra|24.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Lonisawangi H L B|Maharashtra|26.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Lower Chondhe|Maharashtra|50.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Lower Dudhana|Maharashtra|11.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Lower Manar|Maharashtra|77.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Lower Terna|Maharashtra|16.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Lower Wardha|Maharashtra|61|live storage|2026-11-15|Maharashtra WRD daily report|||
+Madansuri L T B|Maharashtra|0|live storage|2026-11-14|Maharashtra WRD daily report|||
+Majalgaon|Maharashtra|18.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Mangrul H L B|Maharashtra|35.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Manikdoh|Maharashtra|85.4|live storage|2026-11-15|Maharashtra WRD daily report|||
+Manjara|Maharashtra|4.5|live storage|2026-11-14|Maharashtra WRD daily report|||
+Middle Vaitarna|Maharashtra|77.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Modaksagar|Maharashtra|47.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Mudgal H L B|Maharashtra|71.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Mukane|Maharashtra|78.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Mula|Maharashtra|53.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Mulshi Tata|Maharashtra|76.3|live storage|2026-11-14|Maharashtra WRD daily report|||
+Nagzari L T B|Maharashtra|0|live storage|2026-11-13|Maharashtra WRD daily report|||
+Nalganga|Maharashtra|72.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Nand|Maharashtra|60.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Nilwande-2|Maharashtra|65.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Nira Deoghar|Maharashtra|95.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Ozarkhed|Maharashtra|92.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Paithan (Jayakwadi)|Maharashtra|68.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Palkhed|Maharashtra|69|live storage|2026-11-15|Maharashtra WRD daily report|||
+Panshet|Maharashtra|69.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Pawana|Maharashtra|86.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Pentakli|Maharashtra|60.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Pimpalgaon Joge|Maharashtra|84.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Pujaritola P.U.Weir|Maharashtra|60.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Punegaon|Maharashtra|85.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Pus|Maharashtra|73.6|live storage|2026-11-14|Maharashtra WRD daily report|||
+Radhanagari H E P|Maharashtra|86.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Rajatakli H L B|Maharashtra|41.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Rajegaon L T B|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Roshanpuri H L B|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Sai|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Shirawta Tata|Maharashtra|68.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Shivni|Maharashtra|0|live storage|2026-11-13|Maharashtra WRD daily report|||
+Siddeshwar|Maharashtra|9.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Sina kolegaon|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Sirasmarg L L B|Maharashtra|0|live storage|2026-11-15|Maharashtra WRD daily report|||
+Sirpur|Maharashtra|78.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Tagarkheda L T B|Maharashtra|0|live storage|2026-11-14|Maharashtra WRD daily report|||
+Takalgaon-Deola|Maharashtra|13.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Tansa|Maharashtra|80|live storage|2026-11-15|Maharashtra WRD daily report|||
+Tarali|Maharashtra|76.7|live storage|2026-11-15|Maharashtra WRD daily report|||
+Temghar|Maharashtra|74.4|live storage|2026-11-15|Maharashtra WRD daily report|||
+Thokerwadi Tata|Maharashtra|93.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Tillari|Maharashtra|81.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Tillari (Dhamne)|Maharashtra|91.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Tisgaon|Maharashtra|90.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Totladoh|Maharashtra|22.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Tulshi|Maharashtra|90.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Upper Ghatghar|Maharashtra|76.5|live storage|2026-11-14|Maharashtra WRD daily report|||
+Upper Tapi Hatnur|Maharashtra|95.4|live storage|2026-11-15|Maharashtra WRD daily report|||
+Upper Vaitarna|Maharashtra|94.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Upper Wardha|Maharashtra|41.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Urmodi|Maharashtra|80.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Veer|Maharashtra|41|live storage|2026-11-15|Maharashtra WRD daily report|||
+Vishnupuri|Maharashtra|57.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Wadaj|Maharashtra|88.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Wadgaon|Maharashtra|49|live storage|2026-11-15|Maharashtra WRD daily report|||
+Waghad|Maharashtra|94.1|live storage|2026-11-15|Maharashtra WRD daily report|||
+Waghur|Maharashtra|64.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Waki Dam|Maharashtra|94.2|live storage|2026-11-15|Maharashtra WRD daily report|||
+Walwan Tata|Maharashtra|91.3|live storage|2026-11-15|Maharashtra WRD daily report|||
+Wan|Maharashtra|79.8|live storage|2026-11-15|Maharashtra WRD daily report|||
+Wangdari L T B|Maharashtra|0|live storage|2026-11-14|Maharashtra WRD daily report|||
+Wanjarkheda High level Barrage|Maharashtra|0.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Warasgaon|Maharashtra|80.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Warna|Maharashtra|88.9|live storage|2026-11-15|Maharashtra WRD daily report|||
+Yedgaon|Maharashtra|68.6|live storage|2026-11-15|Maharashtra WRD daily report|||
+Yeldari|Maharashtra|52.5|live storage|2026-11-15|Maharashtra WRD daily report|||
+Khandong|Meghalaya|24.4|live storage|2026-11-14|CWC weekly bulletin|||
+Umiam|Meghalaya|48.6|live storage|2026-11-12|CWC weekly bulletin|||
+Tuirial|Mizoram|52.8|live storage|2026-11-12|CWC weekly bulletin|||
+Doyang Hep|Nagaland|59.1|live storage|2026-11-12|CWC weekly bulletin|||
+Balimela|Odisha|83|live storage|2026-11-12|CWC weekly bulletin|||
+Donkarayi|Odisha|86.4|live storage|2026-11-13|CWC weekly bulletin|||
+Hariharjhor|Odisha|88.1|live storage|2026-11-12|CWC weekly bulletin|||
+Hirakud|Odisha|84.6|live storage|2026-11-12|CWC weekly bulletin|||
+Mandira Dam|Odisha|56|live storage|2026-11-12|CWC weekly bulletin|||
+Rengali|Odisha|83.1|live storage|2026-11-12|CWC weekly bulletin|||
+Salanadi|Odisha|47.8|live storage|2026-11-14|CWC weekly bulletin|||
+Sapua|Odisha|100|live storage|2026-11-12|CWC weekly bulletin|||
+Sondur|Odisha|76.3|live storage|2026-11-12|CWC weekly bulletin|||
+Upper Indravati|Odisha|76.9|live storage|2026-11-12|CWC weekly bulletin|||
+Upper Kolab|Odisha|83.1|live storage|2026-11-12|CWC weekly bulletin|||
+Thein Dam|Punjab|44.4|live storage|2026-11-12|CWC weekly bulletin|||
+Bisalpur|Rajasthan|64.9|live storage|2026-11-12|CWC weekly bulletin|||
+Jaisamand|Rajasthan|49|live storage|2026-11-12|CWC weekly bulletin|||
+Jawai Dam|Rajasthan|9.8|live storage|2026-11-12|CWC weekly bulletin|||
+Jhakam|Rajasthan|96.2|live storage|2026-11-12|CWC weekly bulletin|||
+Mahi Bajaj Sagar|Rajasthan|63.2|live storage|2026-11-12|CWC weekly bulletin|||
+Rana Pratap Sagar|Rajasthan|54.9|live storage|2026-11-12|CWC weekly bulletin|||
+Som Kamla Amba|Rajasthan|74|live storage|2026-11-12|CWC weekly bulletin|||
+Adavinainarkovil|Tamil Nadu|48.2|capacity|2026-11-19|TN daily reservoir report|||
+Aliyar|Tamil Nadu|20|capacity|2026-11-19|TN daily reservoir report|||
+Amaravathi|Tamil Nadu|41.7|capacity|2026-11-19|TN daily reservoir report|||
+Anaikuttam|Tamil Nadu|1.4|capacity|2026-11-19|TN daily reservoir report|||
+Anaimaduvu|Tamil Nadu|11|capacity|2026-11-19|TN daily reservoir report|||
+Andiappanur Odai|Tamil Nadu|91.1|capacity|2026-11-19|TN daily reservoir report|||
+Bhavani|Tamil Nadu|46.2|capacity|2026-11-19|TN daily reservoir report|||
+Chembarampakkam|Tamil Nadu|35.2|capacity|2026-11-19|TN daily reservoir report|||
+Chinnar|Tamil Nadu|39.8|capacity|2026-11-19|TN daily reservoir report|||
+Chittar I|Tamil Nadu|42.9|capacity|2026-11-19|TN daily reservoir report|||
+Chittar II|Tamil Nadu|45.3|capacity|2026-11-19|TN daily reservoir report|||
+Gatana|Tamil Nadu|47|capacity|2026-11-19|TN daily reservoir report|||
+Golwarpatti|Tamil Nadu|7.2|capacity|2026-11-19|TN daily reservoir report|||
+Gomuki|Tamil Nadu|69.4|capacity|2026-11-19|TN daily reservoir report|||
+Gundar|Tamil Nadu|82.9|capacity|2026-11-19|TN daily reservoir report|||
+Gunderipallam|Tamil Nadu|65.7|capacity|2026-11-19|TN daily reservoir report|||
+Irrukkangudi|Tamil Nadu|10.4|capacity|2026-11-19|TN daily reservoir report|||
+Kariakovil|Tamil Nadu|9.9|capacity|2026-11-19|TN daily reservoir report|||
+Karuppanadhi|Tamil Nadu|34.5|capacity|2026-11-19|TN daily reservoir report|||
+Kelavarapalli|Tamil Nadu|81|capacity|2026-11-19|TN daily reservoir report|||
+Kesarigulli|Tamil Nadu|57.3|capacity|2026-11-19|TN daily reservoir report|||
+Kodaganar|Tamil Nadu|38.8|capacity|2026-11-19|TN daily reservoir report|||
+Kodumudiyar|Tamil Nadu|28.7|capacity|2026-11-19|TN daily reservoir report|||
+Krishnagiri|Tamil Nadu|80.9|capacity|2026-11-19|TN daily reservoir report|||
+Kullursandai|Tamil Nadu|90|capacity|2026-11-19|TN daily reservoir report|||
+Kuppanatham|Tamil Nadu|71.6|capacity|2026-11-19|TN daily reservoir report|||
+Kuthiraiyar|Tamil Nadu|51.8|capacity|2026-11-19|TN daily reservoir report|||
+Lower Nirar|Tamil Nadu|38.6|capacity|2026-11-19|TN daily reservoir report|||
+Mabazhathuraiyar|Tamil Nadu|92.5|capacity|2026-11-19|TN daily reservoir report|||
+Manimukthanadhi|Tamil Nadu|2|capacity|2026-11-19|TN daily reservoir report|||
+Manimuthar|Tamil Nadu|30|capacity|2026-11-19|TN daily reservoir report|||
+Manjalar|Tamil Nadu|51.2|capacity|2026-11-19|TN daily reservoir report|||
+Marudhanadhi|Tamil Nadu|68.8|capacity|2026-11-19|TN daily reservoir report|||
+Mettur|Tamil Nadu|27.6|capacity|2026-11-19|TN daily reservoir report|||
+Mirugandanadhi|Tamil Nadu|58.9|capacity|2026-11-19|TN daily reservoir report|||
+Mordhana|Tamil Nadu|15.5|capacity|2026-11-19|TN daily reservoir report|||
+Nagavathi|Tamil Nadu|20.3|capacity|2026-11-19|TN daily reservoir report|||
+Nallathangal Odai|Tamil Nadu|0|capacity|2026-11-19|TN daily reservoir report|||
+Nambiar|Tamil Nadu|14.2|capacity|2026-11-19|TN daily reservoir report|||
+Nanganjiar|Tamil Nadu|3.8|capacity|2026-11-19|TN daily reservoir report|||
+Noyyal Athupalayam|Tamil Nadu|0|capacity|2026-11-19|TN daily reservoir report|||
+Noyyal Orathupalayam|Tamil Nadu|1.1|capacity|2026-11-19|TN daily reservoir report|||
+Palar Perunthalar|Tamil Nadu|52.5|capacity|2026-11-19|TN daily reservoir report|||
+Pambar|Tamil Nadu|17|capacity|2026-11-19|TN daily reservoir report|||
+Parambikulam|Tamil Nadu|66.9|capacity|2026-11-19|TN daily reservoir report|||
+Parappalar|Tamil Nadu|17|capacity|2026-11-19|TN daily reservoir report|||
+Pechipparai|Tamil Nadu|49.5|capacity|2026-11-19|TN daily reservoir report|||
+Periyar dam|Tamil Nadu|34.9|capacity|2026-11-19|TN daily reservoir report|||
+Perumpallam|Tamil Nadu|29.2|capacity|2026-11-19|TN daily reservoir report|||
+Perunchani|Tamil Nadu|31.9|capacity|2026-11-19|TN daily reservoir report|||
+Pilavukkal Kovilar|Tamil Nadu|12.8|capacity|2026-11-19|TN daily reservoir report|||
+Pilavukkal Periyar|Tamil Nadu|52.3|capacity|2026-11-19|TN daily reservoir report|||
+Poigaiyar|Tamil Nadu|23.1|capacity|2026-11-19|TN daily reservoir report|||
+Ponnaiyar|Tamil Nadu|32.9|capacity|2026-11-19|TN daily reservoir report|||
+Poondi|Tamil Nadu|17.8|capacity|2026-11-19|TN daily reservoir report|||
+Rajathopekanar|Tamil Nadu|2.2|capacity|2026-11-19|TN daily reservoir report|||
+Ramanadhi|Tamil Nadu|37.7|capacity|2026-11-19|TN daily reservoir report|||
+Redhills|Tamil Nadu|69.8|capacity|2026-11-19|TN daily reservoir report|||
+Sasthakovil|Tamil Nadu|100|capacity|2026-11-19|TN daily reservoir report|||
+Sathaiyyar|Tamil Nadu|0|capacity|2026-11-19|TN daily reservoir report|||
+Sathanur|Tamil Nadu|57.2|capacity|2026-11-19|TN daily reservoir report|||
+Shanmuganadhi|Tamil Nadu|26.3|capacity|2026-11-19|TN daily reservoir report|||
+Shenbagathope|Tamil Nadu|74.5|capacity|2026-11-19|TN daily reservoir report|||
+Sholayar|Tamil Nadu|15.2|capacity|2026-11-19|TN daily reservoir report|||
+Siddhamalli|Tamil Nadu|0|capacity|2026-11-19|TN daily reservoir report|||
+Sirumalaiyar|Tamil Nadu|0|capacity|2026-11-19|TN daily reservoir report|||
+Sothuparai|Tamil Nadu|100|capacity|2026-11-19|TN daily reservoir report|||
+Sulagirichinnar|Tamil Nadu|17.3|capacity|2026-11-19|TN daily reservoir report|||
+Thervoy Kandigai|Tamil Nadu|48.8|capacity|2026-11-19|TN daily reservoir report|||
+Thirumurthi|Tamil Nadu|65.9|capacity|2026-11-19|TN daily reservoir report|||
+Thoppaiyar|Tamil Nadu|3|capacity|2026-11-19|TN daily reservoir report|||
+Thumbalahalli|Tamil Nadu|8.6|capacity|2026-11-19|TN daily reservoir report|||
+Thunakadavu Peruvariplla|Tamil Nadu|93.9|capacity|2026-11-19|TN daily reservoir report|||
+Uppar|Tamil Nadu|0.2|capacity|2026-11-19|TN daily reservoir report|||
+Uppar Trichy|Tamil Nadu|0|capacity|2026-11-19|TN daily reservoir report|||
+Upper Nirar|Tamil Nadu|0.8|capacity|2026-11-19|TN daily reservoir report|||
+Vaaniar|Tamil Nadu|24.9|capacity|2026-11-19|TN daily reservoir report|||
+Vadakku Pachaiyaru|Tamil Nadu|1.8|capacity|2026-11-19|TN daily reservoir report|||
+Vaigai|Tamil Nadu|44.8|capacity|2026-11-19|TN daily reservoir report|||
+Vandal Odai|Tamil Nadu|0|capacity|2026-11-19|TN daily reservoir report|||
+Varadhamanadhi|Tamil Nadu|100.4|capacity|2026-11-19|TN daily reservoir report|||
+Varattar Vallimalai|Tamil Nadu|7.1|capacity|2026-11-19|TN daily reservoir report|||
+Varattupallam|Tamil Nadu|31.4|capacity|2026-11-19|TN daily reservoir report|||
+Vattamalaikarai|Tamil Nadu|0.1|capacity|2026-11-19|TN daily reservoir report|||
+Veeranam|Tamil Nadu|57.2|capacity|2026-11-19|TN daily reservoir report|||
+Vembakottai|Tamil Nadu|4.8|capacity|2026-11-19|TN daily reservoir report|||
+Vidur|Tamil Nadu|6.3|capacity|2026-11-19|TN daily reservoir report|||
+Willingdon|Tamil Nadu|0|capacity|2026-11-19|TN daily reservoir report|||
+Kaddam|Telangana|40.9|live storage|2026-11-12|CWC weekly bulletin|||
+Lower Manair|Telangana|68.3|live storage|2026-11-12|CWC weekly bulletin|||
+Musi Project|Telangana|68.3|live storage|2026-11-12|CWC weekly bulletin|||
+Nagarjuna Sagar|Telangana|26.5|live storage|2026-11-12|CWC weekly bulletin|||
+Nizam Sagar|Telangana|53.9|live storage|2026-11-12|CWC weekly bulletin|||
+Priyadarshini Jurala|Telangana|34.5|live storage|2026-11-12|CWC weekly bulletin|||
+Pulichintala|Telangana|40.6|live storage|2026-11-12|CWC weekly bulletin|||
+Singur|Telangana|8.2|live storage|2026-11-12|CWC weekly bulletin|||
+Sriramsagar|Telangana|42|live storage|2026-11-12|CWC weekly bulletin|||
+Srisailam|Telangana|21.9|live storage|2026-11-12|CWC weekly bulletin|||
+Gumti|Tripura|84.3|live storage|2026-11-12|CWC weekly bulletin|||
+Jirgo|Uttar Pradesh|82.3|live storage|2026-11-13|CWC weekly bulletin|||
+Matatila|Uttar Pradesh|89.3|live storage|2026-11-12|CWC weekly bulletin|||
+Maudaha|Uttar Pradesh|100|live storage|2026-11-12|CWC weekly bulletin|||
+Meja|Uttar Pradesh|69.9|live storage|2026-11-13|CWC weekly bulletin|||
+Rihand|Uttar Pradesh|70.5|live storage|2026-11-13|CWC weekly bulletin|||
+Sharda Sagar|Uttar Pradesh|99.7|live storage|2026-11-12|CWC weekly bulletin|||
+Sirsi|Uttar Pradesh|94.7|live storage|2026-11-12|CWC weekly bulletin|||
+Nanak Sagar|Uttarakhand|89.8|live storage|2026-11-12|CWC weekly bulletin|||
+Ramganga|Uttarakhand|90.4|live storage|2026-11-13|CWC weekly bulletin|||
+Tehri|Uttarakhand|91.3|live storage|2026-11-12|CWC weekly bulletin|||
+Barkeshwar|West Bengal|96.4|live storage|2026-11-12|CWC weekly bulletin|||
+Hinglow|West Bengal|21.2|live storage|2026-11-12|CWC weekly bulletin|||
+Kangsabati|West Bengal|49.3|live storage|2026-11-12|CWC weekly bulletin|||

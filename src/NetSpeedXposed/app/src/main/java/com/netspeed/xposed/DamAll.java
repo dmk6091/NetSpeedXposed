@@ -40,6 +40,69 @@ final class DamAll {
         "Teegalavagu Project, Pochampally (V)|18.5397|79.8089|26|Jayashankar Vagu Bhupalapally|M|||||||;Thotapally MI Tank Online Reservoir|18.2633|79.0742|26|Jayashankar Vagu Bhupalapally eda Vagu Maner|M|||||||;Udayasamudram|17.0808|79.3067|26|eda Vagu|M|||||||;Upper Manair|18.2703|78.5436|26|Maner|M|||||||;Vattivagu|19.2856|79.2689|26|Vagu|L|||||||;Veldanda Tank|17.8669|79.1050|26|Vagu|L|||||||;Venkamma Cheroo|17.2861|81.1042|26|Vagu Kothagudem|M|||||||;Wyra Project|17.2044|80.3811|26|Wyra|M|||||||;Yellore Balancing Reservoir|16.1192|78.3556|26|Nala Nagarkurnool|M|||||||;Yenukunta Balancing Reservoir|16.3519|77.9275|26|Konnuru Wanaparthy Vagu|M|||||||;Gumti|23.4275|91.8110|27|Gumti|H|84.3|2|2026-11-12|1|||;Gumti Hydro Electric Dam|23.4258|91.8222|27|Gumti|M|||||||;Gangau Weir|24.6244|79.8583|28|Ken Ken Karibarar Narmada|M|||||||;Adwa|24.7858|82.3125|29|Nala Adwa|M|||||||;Adwa Barrage|24.6767|82.2978|29|Adwa|M|||||||;Ahrura|24.9978|83.0397|29|Garai|M|||||||;Amauli Bandhi|24.6461|83.0225|29||L|||||||;Arjun|25.3864|79.6894|29|Arjun Nala Nala|M|||||||;Aunjhar Tank|25.1869|81.3253|29|Garai Arjun Nala|M|||||||;Bachhara Dam|25.1306|82.0550|29|Nala|L|||||||;Baghel Khand|27.6442|82.4292|29|K|L|||||||;Baigul Dam|28.8819|79.6311|29|Udham Bahgul|M|||||||;Bajiya|23.9208|83.1389|29|Nala|L|||||||;Balui|24.5986|83.0353|29|K Nala|M|||||||;Banbasa Barrage|28.9964|80.1061|29|Sharda / Champawat Chauka|M|||||||;Bandai Dam|24.3000|78.8444|29||L|||||||;Banghoghwa|27.7936|82.1372|29||L|||||||;Banjari Kalan|24.7642|82.2200|29|Seoti|M|||||||;Bardha|25.0078|80.9753|29|Kirha|M|||||||;Bariyarpur Weir|24.8431|80.0906|29|Ken Ken Parsul|M|||||||;Barkachha|24.9375|82.4261|29|Ghori|M|||||||;Barrage Bhimgoda Barrage|29.9564|78.1803|29|Chauka Ganga Pithoragarh Udham Dhora|M|||||||;Baruwa Dam|25.1800|80.7933|29|Kulari|M|||||||;Barwa Sagar|25.3725|78.7478|29|Barwa|M|||||||;Barwar|25.5147|79.1453|29|Nala|L|||||||;Barwatola|24.0603|83.1125|29||L|||||||;Beeder Bandhi|24.2428|83.2261|29|Nala|L|||||||;Berbeta Bandi|25.1086|82.3086|29|Nala|L|||||||;Bewar Barrage|27.6525|78.7331|29|Kali|M|||||||;Bhaghla Tank|25.2442|81.6131|29|Nala|L|||||||;Bhagwanpur Dam|27.5883|82.4561|29|Nala|L|||||||;Bhaisora Dam|24.7800|83.2203|29|Nala|L|||||||;Bhaoni Dam|24.8500|78.6833|29||L|||||||;Bhaurat Dam|24.6175|78.6911|29|Jamni|M|||||||;Bhonka|25.0030|83.1213|29|Bandh|M|||||||;Chandraprabha|24.9317|83.1736|29||L|||||||;Chandrawal|25.4472|79.8958|29||L|||||||;Chigauri|24.6678|82.8053|29|Nala|L|||||||;Chittaurgarh|27.5772|82.5989|29|Nala Nala|M|||||||;Deori|24.7050|83.3586|29|Nala|L|||||||;Dhandhraul|24.6197|83.1833|29|Nala|L|||||||;Dhekwaan|25.0008|82.7481|29||L|||||||;Dhora|28.9386|79.5814|29|Udham Dhora|M|||||||;Dhukwan Weir|25.1917|78.5417|29|Nardari Nala Betwa Garai|M|||||||;Dongari|25.3864|78.4619|29|Pahuj|M|||||||;Dongia|24.9017|83.0119|29|Garai|M|||||||;Erach Dam|25.7408|79.0567|29|Betwa|M|||||||;Garhwa Tank|25.2133|81.4439|29|Nala|L|||||||;Ghaghar Barrage|24.6156|83.0589|29||L|||||||;Ghori|24.9378|82.4261|29|Ghori|M|||||||;Girgitahi|27.6764|82.3219|29||L|||||||;Girja Barrage|28.2725|81.0844|29||L|||||||;Gokul Barrage|27.4431|77.7161|29||L|||||||;Gomti Barrage|26.8553|80.9696|29||L|||||||;Govind Sagar|24.6742|78.4128|29|Nala|L|||||||;Gularia|25.0781|82.1786|29|Nala|L|||||||;Gunta|25.2194|81.1500|29|Jhurai|M|||||||;Harewali Barrage|29.4125|78.6203|29||L|||||||;Hindon Barrage|28.6642|77.3997|29||L|||||||;Jaiwanti|25.1833|81.2189|29|Nala|L|||||||;Jamathua Bandhi|25.0528|82.5222|29|Nala|L|||||||;Jamini Dam|24.3696|78.6844|29|Jamni|M|||||||;Jamrar Dam|24.5611|78.8239|29|Bapra|M|||||||;Jarera|25.0247|81.0869|29|Nala|L|||||||;Jharo Khas|24.1886|83.1450|29|Jharo|M|||||||;Jirgo|25.0492|82.9532|29|Jargo|U|82.3|2|2026-11-13|1|||;Jogendra|24.6589|82.7247|29|Nala|L|||||||;Kabrai|25.4125|79.9639|29||L|||||||;Kachnaudha Dam|24.7367|78.5936|29||L|||||||;Kanhar|24.1225|83.2967|29|Nala|L|||||||;Kanpur Barrage|26.5078|80.3167|29|Ganga|M|||||||;Kargara|24.6059|82.9878|29|Nala|L|||||||;Keolari|25.3114|79.3669|29||L|||||||;Khairatia|24.4914|82.9981|29|Nala|L|||||||;Khairman|27.7686|82.2242|29|Henga|M|||||||;Khandeha|25.1908|81.2536|29|Nala|L|||||||;Khapatia|25.2136|81.3717|29|Nala|L|||||||;Khaprar|25.4372|78.4519|29||L|||||||;Kohar Gaddi|27.6153|82.6542|29|Sonahi|M|||||||;Kota|24.4522|83.1094|29|Nala|L|||||||;Kotra Khambha|25.2225|81.4247|29|Nala|L|||||||;Kuba Khurd|25.0278|82.8106|29||L|||||||;Kurar Dam|25.1644|79.2053|29|Nala|L|||||||;Lahchura Dam|25.3192|79.2794|29|Nala Chhatarpur|M|||||||;Lakheri Dam|25.4008|79.1681|29|Nala Chhatarpur Lauwa|M|||||||;Lakra|24.1997|83.2267|29|Lauwa|M|||||||;Latifshah Weir|25.0203|83.2425|29|Nala|L|||||||;Lower Khajuri|25.0789|82.6058|29|Nala|L|||||||;Lower Rohini Dam|24.3986|78.8825|29|Rohni|M|||||||;Madhya Ganga Barrage|29.3734|78.0385|29|Ganga|M|||||||;Magar Pur|25.2858|78.8631|29|Rohni Ganga Jogar|M|||||||;Majhgawan|25.1777|79.5414|29|Jogar Nala Barai|M|||||||;Majhgawan Dam|27.6269|82.5331|29|Nala Barai Maro|M|||||||;Maro|25.0636|80.9136|29|Maro|M|||||||;Matatila|25.0922|78.3747|29|Betwa|H|89.3|2|2026-11-12|1|||;Maudaha|25.5885|79.7079|29|Birma|M|100|2|2026-11-12|1|||;Meja|24.8650|82.3988|29|Meja (Tons Tributary)|M|69.9|2|2026-11-13|1|||;Moosakhand|24.9783|83.2997|29||L|||||||;Motipur Dam|27.8761|82.0328|29|Bhawa|M|||||||;Muirpur|24.1094|83.0572|29|Khola|M|||||||;Murtia|24.7864|82.6122|29||L|||||||;Nagwa|24.6722|83.3797|29||L|||||||;Nanak Sagar Dam|28.9381|79.8369|29|Udham|M|||||||;Nanauti|24.9844|82.7803|29|Pahiti|M|||||||;Narora Barrage|28.1914|78.3989|29|Ganga|M|||||||;Narson|24.6211|83.2800|29|Nala|L|||||||;Naugarh|24.8622|83.3461|29||L|||||||;Newari|24.6517|83.3097|29|Nala|L|||||||;Obra|24.4389|82.9647|29|Rihand|M|||||||;Ohen (Balmiki)|25.1328|81.0331|29|Ohan Nala|M|||||||;Okhla Barrage|28.5527|77.3110|29|Gautambudh|M|||||||;Pachwara Lake|25.3669|79.0453|29|Nala|L|||||||;Pahari|25.2317|79.2844|29||L|||||||;Pahuj|25.5033|78.5350|29|Pahuj Betwa|M|||||||;Parichha|25.5103|78.7803|29|Pahuj Betwa|M|||||||;Pathrai|25.4236|79.0278|29||L|||||||;Pili|29.3558|78.7908|29|Sot|L|||||||;Pokhar|23.9344|83.1144|29|Sot Nala|M|||||||;Raghunathpur Bandhi|24.7106|82.7828|29|Belan|M|||||||;Raipura|25.2897|79.7922|29|Arjun|M|||||||;Rajban|24.6726|82.9289|29|Nala|L|||||||;Rajghat|24.7628|78.2342|29|Betwa|M|||||||;Rajkhar|24.2286|83.1931|29|Lauwa|M|||||||;Ram Ganga Dam|29.5153|78.7564|29||L|||||||;Ram Ganga Saddle Dam|29.5322|78.7789|29||L|||||||;Rampur|27.8539|82.0575|29|Nala|L|||||||;Rampur Kalyangarh|25.0322|81.0981|29|Nala|L|||||||;Rampur Pindaria|24.6078|82.3925|29|Nala|L|||||||;Rangawan|24.6994|79.8589|29|Karibarar|M|||||||;Rasin|25.1717|80.6675|29||L|||||||;Ratauli Weir|25.2942|80.0017|29||L|||||||;Rexahawa Bandhi|24.8061|82.7006|29|Nala|L|||||||;Rihand|24.2003|83.0101|29|Rihand|H|70.5|2|2026-11-13|1|||;Rohini|24.3556|78.7914|29|Rohni|M|||||||;Sajnam|24.5247|78.5919|29||L|||||||;Sakteshgarh Bandhi|24.9325|82.8442|29|Jirgo|M|||||||;Salar Pur|25.2008|79.8381|29|Karpia Saprar Bhada|M|||||||;Saprar|25.2089|79.0878|29|Karpia Saprar|M|||||||;Saryu Barrage|28.0522|81.4147|29|Bhada|M|||||||;Shahjad|24.9492|78.5219|29||L|||||||;Sharda Barrage|28.0642|80.9639|29|/|L|||||||;Sharda Sagar|28.7833|80.0898|29|Sharda|H|99.7|2|2026-11-12|1|||;Sijar|25.2031|79.1931|29|/ Nala|M|||||||;Silhata|24.6761|82.9136|29|Nala Nala|M|||||||;Silhata Pickup Weir|24.6747|83.3408|29|Nala|L|||||||;Siori Lake|25.3139|79.0917|29|Lakheri|M|||||||;Sirsi|24.8427|82.5002|29|Bakahar (Bakhar)|U|94.7|2|2026-11-12|1|||;Suheli Barrage|28.3419|80.7717|29|Or Suheli|M|||||||;Sukhara Dam|24.7914|82.2792|29|Nala|L|||||||;Sukhra Bandhi|24.2611|82.3861|29|Nala|L|||||||;Suswar|24.8156|82.3600|29|Nala|L|||||||;Tons Barrage|25.0431|81.7586|29|Tons|M|||||||;Upper Khajuri|24.9931|82.6028|29|Nala|L|||||||;Urmil|25.1311|79.7019|29|Urmal|M|||||||;Utari Dam|24.7750|78.6725|29|Utai|M|||||||;(UJVNL) Phika Barrage|29.3622|78.8719|30|Phika|M|||||||;Asan Barrage (UJVNL)|30.4358|77.6658|30|(Tons)|M|||||||;Baur Dam|29.1333|79.3000|30|Udham Nihal|M|||||||;Bhimtal Dam|29.3428|79.5628|30|Bhimtal Gadhera|M|||||||;Dakpathar Barrage (UJVNL)|30.5042|77.7953|30|Yamuna|M|||||||;Dhauliganga Dam|29.9797|80.5719|30|Ganga Pithoragarh|M|||||||;Dhela Barrage|29.3456|79.0075|30|Dhela|M|||||||;Gagas Barrage|29.7042|79.4772|30|Gagas|M|||||||;Gola Barrage|29.2714|79.5478|30||L|||||||;Haripura Dam|29.1300|79.2650|30|Udham Baur|M|||||||;Ichari Dam (UJVNL)|30.6142|77.7925|30|Tons|M|||||||;Joshiyara Barrage MB-II (UJVNL)|30.7294|78.4236|30||L|||||||;Kolidhek Dam|29.4008|80.0783|30|Gad Champawat|M|||||||;Kosi Barrage Ramnagar|29.3989|79.1336|30|Kosi|M|||||||;Koteshwar HEP|30.2603|78.4981|30|Bhagirathi Tehri|M|||||||;Lakhwar Dam (UJVNL)|30.5181|77.9489|30|Yamuna|M|||||||;Lata Tapovan (NTPC)|30.4942|79.6275|30|Nala|L|||||||;Maneri Dam Stage I (UJVNL)|30.7392|78.5283|30|Phika|M|||||||;Naitwar Mori H.E Project Dam|31.0632|78.0975|30|Tons|M|||||||;Nanak Sagar|28.9417|79.8292|30|Deoha|H|89.8|2|2026-11-12|1|||;Ramganga|29.5203|78.7597|30|Ramganga|H|90.4|2|2026-11-13|1|||;Sharda Sagar Dam|28.7839|80.0822|30|Nala Adwa Adwa|M|||||||;Singoli- Bhatwari Hep|30.5047|79.0894|30|Rudraprayag|M|||||||;Srinagar Dam|30.2311|78.7922|30|Rudraprayag Toli Gad Pithoragarh Udham Tumaria Patherwa Udham Nala|M|||||||;Tanakpur Barrage|29.0553|80.1211|30|Tons Udham Chui Sot Sharda / Champawat Chauka|M|||||||;Tehri|30.3778|78.4806|30|Bhagirathi|H|91.3|2|2026-11-12|1|||;Tehri HPP|30.3778|78.4778|30|Champawat Chauka|M|||||||;Tharkot Dam|29.5461|80.1725|30|Toli Gad Pithoragarh|M|||||||;Tumaria Dam|29.3069|78.9311|30|Udham Tumaria|M|||||||;Tumaria Extension Dam|29.3069|78.9353|30|Udham Nala|M|||||||;Virbhadra (Pashulok) Barrage (UJVNL)|30.0742|78.2883|30|Ganga|M|||||||;Vishnu Gad Pipalkoti HEP|30.5139|79.4917|30|Bhagirathi Tehri Alaknanda|M|||||||;Vishnuprayag Barrage (Jaypee)|30.6725|79.5153|30||L|||||||;Vyasi Dam (UJVNL)|30.5206|77.9150|30|Ganga Yamuna|M|||||||;Bakreswar Dam|23.8225|87.4114|31|Teesta|M|||||||;Bandhu Extension|23.2806|86.1400|31|Nala|L|||||||;Bara Mandira|23.8331|86.9544|31|Ajay Barddhaman|M|||||||;Barabhum|23.0320|86.3064|31|Nala Ajay Barddhaman Nala|M|||||||;Barkeshwar|23.8258|87.4165|31|Bakreswar|U|96.4|2|2026-11-12|1|||;Beko|23.4733|86.6250|31|Nala|L|||||||;Bindu Barrage|27.1050|88.8703|31|Kalimpong|M|||||||;Dangra|23.4528|86.7831|31|Dangra|M|||||||;Dimu|23.4247|85.9800|31|Kasai /|M|||||||;Farakka Barrage|24.8044|87.9322|31|Ganga Murshidabad Teesta Kalimpong|M|||||||;Futiary|23.3844|86.5672|31|Nadi|M|||||||;Golamarjore|23.4247|86.3650|31||L|||||||;Hanumata|23.1089|86.2633|31|Amruhasa Nala|M|||||||;Hinglow|23.8222|87.1934|31|Hinglo|M|21.2|2|2026-11-12|1|||;Kangsabati|22.9639|86.7889|31|Kangsabati|H|49.3|2|2026-11-12|1|||;Kangsabati Kumari|22.9636|86.7892|31|Kasai /|M|||||||;Karrior|23.4247|85.9461|31|Karrior Kulbera Kumari|M|||||||;Khairabera|23.2636|86.0072|31|Kulbera|M|||||||;Kumari|23.1575|86.2881|31|Kumari|M|||||||;Lipania|23.4672|86.4597|31|Bagjor|M|||||||;Maliarajore|23.4494|87.1997|31|Nala|L|||||||;Massanjore|24.1072|87.3086|31|Mayuraks hi|M|||||||;Moutorejore|23.5800|86.5869|31|Bagjor Nala|M|||||||;Nachan|23.6175|87.3192|31|Nala Barddhaman|M|||||||;Parga|23.4375|86.0819|31|Nala Barddhaman Parga|M|||||||;Patloi|23.3622|86.4836|31|Parga Patloi|M|||||||;Purulia Pump Storage Project Lower Dam|23.1875|86.0917|31||L|||||||;Purulia Pump Storage Project Upper Dam|23.1969|86.0986|31||L|||||||;Ramchandra pur|23.5756|86.8361|31|Jhora|M|||||||;Rupai|23.3100|85.9211|31|Rupai|M|||||||;Saharajore|23.3161|86.0542|31|Goura|M|||||||;Sali|23.4053|87.0853|31|Sali|M|||||||;Silabati Barrage|23.1011|86.8633|31|Silabali|M|||||||;Taragonia|23.4778|86.3875|31||L|||||||;Tatko|22.9289|86.5125|31|Totko|M|||||||;Teesta Barrage|26.7514|88.5883|31|Teesta|M|||||||;Teesta Low Dam-III Barrage|27.0021|88.4429|31|Teesta Kalimpong|M|||||||;Teesta Low Dam-IV|26.9280|88.4557|31|Teesta|M|||||||;Turga|23.1978|86.0625|31|Teesta Turga|M|||||||"
     };
 
+    /** Where the daily download lives; set by whoever has a Context. */
+    static final String FEED = "https://raw.githubusercontent.com/dmk6091/NetSpeedXposed/main/data/dams_levels.txt";
+    private static java.io.File feedFile;
+    private static long feedStamp = -1;
+    private static java.util.HashMap<String, String[]> feed = new java.util.HashMap<>();
+    static volatile String feedNote = "built-in snapshot";
+
+    private static String key(String name, String state) { return (name + "|" + state).toLowerCase(Locale.ROOT); }
+
+    /** Use the downloaded levels file in this folder (re-read when it changes). */
+    static synchronized void useFeed(java.io.File dir) {
+        feedFile = new java.io.File(dir, "dams_levels.txt");
+        readFeed();
+    }
+
+    private static synchronized void readFeed() {
+        try {
+            if (feedFile == null || !feedFile.exists()) return;
+            long st = feedFile.lastModified();
+            if (st == feedStamp) return;
+            java.util.HashMap<String, String[]> m = new java.util.HashMap<>();
+            try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(feedFile), "UTF-8"))) {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    if (line.startsWith("#") || line.trim().isEmpty()) continue;
+                    String[] f = line.split("\\|", -1);
+                    if (f.length >= 9) m.put(key(f[0], f[1]), f);
+                }
+            }
+            if (!m.isEmpty()) { feed = m; feedStamp = st; feedNote = "downloaded " + new java.text.SimpleDateFormat("d MMM HH:mm", Locale.US).format(new java.util.Date(st)); }
+        } catch (Throwable ignored) { }
+    }
+
+    /** Fetches the levels file when the copy here is over 12 hours old. Returns true when a new file was saved. */
+    static boolean download(java.io.File dir, long now) {
+        java.io.File f = new java.io.File(dir, "dams_levels.txt");
+        if (f.exists() && now - f.lastModified() < 12 * 3600_000L) { useFeed(dir); return false; }
+        try {
+            java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(FEED).openConnection();
+            c.setConnectTimeout(10_000);
+            c.setReadTimeout(20_000);
+            c.setRequestProperty("User-Agent", "NetSpeedXposed/1.0");
+            if (c.getResponseCode() != 200) { feedNote = "download failed: HTTP " + c.getResponseCode(); useFeed(dir); return false; }
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            try (java.io.InputStream in = c.getInputStream()) {
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
+            }
+            String body = bo.toString("UTF-8");
+            if (!body.contains("|") || body.length() < 2000) { feedNote = "download looked wrong"; useFeed(dir); return false; }
+            java.io.File t = new java.io.File(dir, "dams_levels.tmp");
+            java.nio.file.Files.write(t.toPath(), body.getBytes("UTF-8"));
+            if (!t.renameTo(f)) { feedNote = "could not save the download"; return false; }
+            useFeed(dir);
+            return true;
+        } catch (Throwable t) {
+            feedNote = "download failed: " + t.getClass().getSimpleName();
+            useFeed(dir);
+            return false;
+        }
+    }
+
     private static String[][] rec;
     private static double[] la, lo;
 
@@ -78,6 +141,11 @@ final class DamAll {
         h.date = f[8];
         h.source = f[9].isEmpty() ? "" : SOURCES[Integer.parseInt(f[9])];
         h.inflow = d(f[10]); h.outRiver = d(f[11]); h.outCanal = d(f[12]);
+        String[] o = feed.get(key(h.name, h.state));
+        if (o != null) {
+            h.pct = d(o[2]); h.basis = o[3]; h.date = o[4]; h.source = o[5];
+            h.inflow = d(o[6]); h.outRiver = d(o[7]); h.outCanal = d(o[8]);
+        }
         h.dir = DamReg.dir(lat, lon, la[i], lo[i]);
         return h;
     }
@@ -85,6 +153,7 @@ final class DamAll {
     /** The n nearest dams within maxKm, nearest first; levelOnly = only those with a reading that is not too old. */
     static List<Hit> nearest(double lat, double lon, int n, double maxKm, boolean levelOnly) {
         load();
+        readFeed();
         List<Hit> all = new ArrayList<>();
         for (int i = 0; i < rec.length; i++) {
             if (Math.abs(la[i] - lat) > maxKm / 111.0 + 0.01) continue;

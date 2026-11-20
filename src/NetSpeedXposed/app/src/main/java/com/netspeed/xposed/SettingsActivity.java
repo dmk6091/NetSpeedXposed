@@ -1502,6 +1502,7 @@ public class SettingsActivity extends Activity {
 
         if (!Double.isNaN(lat)) {
             try {
+                DamAll.useFeed(getCacheDir());
                 java.util.List<DamAll.Hit> rh = DamAll.nearest(lat, lon, 5, 150, false);
                 if (!rh.isEmpty()) {
                     TextView h = text("Nearest dams anywhere in India", 12, accent);
@@ -1521,7 +1522,7 @@ public class SettingsActivity extends Activity {
                         }
                         infoRow(c, x.name + " · " + Dam.kmText(x.km) + " " + x.dir, sb.toString());
                     }
-                    TextView n = text("National dam register with rivers; levels and flows only where a state or CWC report gave them (snapshot " + DamAll.SNAPSHOT + ", hidden after " + DamAll.MAX_AGE_DAYS + " days). Positions can be a few km out.", 11, sub);
+                    TextView n = text("National dam register with rivers; levels and flows only where a state or CWC report gave them (levels file: " + DamAll.feedNote + "; built-in snapshot " + DamAll.SNAPSHOT + "; hidden after " + DamAll.MAX_AGE_DAYS + " days). Positions can be a few km out.", 11, sub);
                     c.addView(n);
                 }
             } catch (Throwable ignored) { }
