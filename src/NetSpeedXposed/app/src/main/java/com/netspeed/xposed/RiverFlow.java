@@ -22,8 +22,18 @@ final class RiverFlow {
 
     /** When a lookup fails, keep the last name found if it was within 3 km of here. */
     private static String stale(String key, double lat, double lon) {
-        if (nameKey.equals(key)) return nameVal;
-        return !nameVal.isEmpty() && EarthLine.km(lat, lon, nameLat, nameLon) < 3 ? nameVal : "";
+        if (nameKey.equals(key) && !nameVal.isEmpty()) return nameVal;
+        if (!nameVal.isEmpty() && EarthLine.km(lat, lon, nameLat, nameLon) < 3) return nameVal;
+        // map servers down: the national dam list knows the river of the nearest dam, so name the basin from that
+        try {
+            java.util.List<DamAll.Hit> h = DamAll.nearest(lat, lon, 1, 40, false);
+            if (!h.isEmpty() && h.get(0).river != null && !h.get(0).river.trim().isEmpty() && h.get(0).km < 40) {
+                String r = h.get(0).river.trim().replaceAll("(?i)\\s*(river|nadi)$", "").trim();
+                nameWhy += "; named from nearest dam list (" + h.get(0).name + ")";
+                return r + " basin";
+            }
+        } catch (Throwable ignored) { }
+        return "";
     }
 
     /**

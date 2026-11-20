@@ -303,6 +303,14 @@ final class EarthLine {
                     regNote = " (national dam register)";
                 }
             } catch (Throwable ignored) { }
+            try {
+                java.util.List<DamAll.Hit> ah = DamAll.nearest(lat, lon, 1, dmKm, false);
+                if (!ah.isEmpty() && (best.isEmpty() || ah.get(0).km + 0.5 < osmKm)) {
+                    DamAll.Hit h = ah.get(0);
+                    best = "🏞 " + h.name.replaceAll("(?i)\\s+(dam|barrage)$", "") + " Dam " + dist(h.km) + " " + h.dir;
+                    regNote = " (all-India dam list)";
+                }
+            } catch (Throwable ignored) { }
             if (els != null || !best.isEmpty()) { dam = best; damKey = dmCell; damAt = now; }
             w += (els == null ? "dam lookup failed; " : els.length() + " dams found, nearest: " + (best.isEmpty() ? "none" : best.replace("\uD83C\uDFDE ", "") + regNote) + "; ");
         } catch (Throwable t) { w += "dam " + t.getClass().getSimpleName() + "; "; }
