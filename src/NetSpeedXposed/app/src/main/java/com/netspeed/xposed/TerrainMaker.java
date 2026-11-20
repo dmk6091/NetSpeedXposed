@@ -406,7 +406,11 @@ final class TerrainMaker {
         t.setColor(Color.WHITE);
         t.setTextSize(38 * u);
         t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        cv.drawText(place.isEmpty() ? String.format(Locale.US, "%.3f, %.3f", lat, lon) : place, left + 28 * u, top + 52 * u, t);
+        String head1 = place.isEmpty() ? String.format(Locale.US, "%.3f, %.3f", lat, lon) : place;
+        float hw = right - left - 56 * u;
+        while (head1.length() > 6 && t.measureText(head1) > hw) head1 = head1.substring(0, head1.length() - 2).trim();
+        if (!head1.equals(place) && !place.isEmpty()) head1 += "…";
+        cv.drawText(head1, left + 28 * u, top + 52 * u, t);
         t.setTypeface(Typeface.DEFAULT);
         t.setTextSize(27 * u);
         float y = top + head + 34 * u;
