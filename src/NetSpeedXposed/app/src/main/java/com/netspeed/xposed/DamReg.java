@@ -50,6 +50,19 @@ final class DamReg {
 
     /** The n nearest register dams within maxKm, nearest first. */
     static List<Hit> nearest(double lat, double lon, int n, double maxKm) {
+        List<Hit> r = nearest0(lat, lon, n, maxKm);
+        if (!r.isEmpty()) return r;
+        try {
+            for (DamAll.Hit a : DamAll.nearest(lat, lon, n, maxKm, false)) {
+                Hit h = new Hit();
+                h.name = a.name; h.km = a.km; h.lat = a.lat; h.lon = a.lon; h.dir = a.dir;
+                r.add(h);
+            }
+        } catch (Throwable ignored) { }
+        return r;
+    }
+
+    private static List<Hit> nearest0(double lat, double lon, int n, double maxKm) {
         load();
         List<Hit> all = new ArrayList<>();
         for (int i = 0; i < nm.length; i++) {

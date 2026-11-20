@@ -1499,13 +1499,26 @@ public class SettingsActivity extends Activity {
 
         if (!Double.isNaN(lat)) {
             try {
-                java.util.List<DamReg.Hit> rh = DamReg.nearest(lat, lon, 4, 40);
+                java.util.List<DamAll.Hit> rh = DamAll.nearest(lat, lon, 5, 150, false);
                 if (!rh.isEmpty()) {
-                    TextView h = text("Nearest dams on the national register (no level data)", 12, accent);
+                    TextView h = text("Nearest dams anywhere in India", 12, accent);
                     h.setPadding(0, dp(10), 0, dp(2));
                     c.addView(h);
-                    for (DamReg.Hit x : rh) infoRow(c, x.name, Dam.kmText(x.km) + " " + x.dir);
-                    TextView n = text("Maharashtra, Andhra, Telangana and Karnataka national dam registers. Positions can be a few km out; no level data for these.", 11, sub);
+                    for (DamAll.Hit x : rh) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(x.state);
+                        if (!x.river.isEmpty()) sb.append(" · ").append(x.river).append(x.riverConf.equals("L") ? " (river uncertain)" : "");
+                        if (x.fresh()) sb.append(String.format(us, "\n%.0f%% full (%s) · %s · %s", x.pct, x.basis, x.date, x.source));
+                        else if (!Double.isNaN(x.pct)) sb.append(String.format(us, "\nlevel %.0f%% on %s is too old, not shown", x.pct, x.date));
+                        if (!Double.isNaN(x.inflow) || !Double.isNaN(x.outRiver) || !Double.isNaN(x.outCanal)) {
+                            sb.append("\ncusecs:");
+                            if (!Double.isNaN(x.inflow)) sb.append(String.format(us, " in %.0f", x.inflow));
+                            if (!Double.isNaN(x.outRiver)) sb.append(String.format(us, " out river %.0f", x.outRiver));
+                            if (!Double.isNaN(x.outCanal)) sb.append(String.format(us, " out canal %.0f", x.outCanal));
+                        }
+                        infoRow(c, x.name + " · " + Dam.kmText(x.km) + " " + x.dir, sb.toString());
+                    }
+                    TextView n = text("National dam register with rivers; levels and flows only where a state or CWC report gave them (snapshot " + DamAll.SNAPSHOT + ", hidden after " + DamAll.MAX_AGE_DAYS + " days). Positions can be a few km out.", 11, sub);
                     c.addView(n);
                 }
             } catch (Throwable ignored) { }
