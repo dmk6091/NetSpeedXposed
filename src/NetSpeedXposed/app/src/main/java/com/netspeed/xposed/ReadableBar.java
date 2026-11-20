@@ -1745,7 +1745,8 @@ final class ReadableBar extends View {
                     }
                 } catch (Throwable ignored) { }
                 if (Cfg.b(Cfg.EL_POWER, Cfg.D_EL_POWER)) addFrame(fs[3], EarthLine.powerLine, EarthLine.powerSub);
-                if (Cfg.b(Cfg.EL_LAND, Cfg.D_EL_LAND)) addFrame(fs[4], alt, cl, EarthLine.peak);
+                if (Cfg.b(Cfg.EL_LAND, Cfg.D_EL_LAND)) addFrame(fs[4], alt, cl, gps, EarthLine.peak);
+                else if (gps != null) addFrame(fs[4], gps);
                 if (Cfg.b(Cfg.EL_QUAKE, Cfg.D_EL_QUAKE)) addFrame(fs[5], EarthLine.quake);
                 if (Cfg.b(Cfg.EL_EARTH, Cfg.D_EL_EARTH)) addFrame(fs[6], EarthLine.district);
                 try {   // tectonic plate and nearest plate boundary (with the faults)
@@ -1812,8 +1813,7 @@ final class ReadableBar extends View {
                 String body = screens.get((int) ((System.currentTimeMillis() / (spd * 1000L)) % screens.size()));
                 boolean dropLead = body.startsWith("\u0002");
                 String t = dropLead ? body.substring(1) : join(lead, body);
-                boolean withGps = false;
-                if (gps != null && px + tw(t + " \u00b7 " + gps, sz, semi) <= lineEnd) { t = t + " \u00b7 " + gps; withGps = true; }
+                boolean withGps = gps != null && t.contains(gps);   // the GPS text lives in the altitude frame, not on every frame
                 while (t.length() > 4 && px + tw(t, sz, semi) > lineEnd) t = t.substring(0, t.length() - 2) + "\u2026";
                 if (!t.isEmpty()) text(c, t, px, y(P2) + 26, sz, semi, withGps ? (sats >= 8 ? green() : yellow()) : grey());
             }
