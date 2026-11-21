@@ -1555,12 +1555,25 @@ final class ReadableBar extends View {
                 loose.add(p);
             }
         }
+        if (simL < w) {
+            int ny1 = (int) ((oy + 19f) * sc0);
+            for (int[] r : pkRuns(px, w, simL, w, 0, Math.max(1, ny1), gap, 0, 0)) {
+                if (r[1] - r[0] < 5) continue;
+                int[] t = pkTrim(px, w, r[0], 0, r[1], Math.max(1, ny1));
+                if (t == null) continue;
+                Pk p = new Pk();
+                p.parts.add(t);
+                p.order = 1000f + t[0];
+                pkMeasure(p, 0);
+                loose.add(p);
+            }
+        }
         // 2) one row-piece per SIM box
         java.util.ArrayList<Pk> sim = new java.util.ArrayList<>();
         final float[] cuts = {51, 77, 100, 122, 146};
         for (int i = 0; i < colN && i < 2; i++) {
             int x0 = (int) (colX[i] * sc0), x1 = (int) ((colX[i] + colW[i]) * sc0);
-            int ya = (int) ((oy + 14f) * sc0), yb = Math.min(h, (int) ((oy + 178f) * sc0));
+            int ya = (int) ((oy + 19f) * sc0), yb = Math.min(h, (int) ((oy + 178f) * sc0));
             Pk p = new Pk();
             p.tag = String.valueOf(i + 1);
             int gs = -1;
@@ -1592,7 +1605,7 @@ final class ReadableBar extends View {
         float rp = h / (float) R;
         java.util.ArrayList<PkSeg> segs = new java.util.ArrayList<>();
         final float G = 12f;
-        float camL = cxD - crD - 12f, camR2 = cxD + crD + 12f;
+        float camL = cxD - 72f, camR2 = cxD + 72f;
         PkSeg sim2Rest = null;
         float[] simX = new float[2];
         for (int r = 0; r < R; r++) {
@@ -1622,9 +1635,9 @@ final class ReadableBar extends View {
         });
         for (Pk p : todo) {
             PkSeg best = null;
-            for (PkSeg g : segs) {                                    // tightest segment it still fits in at full size
+            for (PkSeg g : segs) {                                    // roomiest segment it fits in at full size: spreads items over all rows
                 float need = p.w + (g.items.isEmpty() ? 0 : G);
-                if (g.room() >= need && (best == null || g.room() < best.room())) best = g;
+                if (g.room() >= need && (best == null || g.room() / (g.x1 - g.x0) > best.room() / (best.x1 - best.x0))) best = g;
             }
             if (best == null) {                                     // else the roomiest, shrunk to fit (not below 60 %)
                 for (PkSeg g : segs) if (best == null || g.room() > best.room()) best = g;
