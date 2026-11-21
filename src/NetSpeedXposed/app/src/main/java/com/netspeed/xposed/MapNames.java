@@ -27,9 +27,9 @@ final class MapNames {
     /** Draws up to about a dozen names that do not overlap each other, the clock, the legend or the position dot. */
     static void draw(Context c, Canvas cv, int W, int H, double lat, double lon, int z, double ox, double oy, float S, boolean day, double halfKm) {
         List<L> all = new ArrayList<>();
-        try { dams(all, lat, lon, halfKm); } catch (Throwable ignored) { }
+        try { dams(all, lat, lon, halfKm); } catch (Throwable t) { WpStatus.note("dam names skipped: " + t.getClass().getSimpleName()); }
         try { faults(all, lat, lon, halfKm); } catch (Throwable ignored) { }
-        try { osm(c, all, lat, lon, halfKm, z); } catch (Throwable ignored) { }
+        try { osm(c, all, lat, lon, halfKm, z); } catch (Throwable t) { WpStatus.note("peaks, lakes, wetland and river names skipped: " + (String.valueOf(t.getMessage()).contains("busy") ? "OpenStreetMap servers busy" : t.getClass().getSimpleName())); }
         for (L l : all) {
             l.x = (float) ((WallpaperMaker.worldX(l.lon, z) - ox) * S);
             l.y = (float) ((WallpaperMaker.worldY(l.lat, z) - oy) * S);

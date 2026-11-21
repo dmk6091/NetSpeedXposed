@@ -1967,15 +1967,22 @@ public class SettingsActivity extends Activity {
         st.setPadding(0, dp(8), 0, 0);
         Runnable show = () -> {
             long at = wp.getLong("lastAt", 0);
-            st.setText(at == 0 ? "No map wallpaper made yet" : "Last picture " + new java.text.SimpleDateFormat("d MMM HH:mm", java.util.Locale.US).format(new java.util.Date(at))
-                    + (wp.getString("status", "ok").equals("ok") ? "" : " \u00b7 last try: " + wp.getString("status", "")));
+            String base = at == 0 ? "No map wallpaper made yet" : "Last picture " + new java.text.SimpleDateFormat("d MMM HH:mm", java.util.Locale.US).format(new java.util.Date(at))
+                    + (wp.getLong("lastMs", 0) > 0 ? " \u00b7 took " + wp.getLong("lastMs", 0) / 1000 + " s" : "");
+            String why = wp.getString("status", "ok").equals("ok") ? "" : "\nLast try failed: " + reason(wp.getString("status", ""));
+            String nt = wp.getString("notes", "");
+            st.setText(base + (nt.isEmpty() ? "" : "\nLeft out: " + nt) + why);
         };
         show.run();
         c.addView(wpButton("Set wallpaper now", false, () -> {
-            st.setText("Making the picture\u2026 (map tiles, rock, soil: up to a minute)");
+            st.setText("Starting\u2026");
+            final android.os.Handler hd = new android.os.Handler(android.os.Looper.getMainLooper());
+            final Runnable[] tick = new Runnable[1];
+            tick[0] = () -> { if (WpStatus.active) { st.setText(WpStatus.progress()); hd.postDelayed(tick[0], 1000); } };
+            hd.postDelayed(tick[0], 400);
             new Thread(() -> {
                 String r = WallpaperMaker.run(getApplicationContext(), true);
-                runOnUiThread(() -> { show.run(); android.widget.Toast.makeText(this, r, android.widget.Toast.LENGTH_LONG).show(); });
+                runOnUiThread(() -> { hd.removeCallbacks(tick[0]); show.run(); android.widget.Toast.makeText(this, r, android.widget.Toast.LENGTH_LONG).show(); });
             }).start();
         }));
         c.addView(st);
@@ -2022,6 +2029,18 @@ public class SettingsActivity extends Activity {
         TextView n = text("The job runs about every 30 min but only draws when you have moved. Needs location permission and the phone not on low battery. Maps: OpenStreetMap.", 11, sub);
         n.setPadding(0, dp(8), 0, 0);
         opts.addView(n);
+    }
+
+    /** A failure message in plain words. */
+    private static String reason(String m) {
+        String l = m.toLowerCase(java.util.Locale.ROOT);
+        if (l.contains("no terrain tiles")) return "the elevation map server could not be reached (check the internet, then try again)";
+        if (l.contains("no map tiles")) return "the map server could not be reached (check the internet, then try again)";
+        if (l.contains("unknownhost") || l.contains("unable to resolve")) return "no internet connection";
+        if (l.contains("timeout")) return "a server took too long to answer";
+        if (l.contains("outofmemory")) return "the phone ran out of memory while drawing";
+        if (l.contains("security") || l.contains("permission")) return "a permission is missing: " + m;
+        return m;
     }
 
     /** km stores the index into KMS; card stores 0 = show, 1 = hide. */

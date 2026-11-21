@@ -182,17 +182,19 @@ final class WallpaperMaker {
     /** Where we are now -> bitmap -> wallpaper. Returns a one-line result. */
     static String run(Context c, boolean force) {
         SharedPreferences sp = sp(c);
+        WpStatus.begin(sp.getLong("lastMs", 0));
         try {
             Object[] w = DamJob.where(c);
             double lat = (Double) w[0], lon = (Double) w[1];
-            if ((Long) w[2] < 0) return "no location fix yet";
+            if ((Long) w[2] < 0) { WpStatus.end(); return "no location fix yet"; }
             if (!force && sp.contains("lastLat")) {
                 float[] d = new float[1];
                 android.location.Location.distanceBetween(sp.getFloat("lastLat", 0), sp.getFloat("lastLon", 0), lat, lon, d);
                 long age = System.currentTimeMillis() - sp.getLong("lastAt", 0);
-                if (d[0] < sp.getInt("km", 2) * 1000f && age < 24 * 3600_000L) return "still near the last picture";
+                if (d[0] < sp.getInt("km", 2) * 1000f && age < 24 * 3600_000L) { WpStatus.end(); return "still near the last picture"; }
             }
             String place = "";
+            WpStatus.step(0);
             try {
                 org.json.JSONObject a = new org.json.JSONObject(Geo.get(String.format(Locale.US,
                         "https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat=%.5f&lon=%.5f", lat, lon), 12_000)).optJSONObject("address");
@@ -210,16 +212,20 @@ final class WallpaperMaker {
                 ti.place = place;
                 b = TerrainMaker.draw(c, lat, lon, DayNight.isDay(lat, lon), new int[]{12, 11, 10}[zi], sp.getBoolean("card", false), ti);
             } else b = draw(c, lat, lon, ZOOMS[zi], 0, sp.getBoolean("card", false), place);
+            WpStatus.step(6);
             WallpaperManager wm = WallpaperManager.getInstance(c);
             int tg = sp.getInt("target", 0);
             int flags = tg == 1 ? WallpaperManager.FLAG_SYSTEM : tg == 2 ? WallpaperManager.FLAG_LOCK : (WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK);
             wm.setBitmap(b, null, true, flags);
             b.recycle();
+            String nt = WpStatus.notesText();
+            long took = WpStatus.end();
             sp.edit().putFloat("lastLat", (float) lat).putFloat("lastLon", (float) lon).putLong("lastAt", System.currentTimeMillis())
-                    .putString("status", "ok").apply();
+                    .putLong("lastMs", took).putString("notes", nt).putString("status", "ok").apply();
             return "Wallpaper set for " + (place.isEmpty() ? String.format(Locale.US, "%.3f, %.3f", lat, lon) : place);
         } catch (Throwable t) {
             String m = t.getClass().getSimpleName() + (t.getMessage() != null ? ": " + t.getMessage() : "");
+            WpStatus.end();
             sp.edit().putString("status", m).apply();
             return "Failed: " + m;
         }

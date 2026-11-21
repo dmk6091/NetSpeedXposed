@@ -109,6 +109,7 @@ final class TerrainMaker {
         final float[] el = new float[gw * gh];
         final byte[] cls = new byte[gw * gh];
         final boolean[] elOk = new boolean[1];
+        WpStatus.step(1);
         final List<int[]> need = new ArrayList<>();
         for (int ty = ty0; ty <= ty1; ty++) if (ty >= 0 && ty < n) for (int tx = tx0; tx <= tx1; tx++) need.add(new int[]{tx, ty});
         final AtomicInteger next = new AtomicInteger(), okEl = new AtomicInteger();
@@ -226,6 +227,7 @@ final class TerrainMaker {
         small.recycle();
         Canvas cv = new Canvas(bmp);
 
+        WpStatus.step(2);
         // nearest forest
         double bestF = Double.NaN;
         int fbx = -1, fby = -1;
@@ -239,6 +241,7 @@ final class TerrainMaker {
             if (fbx >= 0) bestF = Math.sqrt(bd) * mpp / 1000.0;
         }
 
+        WpStatus.step(3);
         // wetlands (OpenStreetMap, Overpass): best effort
         double halfLat = (H / S * mpp / 2000.0) / 111.2, halfLon = (W / S * mpp / 2000.0) / (111.3 * Math.cos(Math.toRadians(lat)));
         int wetN = 0, mangN = 0;
@@ -248,6 +251,7 @@ final class TerrainMaker {
             String q = String.format(Locale.US, "[out:json][timeout:25][maxsize:60000000];(way[natural=wetland](%.4f,%.4f,%.4f,%.4f);relation[natural=wetland](%.4f,%.4f,%.4f,%.4f);way[wetland=mangrove][natural!=wetland](%.4f,%.4f,%.4f,%.4f););out geom qt;",
                     lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon);
             String js = overpass(q);
+            if (js == null) WpStatus.note("wetlands skipped: OpenStreetMap servers busy");
             if (js != null) {
                 Paint wp = new Paint(Paint.ANTI_ALIAS_FLAG);
                 wp.setStyle(Paint.Style.FILL);
@@ -297,6 +301,7 @@ final class TerrainMaker {
             }
         } catch (Throwable ignored) { }
 
+        WpStatus.step(4);
         // faults
         double halfKm = Math.max(W, H) / S * mpp / 2000.0;
         Paint fp = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -355,6 +360,7 @@ final class TerrainMaker {
         if (info != null) { info.forestKm = bestF; info.wetKm = bestW; info.wetCount = wetN; }
         if (card) drawCard(c, cv, W, H, lat, lon, day, faultTxt, bestF, bestW, info, mx - mn);
         drawLegend(cv, W, H, day);
+        WpStatus.step(5);
         try { if (WallpaperMaker.sp(c).getBoolean("names", true)) MapNames.draw(c, cv, W, H, lat, lon, z, ox, oy, S, day, halfKm); } catch (Throwable ignored) { }
         Paint at = new Paint(Paint.ANTI_ALIAS_FLAG);
         at.setColor(day ? Color.argb(210, 40, 40, 30) : Color.argb(190, 255, 255, 255));
