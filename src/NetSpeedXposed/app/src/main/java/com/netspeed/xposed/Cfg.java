@@ -165,6 +165,7 @@ final class Cfg {
     static final String TIDE_BY = "tide_by";           static final int D_TIDE_BY = 0;     // 0 nearest tide point, 1 nearest beach (named)
     static final String TIDE_PLACE = "tide_place";     static final int D_TIDE_PLACE = 0;  // 0 nearest, n = place n
     static final String CORNER = "pro_corner";         static final int D_CORNER = 1;   // 0 off, 1 5G share, 2 quality
+    static final String LAYOUT = "bar_layout";         static final int D_LAYOUT = 1;   // 0 classic (data / Q column at the far right), 1 folded (data / Q under the data SIM box)
     static final String INTEGRITY_TOAST = "integrity_toast"; static final boolean D_INTEGRITY_TOAST = true;
     static final String QTI_NR = "qti_nr";             static final boolean D_QTI_NR = false;
     static final String NR_MODE = "nr_mode";           static final int D_NR_MODE = 0;            // 0 automatic, 1 always allow 5G, 2 force 4G

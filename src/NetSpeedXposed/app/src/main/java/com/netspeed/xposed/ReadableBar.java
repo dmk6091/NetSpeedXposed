@@ -2912,7 +2912,7 @@ final class ReadableBar extends View {
     private float predictSimLeft(float R0, float R1) {
         int n = Math.min(2, sims.size());
         if (n == 0) return Float.NaN;
-        if (graphsOn()) R1 -= GW + 8;
+        if (colOn()) R1 -= GW + 8;
         float simR = Math.min(R1, cornerRightX(y(P1A) - 24) - 4);
         final float pad = 7, gap = 2;
         float total = gap * (n - 1);
@@ -2927,7 +2927,7 @@ final class ReadableBar extends View {
         colN = 0;
         int n = Math.min(2, sims.size());
         final float R1full = R1;
-        if (graphsOn()) R1 -= GW + 8;
+        if (colOn()) R1 -= GW + 8;
         float simR = Math.min(R1, cornerRightX(y(P1A) - 24) - 4);
         if (n > 0) {
             final float pad = 7, gap = 2;
@@ -2952,11 +2952,95 @@ final class ReadableBar extends View {
         // corner beside the SIMs: today's 5G share, or the data SIM's signal quality, or nothing
         int corner = Cfg.i(Cfg.CORNER, Cfg.D_CORNER);
         try {
-            if (graphsOn()) graphColumn(c, R1full);
+            if (graphsOn()) { if (fold) foldData(c); else graphColumn(c, R1full); }
             else if (corner == 1) proNrShare(c, simR + 3, W - 4);
             else if (corner == 2) proQuality(c, simR + 3, W - 4);
         } catch (Throwable ignored) { }
         try { proTowerAreas(c); } catch (Throwable ignored) { }
+    }
+
+    /** Height the data SIM's place name takes under its box (0 none, 22 one line, 44 two), same rules as drawPlace. */
+    private float placeH(SimInfo d, float cw) {
+        String ar = placeText(d);
+        if (ar == null) return 0;
+        String bearing = d.bearing != null ? "  " + d.bearing : "";
+        float a = tw(ar, 20, bold);
+        if (a + (bearing.isEmpty() ? 0 : tw(bearing, 17, bold)) <= cw || a <= cw) return 22f;
+        String[] two = split2(ar);
+        if (two != null) {
+            float sz = 20;
+            while (sz > 13 && (tw(two[0], sz, bold) > cw || tw(two[1], sz, bold) > cw)) sz -= 1;
+            if (tw(two[0], sz, bold) <= cw && tw(two[1], sz, bold) <= cw) return 44f;
+        }
+        return 22f;
+    }
+
+    /**
+     * Folded layout: what the far-right column used to show (data used today on 4G / 5G, and the data SIM's signal
+     * quality Q) goes on one line under the data SIM's box, below its place and detail lines. Left out when the box
+     * is already tall enough to reach row 4.
+     */
+    private void foldData(final Canvas c) {
+        int di = -1;
+        for (int i = 0; i < sims.size() && i < 2 && i < colN; i++) if (sims.get(i).data) di = i;
+        if (di < 0) return;
+        final SimInfo d = sims.get(di);
+        final float x = colX[di] + 8, cw = colW[di] - 16;
+        final boolean showData = dataTodayW(d) > 0 && Cfg.b(Cfg.SH_DATA, Cfg.D_SH_DATA);
+        final int q = quality(d);
+        if (!showData && q < 0) return;
+        int nLines = 0;
+        for (java.util.List<DSeg> ln : detailLines(d)) if (!ln.isEmpty()) nLines++;
+        float ph = placeH(d, cw);
+        float y0 = y(P2) + 4;
+        float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
+        final float cy = Math.max(y(P3), lastCy + 24f);
+        if (cy > y(P4) - 14f) return;
+        final boolean mo = monthly();
+        final String pl = mo ? "M" : "D";
+        final String v4 = dataText(true, mo), v5 = dataText(false, mo);
+        final float f4 = (float) used4g / Math.max(1, limit4g);
+        final int c4 = mo ? green() : f4 < 0.5f ? green() : f4 < 0.8f ? yellow() : f4 < 1f ? orange() : red();
+        final float bw0 = tw(pl, 14, bold) + 9;
+        final String qv = q + "%";
+        final int qc = q >= 70 ? green() : q >= 45 ? yellow() : q >= 25 ? orange() : red();
+        final boolean qbox = Cfg.b(Cfg.Q_BOX, Cfg.D_Q_BOX);
+        final int dim = fade(grey(), 0.85f);
+        float wq = q >= 0 ? (showData ? 12 : 0) + (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold) : 0;
+        float wd = showData ? bw0 + 5 + tw(v4, 20, bold) + tw(" · ", 17, semi) + tw(v5, 20, bold) : 0;
+        float wl = showData ? tw("4G ", 15, semi) + tw("5G ", 15, semi) : 0;
+        final boolean lab = Cfg.b(Cfg.DATA_LABELS, Cfg.D_DATA_LABELS) && wd + wl + wq <= cw * 1.05f;
+        final float w = wd + (lab ? wl : 0) + wq;
+        fit(c, x, cy, w, cw, () -> {
+            float e = 0;
+            if (showData) {
+                gp.setStyle(Paint.Style.FILL);
+                gp.setColor(mo ? 0xFFB388FF : 0xFF4DD0E1);
+                rf.set(0, -9, bw0, 9);
+                c.drawRoundRect(rf, 4, 4, gp);
+                textB(c, pl, 4.5f, 0, 20, 14, bold, 0xFF1A1A1A);
+                e = bw0 + 5;
+                if (lab) e = textB(c, "4G ", e, 0, 20, 15, semi, dim);
+                e = textB(c, v4, e, 0, 20, 20, bold, c4);
+                e = textB(c, " · ", e, 0, 20, 17, semi, dim);
+                if (lab) e = textB(c, "5G ", e, 0, 20, 15, semi, dim);
+                e = textB(c, v5, e, 0, 20, 20, bold, teal());
+                e += 12;
+            }
+            if (q >= 0) {
+                if (qbox) {
+                    gp.setStyle(Paint.Style.STROKE);
+                    gp.setStrokeWidth(2f);
+                    gp.setColor(dim);
+                    rf.set(e + 1, -11, e + 21, 11);
+                    c.drawRoundRect(rf, 4, 4, gp);
+                    gp.setStyle(Paint.Style.FILL);
+                    textB(c, "Q", e + 11 - tw("Q", 15, bold) / 2f, -0.5f, 15, 15, bold, dim);
+                    e += 25;
+                } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
+                textB(c, qv, e, 0, 20, 20, bold, qc);
+            }
+        });
     }
 
     /** Data SIM signal quality 0-100: 60 % from RSRP (-125..-80 dBm), 40 % from SNR (-5..25 dB). */
@@ -4148,6 +4232,9 @@ final class ReadableBar extends View {
     // ================================================================== earth-science graphs (right column)
     static final float GW = 84;
     private boolean graphsOn() { return pro && look2 && !chips; }
+    /** Folded layout ("Status bar layout" in settings): no far-right column; its data and Q sit under the data SIM box. */
+    boolean fold = true;
+    private boolean colOn() { return graphsOn() && !fold; }
 
     private void graphColumn(Canvas c, float R1) {
         final float x1 = Math.min(R1 - 2, W - 20), x0 = x1 - GW;
