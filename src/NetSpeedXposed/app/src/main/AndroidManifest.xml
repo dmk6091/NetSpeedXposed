@@ -42,6 +42,11 @@
         <activity android:name=".MapActivity" android:label="Field Atlas map" android:exported="false" />
 
         <service
+            android:name=".WallpaperNowJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <service
             android:name=".WallpaperJob"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />

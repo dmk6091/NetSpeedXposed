@@ -1978,26 +1978,17 @@ public class SettingsActivity extends Activity {
             st.setText("Starting\u2026");
             final android.os.Handler hd = new android.os.Handler(android.os.Looper.getMainLooper());
             final Runnable[] tick = new Runnable[1];
-            tick[0] = () -> { if (WpStatus.active) { st.setText(WpStatus.progress()); hd.postDelayed(tick[0], 1000); } };
-            hd.postDelayed(tick[0], 400);
-            new Thread(() -> {
-                String r = WallpaperMaker.run(getApplicationContext(), true);
-                runOnUiThread(() -> { hd.removeCallbacks(tick[0]); show.run(); android.widget.Toast.makeText(this, r, android.widget.Toast.LENGTH_LONG).show(); });
-            }).start();
+            if (!WallpaperNowJob.start(getApplicationContext(), false)) { st.setText("Android refused to start the job. Try again."); return; }
+            watch(st, show, hd, tick);
+            android.widget.Toast.makeText(this, "Making it in the background. You can leave the app; a notification says when it is ready.", android.widget.Toast.LENGTH_LONG).show();
         }));
         c.addView(wpButton("Retry the missing names (waits longer)", false, () -> {
             st.setText("Starting\u2026");
             final android.os.Handler hd = new android.os.Handler(android.os.Looper.getMainLooper());
             final Runnable[] tick = new Runnable[1];
-            tick[0] = () -> { if (WpStatus.active) { st.setText(WpStatus.progress() + " (retrying names, can take up to 2 min)"); hd.postDelayed(tick[0], 1000); } };
-            hd.postDelayed(tick[0], 400);
-            new Thread(() -> {
-                MapNames.patient = true;
-                String r;
-                try { r = WallpaperMaker.run(getApplicationContext(), true); } finally { MapNames.patient = false; }
-                final String rr = r;
-                runOnUiThread(() -> { hd.removeCallbacks(tick[0]); show.run(); android.widget.Toast.makeText(this, rr, android.widget.Toast.LENGTH_LONG).show(); });
-            }).start();
+            if (!WallpaperNowJob.start(getApplicationContext(), true)) { st.setText("Android refused to start the job. Try again."); return; }
+            watch(st, show, hd, tick);
+            android.widget.Toast.makeText(this, "Retrying in the background. You can leave the app; a notification says when it is ready.", android.widget.Toast.LENGTH_LONG).show();
         }));
         c.addView(st);
         LinearLayout opts = new LinearLayout(this);
@@ -2043,6 +2034,17 @@ public class SettingsActivity extends Activity {
         TextView n = text("The job runs about every 30 min but only draws when you have moved. Needs location permission and the phone not on low battery. Maps: OpenStreetMap.", 11, sub);
         n.setPadding(0, dp(8), 0, 0);
         opts.addView(n);
+    }
+
+    /** Keeps the status line moving while a background wallpaper job runs, then shows the result. */
+    private void watch(TextView st, Runnable show, android.os.Handler hd, Runnable[] tick) {
+        final long t0 = System.currentTimeMillis();
+        tick[0] = () -> {
+            if (WpStatus.active) { st.setText(WpStatus.progress()); hd.postDelayed(tick[0], 1000); }
+            else if (System.currentTimeMillis() - t0 < 6000) hd.postDelayed(tick[0], 500);   // job not started yet
+            else show.run();
+        };
+        hd.postDelayed(tick[0], 500);
     }
 
     /** A failure message in plain words. */
