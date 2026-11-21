@@ -1495,7 +1495,7 @@ final class ReadableBar extends View {
         k.w = w; k.h = h;
     }
 
-    private static final class Seg {
+    private static final class PkSeg {
         float x0, x1, row; float used; final java.util.ArrayList<Pk> items = new java.util.ArrayList<>();
         float room() { return x1 - x0 - used; }
     }
@@ -1590,20 +1590,20 @@ final class ReadableBar extends View {
         // 3) rows: 6 equal lines; the first three have the camera hole in the middle
         final int R = 6;
         float rp = h / (float) R;
-        java.util.ArrayList<Seg> segs = new java.util.ArrayList<>();
+        java.util.ArrayList<PkSeg> segs = new java.util.ArrayList<>();
         final float G = 12f;
         float camL = cxD - crD - 12f, camR2 = cxD + crD + 12f;
-        Seg sim2Rest = null;
+        PkSeg sim2Rest = null;
         float[] simX = new float[2];
         for (int r = 0; r < R; r++) {
             float topU = r * rp / sc0, botU = (r + 1) * rp / sc0;
             float lo = Math.max(8f, Math.max(cornerX(topU), cornerX(botU)));
             float hi = Math.min(W - 8f, Math.min(cornerRightX(topU), cornerRightX(botU)));
             if (r < 3) {
-                Seg a = new Seg(); a.row = r; a.x0 = lo; a.x1 = Math.min(camL, hi); segs.add(a);
-                Seg bb = new Seg(); bb.row = r; bb.x0 = Math.max(camR2, lo); bb.x1 = hi; segs.add(bb);
+                PkSeg a = new PkSeg(); a.row = r; a.x0 = lo; a.x1 = Math.min(camL, hi); segs.add(a);
+                PkSeg bb = new PkSeg(); bb.row = r; bb.x0 = Math.max(camR2, lo); bb.x1 = hi; segs.add(bb);
             } else {
-                Seg a = new Seg(); a.row = r; a.x0 = lo; a.x1 = hi;
+                PkSeg a = new PkSeg(); a.row = r; a.x0 = lo; a.x1 = hi;
                 if (r == 3 && sim.size() > 0) { Pk p = sim.get(0); p.sc = Math.min(1f, (a.x1 - a.x0) / p.w); simX[0] = a.x0; continue; }
                 if (r == 4 && sim.size() > 1) {
                     Pk p = sim.get(1); p.sc = Math.min(1f, (a.x1 - a.x0 - 60f) / p.w); simX[1] = a.x0;
@@ -1613,21 +1613,21 @@ final class ReadableBar extends View {
             }
         }
         // (if a box is missing its row is simply free for loose items: segs for rows 3/4 are added above only when used)
-        if (sim.size() < 1) { Seg a = new Seg(); a.row = 3; a.x0 = 8; a.x1 = W - 8; segs.add(a); }
-        if (sim.size() < 2) { Seg a = new Seg(); a.row = 4; a.x0 = 8; a.x1 = W - 8; segs.add(a); }
+        if (sim.size() < 1) { PkSeg a = new PkSeg(); a.row = 3; a.x0 = 8; a.x1 = W - 8; segs.add(a); }
+        if (sim.size() < 2) { PkSeg a = new PkSeg(); a.row = 4; a.x0 = 8; a.x1 = W - 8; segs.add(a); }
 
         java.util.ArrayList<Pk> todo = new java.util.ArrayList<>(loose);
         java.util.Collections.sort(todo, new java.util.Comparator<Pk>() {
             public int compare(Pk a, Pk b2) { return Float.compare(b2.w, a.w); }
         });
         for (Pk p : todo) {
-            Seg best = null;
-            for (Seg g : segs) {                                    // tightest segment it still fits in at full size
+            PkSeg best = null;
+            for (PkSeg g : segs) {                                    // tightest segment it still fits in at full size
                 float need = p.w + (g.items.isEmpty() ? 0 : G);
                 if (g.room() >= need && (best == null || g.room() < best.room())) best = g;
             }
             if (best == null) {                                     // else the roomiest, shrunk to fit (not below 60 %)
-                for (Seg g : segs) if (best == null || g.room() > best.room()) best = g;
+                for (PkSeg g : segs) if (best == null || g.room() > best.room()) best = g;
                 if (best != null) {
                     float avail = best.room() - (best.items.isEmpty() ? 0 : G);
                     float f = avail / p.w;
@@ -1646,7 +1646,7 @@ final class ReadableBar extends View {
         Rect src = new Rect(Math.max(0, skipA), 0, Math.min(w, skipB), Math.min(h, (int) ((oy + 100f) * sc0)));
         c.drawBitmap(b, src, src, pkP);
         for (int i = 0; i < sim.size() && i < 2; i++) pkDraw(c, b, sim.get(i), simX[i], (i == 0 ? 3.5f : 4.5f) * rp, rowU, sc0, w, h, sim.get(i).sc);
-        for (Seg g : segs) {
+        for (PkSeg g : segs) {
             if (g.items.isEmpty()) continue;
             java.util.Collections.sort(g.items, new java.util.Comparator<Pk>() {
                 public int compare(Pk a, Pk b2) { return Float.compare(a.order, b2.order); }
