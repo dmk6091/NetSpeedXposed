@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
@@ -463,6 +464,10 @@ final class ReadableBar extends View {
         dk = SysViews.dark(color);
         if (pro && chips) {
             drawChips(c, w, h);
+            return;
+        }
+        if (pro && packed) {
+            drawPacked(c, w, h);
             return;
         }
         if (pro) {
@@ -1404,7 +1409,7 @@ final class ReadableBar extends View {
         c.save();
         try {
             c.scale(s, s);
-            try { fxBackdrop(c); } catch (Throwable ignored) { }
+            if (!noBackdrop) try { fxBackdrop(c); } catch (Throwable ignored) { }
             float cx = Float.isNaN(camX) ? W / 2f : camX / s;
             float cr = Float.isNaN(camR) ? 24f : Math.max(14f, Math.min(34f, camR / s));
             float ry = Float.isNaN(camY) ? oy + 50f : camY / s;
@@ -1436,6 +1441,257 @@ final class ReadableBar extends View {
             try { proTail4(c); } catch (Throwable ignored) { }
         } finally {
             c.restore();
+        }
+    }
+
+    // ---------------------------------------------------------------- packed layout
+    private Bitmap pkBmp;
+    private final Paint pkP = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
+
+    /** One movable piece: a list of bitmap rectangles (device px) laid side by side. */
+    private static final class Pk {
+        final java.util.ArrayList<int[]> parts = new java.util.ArrayList<>();
+        String tag;
+        float order;
+        float w, h;      // design units, unscaled
+        float sc = 1f;
+    }
+
+    private static boolean inkAt(int[] px, int w, int x, int y) {
+        return (px[y * w + x] >>> 24) > 80;
+    }
+
+    /** Ink runs (x0,x1) along a band; runs closer than gap are one. skipA..skipB is left out. */
+    private java.util.ArrayList<int[]> pkRuns(int[] px, int w, int xa, int xb, int y0, int y1, int gap, int skipA, int skipB) {
+        java.util.ArrayList<int[]> out = new java.util.ArrayList<>();
+        int start = -1, last = -1;
+        for (int x = Math.max(0, xa); x < Math.min(w, xb); x++) {
+            if (x >= skipA && x < skipB) continue;
+            boolean ink = false;
+            for (int y = y0; y < y1 && !ink; y++) ink = inkAt(px, w, x, y);
+            if (!ink) continue;
+            if (start >= 0 && x - last > gap) { out.add(new int[]{start, last + 1}); start = -1; }
+            if (start < 0) start = x;
+            last = x;
+        }
+        if (start >= 0) out.add(new int[]{start, last + 1});
+        return out;
+    }
+
+    /** Tight box of the ink inside the rectangle, or null. */
+    private int[] pkTrim(int[] px, int w, int x0, int y0, int x1, int y1) {
+        int a = Integer.MAX_VALUE, b = Integer.MAX_VALUE, c2 = -1, d = -1;
+        for (int y = Math.max(0, y0); y < y1; y++)
+            for (int x = Math.max(0, x0); x < Math.min(w, x1); x++)
+                if (inkAt(px, w, x, y)) { if (x < a) a = x; if (x > c2) c2 = x; if (y < b) b = y; if (y > d) d = y; }
+        return c2 < 0 ? null : new int[]{a, b, c2 + 1, d + 1};
+    }
+
+    private void pkMeasure(Pk k, float sepW) {
+        float w = 0, h = 0;
+        for (int[] r : k.parts) { w += (r[2] - r[0]) / s; h = Math.max(h, (r[3] - r[1]) / s); }
+        if (k.parts.size() > 1) w += sepW * (k.parts.size() - 1);
+        if (k.tag != null) w += 20f;
+        k.w = w; k.h = h;
+    }
+
+    private static final class Seg {
+        float x0, x1, row; float used; final java.util.ArrayList<Pk> items = new java.util.ArrayList<>();
+        float room() { return x1 - x0 - used; }
+    }
+
+    private void drawPacked(Canvas c, int w, int h) {
+        Bitmap b;
+        try {
+            if (pkBmp == null || pkBmp.getWidth() != w || pkBmp.getHeight() != h) {
+                if (pkBmp != null) pkBmp.recycle();
+                pkBmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            }
+            b = pkBmp;
+            b.eraseColor(0);
+            Canvas oc = new Canvas(b);
+            noBackdrop = true;
+            try { drawPro(oc, w, h); } finally { noBackdrop = false; }
+        } catch (Throwable t) {
+            pkBmp = null;
+            drawPro(c, w, h);
+            return;
+        }
+        try {
+            packRows(c, b, w, h);
+        } catch (Throwable t) {
+            // fall back to the folded layout rather than a blank bar
+            c.drawBitmap(b, 0, 0, null);
+        }
+    }
+
+    private void packRows(Canvas c, Bitmap b, int w, int h) {
+        int[] px = new int[w * h];
+        b.getPixels(px, 0, w, 0, 0, w, h);
+        final float sc0 = s;
+        float cxD = Float.isNaN(camX) ? W / 2f : camX / sc0;
+        float crD = Float.isNaN(camR) ? 24f : Math.max(14f, Math.min(34f, camR / sc0));
+        int skipA = (int) ((cxD - 70f) * sc0), skipB = (int) ((cxD + 70f) * sc0);
+        int simL = Float.isNaN(simLeft) ? w : Math.max(0, (int) (simLeft * sc0) - 2);
+        int gap = Math.max(3, (int) (14f * sc0));
+        final float[] bands = {0, 21, 63, 92, 119, 145, 173, 206};
+
+        // 1) the loose items of the left area, band by band
+        java.util.ArrayList<Pk> loose = new java.util.ArrayList<>();
+        for (int k = 0; k < bands.length - 1; k++) {
+            int y0 = Math.max(0, (int) ((oy + bands[k]) * sc0)), y1 = Math.min(h, (int) ((oy + bands[k + 1]) * sc0));
+            if (k == bands.length - 2) y1 = h;
+            if (y1 <= y0) continue;
+            boolean low = bands[k] >= 172f;
+            boolean cam = bands[k] < 100f;
+            for (int[] r : pkRuns(px, w, 0, low ? w : simL, y0, y1, gap, cam ? skipA : 0, cam ? skipB : 0)) {
+                if (r[1] - r[0] < 5) continue;
+                int[] t = pkTrim(px, w, r[0], y0, r[1], y1);
+                if (t == null) continue;
+                Pk p = new Pk();
+                p.parts.add(t);
+                p.order = k * 10000f + t[0];
+                pkMeasure(p, 0);
+                loose.add(p);
+            }
+        }
+        // 2) one row-piece per SIM box
+        java.util.ArrayList<Pk> sim = new java.util.ArrayList<>();
+        final float[] cuts = {51, 77, 100, 122, 146};
+        for (int i = 0; i < colN && i < 2; i++) {
+            int x0 = (int) (colX[i] * sc0), x1 = (int) ((colX[i] + colW[i]) * sc0);
+            int ya = (int) ((oy + 14f) * sc0), yb = Math.min(h, (int) ((oy + 178f) * sc0));
+            Pk p = new Pk();
+            p.tag = String.valueOf(i + 1);
+            int gs = -1;
+            for (int y = ya; y <= yb; y++) {
+                boolean ink = false;
+                if (y < yb) for (int x = Math.max(0, x0); x < Math.min(w, x1) && !ink; x++) ink = inkAt(px, w, x, y);
+                if (ink && gs < 0) gs = y;
+                if (!ink && gs >= 0) {
+                    // split a group that is taller than a row at the fixed line boundaries
+                    java.util.ArrayList<Integer> cutY = new java.util.ArrayList<>();
+                    cutY.add(gs);
+                    if ((y - gs) / sc0 > 34f) for (float cu : cuts) { int cy2 = (int) ((oy + cu) * sc0); if (cy2 > gs + 4 && cy2 < y - 4) cutY.add(cy2); }
+                    cutY.add(y);
+                    for (int q = 0; q + 1 < cutY.size(); q++) {
+                        int[] t = pkTrim(px, w, x0, cutY.get(q), x1, cutY.get(q + 1));
+                        if (t != null) p.parts.add(t);
+                    }
+                    gs = -1;
+                }
+            }
+            if (p.parts.isEmpty()) continue;
+            p.order = -1;
+            pkMeasure(p, 14f);
+            sim.add(p);
+        }
+
+        // 3) rows: 6 equal lines; the first three have the camera hole in the middle
+        final int R = 6;
+        float rp = h / (float) R;
+        java.util.ArrayList<Seg> segs = new java.util.ArrayList<>();
+        final float G = 12f;
+        float camL = cxD - crD - 12f, camR2 = cxD + crD + 12f;
+        Seg sim2Rest = null;
+        float[] simX = new float[2];
+        for (int r = 0; r < R; r++) {
+            float topU = r * rp / sc0, botU = (r + 1) * rp / sc0;
+            float lo = Math.max(8f, Math.max(cornerX(topU), cornerX(botU)));
+            float hi = Math.min(W - 8f, Math.min(cornerRightX(topU), cornerRightX(botU)));
+            if (r < 3) {
+                Seg a = new Seg(); a.row = r; a.x0 = lo; a.x1 = Math.min(camL, hi); segs.add(a);
+                Seg bb = new Seg(); bb.row = r; bb.x0 = Math.max(camR2, lo); bb.x1 = hi; segs.add(bb);
+            } else {
+                Seg a = new Seg(); a.row = r; a.x0 = lo; a.x1 = hi;
+                if (r == 3 && sim.size() > 0) { Pk p = sim.get(0); p.sc = Math.min(1f, (a.x1 - a.x0) / p.w); simX[0] = a.x0; continue; }
+                if (r == 4 && sim.size() > 1) {
+                    Pk p = sim.get(1); p.sc = Math.min(1f, (a.x1 - a.x0 - 60f) / p.w); simX[1] = a.x0;
+                    a.x0 += p.w * p.sc + G + 4f;
+                }
+                segs.add(a);
+            }
+        }
+        // (if a box is missing its row is simply free for loose items: segs for rows 3/4 are added above only when used)
+        if (sim.size() < 1) { Seg a = new Seg(); a.row = 3; a.x0 = 8; a.x1 = W - 8; segs.add(a); }
+        if (sim.size() < 2) { Seg a = new Seg(); a.row = 4; a.x0 = 8; a.x1 = W - 8; segs.add(a); }
+
+        java.util.ArrayList<Pk> todo = new java.util.ArrayList<>(loose);
+        java.util.Collections.sort(todo, new java.util.Comparator<Pk>() {
+            public int compare(Pk a, Pk b2) { return Float.compare(b2.w, a.w); }
+        });
+        for (Pk p : todo) {
+            Seg best = null;
+            for (Seg g : segs) {                                    // tightest segment it still fits in at full size
+                float need = p.w + (g.items.isEmpty() ? 0 : G);
+                if (g.room() >= need && (best == null || g.room() < best.room())) best = g;
+            }
+            if (best == null) {                                     // else the roomiest, shrunk to fit (not below 60 %)
+                for (Seg g : segs) if (best == null || g.room() > best.room()) best = g;
+                if (best != null) {
+                    float avail = best.room() - (best.items.isEmpty() ? 0 : G);
+                    float f = avail / p.w;
+                    if (f < 0.6f) continue;                         // nowhere to put it: left out
+                    p.sc = f;
+                }
+            }
+            if (best == null) continue;
+            best.items.add(p);
+            best.used += p.w * p.sc + (best.items.size() > 1 ? G : 0);
+        }
+        // a piece must also not be taller than its row
+        float rowU = rp / sc0 - 2f;
+
+        // 4) draw: camera chip / moon slice where it was, then rows
+        Rect src = new Rect(Math.max(0, skipA), 0, Math.min(w, skipB), Math.min(h, (int) ((oy + 100f) * sc0)));
+        c.drawBitmap(b, src, src, pkP);
+        for (int i = 0; i < sim.size() && i < 2; i++) pkDraw(c, b, sim.get(i), simX[i], (i == 0 ? 3.5f : 4.5f) * rp, rowU, sc0, w, h, sim.get(i).sc);
+        for (Seg g : segs) {
+            if (g.items.isEmpty()) continue;
+            java.util.Collections.sort(g.items, new java.util.Comparator<Pk>() {
+                public int compare(Pk a, Pk b2) { return Float.compare(a.order, b2.order); }
+            });
+            float tot = 0;
+            for (Pk p : g.items) { p.sc = Math.min(p.sc, rowU / Math.max(1f, p.h)); tot += p.w * p.sc; }
+            float free = (g.x1 - g.x0) - tot;
+            int n = g.items.size();
+            float sp = n > 1 ? Math.max(G * 0.5f, free / (n - 1)) : 0;
+            if (n > 1 && free / (n - 1) > 60f) sp = 60f;            // don't spread thin pieces across the whole row
+            float x = g.x0;
+            float cy = (g.row + 0.5f) * rp;
+            for (Pk p : g.items) {
+                pkDraw(c, b, p, x, cy, rowU, sc0, w, h, p.sc);
+                x += p.w * p.sc + sp;
+            }
+        }
+    }
+
+    /** Draws a piece with its left edge at xD (design) and its middle at cyPx (device px). */
+    private void pkDraw(Canvas c, Bitmap b, Pk p, float xD, float cyPx, float rowU, float sc0, int w, int h, float sc) {
+        float x = xD * sc0;
+        float f = sc;
+        if (p.tag != null) {
+            tp.setTypeface(bold);
+            tp.setTextSize(15f * sc0 * f);
+            tp.setColor(0xFFDDDDDD);
+            c.drawText(p.tag, x, cyPx + 15f * sc0 * f * 0.36f, tp);
+            x += 20f * sc0 * f;
+        }
+        boolean first = true;
+        for (int[] r : p.parts) {
+            if (!first) {
+                tp.setTypeface(bold);
+                tp.setTextSize(15f * sc0 * f);
+                tp.setColor(0xFF777777);
+                float sw = 14f * sc0 * f;
+                c.drawText("|", x + sw * 0.4f, cyPx + 15f * sc0 * f * 0.36f, tp);
+                x += sw;
+            }
+            first = false;
+            float pw = (r[2] - r[0]) * f, ph = (r[3] - r[1]) * f;
+            Rect dst = new Rect(Math.round(x), Math.round(cyPx - ph / 2f), Math.round(x + pw), Math.round(cyPx + ph / 2f));
+            c.drawBitmap(b, new Rect(r[0], r[1], r[2], r[3]), dst, pkP);
+            x += pw;
         }
     }
 
@@ -4264,6 +4520,8 @@ final class ReadableBar extends View {
     private boolean graphsOn() { return pro && look2 && !chips; }
     /** Folded layout ("Status bar layout" in settings): no far-right column; its data and Q sit under the data SIM box. */
     boolean fold = true;
+    boolean packed = false;
+    private boolean noBackdrop = false;
     private boolean colOn() { return graphsOn() && !fold; }
 
     private void graphColumn(Canvas c, float R1) {
