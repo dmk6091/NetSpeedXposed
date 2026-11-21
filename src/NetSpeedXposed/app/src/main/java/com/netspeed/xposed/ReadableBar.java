@@ -2908,12 +2908,42 @@ final class ReadableBar extends View {
     private static final float HP2_SIZE = 15;
     private float hP2X = 1e9f, hP2W = 0, wxEnd = 0, row3End = 0;
 
+    /** Natural width of a SIM box's first line (network, bars, voice, mode), same sums as proSim. */
+    private float line1W(SimInfo si) {
+        boolean live = si.inService;
+        String rat = si.dataOn && live && si.rat != null && !si.rat.isEmpty() ? si.rat : si.dataOn && live ? "\u2014" : null;
+        return (si.data ? DBOX_W + DBOX_GAP + ARROW_W + 4 : 0) + (rat != null ? ratW(rat) + 2 : 0) + (si.eco ? 6 + tw("E", 22, bold) : 0)
+                + BARS_W + (si.voice != null ? 8 + voW(si.voice) : 0) + modePingW(si);
+    }
+
+    /**
+     * Where the SIM boxes' right edge may be. Classic: the whole box stays clear of the screen's top-right curve. Folded: only
+     * the first line (network, bars, voice) is up there and it is shorter than the box, so the group may sit further right as
+     * long as that line still clears the curve; the lines under it are lower, below the curve.
+     */
+    private float simRight(float R1, int n) {
+        float cl = cornerRightX(y(P1A) - 24) - 4;
+        float lim = Math.min(R1, cl);
+        if (!fold || n <= 0 || sims.size() < n) return lim;
+        try {
+            SimInfo last = sims.get(n - 1);
+            float eq = boxW(n);
+            float wa = line1W(last);
+            float f = Math.min(eq / Math.max(1f, wa), 1.04f);
+            float by1 = cl + eq + 7f - wa * f;                  // first line ends right at the curve
+            float cap2 = cornerRightX(y(P1B) - 30) - 2f;        // second line, lower, with a little margin
+            return Math.min(R1, Math.max(cl, Math.min(by1, cap2)));
+        } catch (Throwable t) {
+            return lim;
+        }
+    }
+
     /** Where the SIM boxes will start (same sums as proRight), before they're drawn. */
     private float predictSimLeft(float R0, float R1) {
         int n = Math.min(2, sims.size());
         if (n == 0) return Float.NaN;
         if (colOn()) R1 -= GW + 8;
-        float simR = Math.min(R1, cornerRightX(y(P1A) - 24) - 4);
+        float simR = simRight(R1, n);
         final float pad = 7, gap = 2;
         float total = gap * (n - 1);
         float eq = boxW(n);
@@ -2928,7 +2958,7 @@ final class ReadableBar extends View {
         int n = Math.min(2, sims.size());
         final float R1full = R1;
         if (colOn()) R1 -= GW + 8;
-        float simR = Math.min(R1, cornerRightX(y(P1A) - 24) - 4);
+        float simR = simRight(R1, n);
         if (n > 0) {
             final float pad = 7, gap = 2;
             float[] bw = new float[n];
