@@ -1985,6 +1985,20 @@ public class SettingsActivity extends Activity {
                 runOnUiThread(() -> { hd.removeCallbacks(tick[0]); show.run(); android.widget.Toast.makeText(this, r, android.widget.Toast.LENGTH_LONG).show(); });
             }).start();
         }));
+        c.addView(wpButton("Retry the missing names (waits longer)", false, () -> {
+            st.setText("Starting\u2026");
+            final android.os.Handler hd = new android.os.Handler(android.os.Looper.getMainLooper());
+            final Runnable[] tick = new Runnable[1];
+            tick[0] = () -> { if (WpStatus.active) { st.setText(WpStatus.progress() + " (retrying names, can take up to 2 min)"); hd.postDelayed(tick[0], 1000); } };
+            hd.postDelayed(tick[0], 400);
+            new Thread(() -> {
+                MapNames.patient = true;
+                String r;
+                try { r = WallpaperMaker.run(getApplicationContext(), true); } finally { MapNames.patient = false; }
+                final String rr = r;
+                runOnUiThread(() -> { hd.removeCallbacks(tick[0]); show.run(); android.widget.Toast.makeText(this, rr, android.widget.Toast.LENGTH_LONG).show(); });
+            }).start();
+        }));
         c.addView(st);
         LinearLayout opts = new LinearLayout(this);
         opts.setOrientation(LinearLayout.VERTICAL);

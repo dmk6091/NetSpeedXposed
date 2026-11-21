@@ -17,6 +17,9 @@ import java.util.Locale;
 final class MapNames {
     private MapNames() { }
 
+    /** True while the "Retry names" button runs: wait much longer for the map servers. */
+    static volatile boolean patient;
+
     private static final class L {
         int kind;            // 0 dam, 1 peak, 2 wetland, 3 fault, 4 water, 5 river
         String text;
@@ -146,13 +149,19 @@ final class MapNames {
             String q = "[out:json][timeout:40];(node[\"natural\"=\"peak\"][\"name\"]" + bb + ";nwr[\"natural\"=\"wetland\"][\"name\"]" + bb
                     + ";nwr[\"natural\"=\"water\"][\"name\"]" + bb + ";nwr[\"waterway\"=\"dam\"][\"name\"]" + bb
                     + ";way[\"waterway\"=\"river\"][\"name\"]" + bb + ";);out center tags 160;";
-            // the wallpaper must not wait for a busy public server: two tries of at most 11 s each, then draw without OpenStreetMap names (the cache fills next time)
+            // normally the wallpaper must not wait for a busy public server (two tries of 11 s); the "Retry names" button waits much longer
             String enc = java.net.URLEncoder.encode(q, "UTF-8");
-            for (String ep : new String[]{"https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"}) {
-                try {
-                    String r = Geo.get(ep + "?data=" + enc, 11_000);
-                    if (r.contains("\"elements\"")) { js = r; break; }
-                } catch (Throwable ignored) { }
+            String[] eps = patient ? new String[]{"https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter",
+                    "https://overpass.kumi.systems/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"}
+                    : new String[]{"https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"};
+            for (int round = 0; round < (patient ? 3 : 1) && js == null; round++) {
+                if (round > 0) { try { Thread.sleep(8_000); } catch (InterruptedException ie) { break; } }
+                for (String ep : eps) {
+                    try {
+                        String r = Geo.get(ep + "?data=" + enc, patient ? 30_000 : 11_000);
+                        if (r.contains("\"elements\"")) { js = r; break; }
+                    } catch (Throwable ignored) { }
+                }
             }
             if (js == null) throw new java.io.IOException("OpenStreetMap busy");
             try (java.io.FileOutputStream fo = new java.io.FileOutputStream(f)) { fo.write(js.getBytes("UTF-8")); } catch (Throwable ignored) { }
