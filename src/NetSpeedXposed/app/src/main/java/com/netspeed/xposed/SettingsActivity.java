@@ -2017,6 +2017,7 @@ public class SettingsActivity extends Activity {
         wpChoice(opts, wp, "Map size", "zoom", 1, WallpaperMaker.ZOOM_NAMES);
         wpChoice(opts, wp, "Map style", "style", 0, WallpaperMaker.STYLES);
         wpChoice(opts, wp, "Put it on", "target", 0, WallpaperMaker.TARGETS);
+        wpChoice(opts, wp, "Names on the map", "names", 0, new String[]{"Show peaks, dams, lakes, wetlands, faults", "Hide"});
         wpChoice(opts, wp, "Info card on the picture", "card", 0, new String[]{"Show rock, soil, fault, relief", "Hide"});
         TextView n = text("The job runs about every 30 min but only draws when you have moved. Needs location permission and the phone not on low battery. Maps: OpenStreetMap.", 11, sub);
         n.setPadding(0, dp(8), 0, 0);
@@ -2032,6 +2033,7 @@ public class SettingsActivity extends Activity {
         final java.util.function.IntSupplier cur = () -> {
             if (key.equals("km")) { int km = wp.getInt("km", 2); for (int i = 0; i < WallpaperMaker.KMS.length; i++) if (WallpaperMaker.KMS[i] == km) return i; return def; }
             if (key.equals("card")) return wp.getBoolean("card", false) ? 0 : 1;
+            if (key.equals("names")) return wp.getBoolean("names", true) ? 0 : 1;
             return Math.max(0, Math.min(o.length - 1, wp.getInt(key, def)));
         };
         final TextView v = text(o[cur.getAsInt()], 13, sub);
@@ -2039,6 +2041,7 @@ public class SettingsActivity extends Activity {
         r.setOnClickListener(x -> new AlertDialog.Builder(this).setTitle(label).setSingleChoiceItems(o, cur.getAsInt(), (d, w) -> {
             if (key.equals("km")) wp.edit().putInt("km", WallpaperMaker.KMS[w]).commit();
             else if (key.equals("card")) wp.edit().putBoolean("card", w == 0).commit();
+            else if (key.equals("names")) wp.edit().putBoolean("names", w == 0).commit();
             else wp.edit().putInt(key, w).commit();
             v.setText(o[w]);
             d.dismiss();

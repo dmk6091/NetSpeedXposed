@@ -144,6 +144,24 @@ final class Faults {
         return out;
     }
 
+    /** Named faults with a point inside the box: {name, lat, lon} where lat/lon is the point of the fault nearest the centre. */
+    static synchronized List<Object[]> namesIn(double lat0, double lon0, double halfKm) {
+        List<Object[]> out = new ArrayList<>();
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        double dLat = halfKm / 110.57, dLon = halfKm / (111.32 * Math.cos(Math.toRadians(lat0)));
+        for (Line l : load()) {
+            if (l.name == null || l.name.trim().isEmpty() || !seen.add(l.name.toLowerCase(Locale.ROOT))) continue;
+            int bi = -1; double bd = 1e18;
+            for (int i = 0; i < l.lat.length; i++) {
+                if (Math.abs(l.lat[i] - lat0) > dLat * 0.8 || Math.abs(l.lon[i] - lon0) > dLon * 0.8) continue;
+                double d = (l.lat[i] - lat0) * (l.lat[i] - lat0) + (l.lon[i] - lon0) * (l.lon[i] - lon0);
+                if (d < bd) { bd = d; bi = i; }
+            }
+            if (bi >= 0) out.add(new Object[]{l.name.replaceAll("(?i)\\s+fault$", "").trim(), (double) l.lat[bi], (double) l.lon[bi]});
+        }
+        return out;
+    }
+
     /** One status-bar piece: "Fault: Chiplun Fault 64 km SW". */
     static String text(Hit h) {
         return "Fault: " + h.label() + " " + Math.round(h.km) + " km " + h.dir;

@@ -301,9 +301,12 @@ final class TerrainMaker {
         double halfKm = Math.max(W, H) / S * mpp / 2000.0;
         Paint fp = new Paint(Paint.ANTI_ALIAS_FLAG);
         fp.setStyle(Paint.Style.STROKE);
-        fp.setStrokeWidth(5f);
-        fp.setColor(day ? Color.argb(235, 210, 40, 30) : Color.argb(235, 255, 96, 72));
-        fp.setPathEffect(new DashPathEffect(new float[]{26f, 16f}, 0f));
+        fp.setStrokeWidth(9f);
+        fp.setColor(day ? Color.argb(250, 225, 30, 20) : Color.argb(250, 255, 96, 72));
+        fp.setPathEffect(new DashPathEffect(new float[]{34f, 16f}, 0f));
+        Paint fo = new Paint(fp);   // dark outline under the red, so the line stands out on any ground
+        fo.setStrokeWidth(15f);
+        fo.setColor(Color.argb(190, 0, 0, 0));
         String faultTxt = "";
         try {
             for (float[][] l : Faults.linesIn(lat, lon, halfKm)) {
@@ -312,6 +315,7 @@ final class TerrainMaker {
                     float x = (float) ((WallpaperMaker.worldX(l[0][i], z) - ox) * S), y = (float) ((WallpaperMaker.worldY(l[1][i], z) - oy) * S);
                     if (i == 0) p.moveTo(x, y); else p.lineTo(x, y);
                 }
+                cv.drawPath(p, fo);
                 cv.drawPath(p, fp);
             }
             List<Faults.Hit> hs = Faults.nearest(lat, lon, 1);
@@ -351,6 +355,7 @@ final class TerrainMaker {
         if (info != null) { info.forestKm = bestF; info.wetKm = bestW; info.wetCount = wetN; }
         if (card) drawCard(c, cv, W, H, lat, lon, day, faultTxt, bestF, bestW, info, mx - mn);
         drawLegend(cv, W, H, day);
+        try { if (WallpaperMaker.sp(c).getBoolean("names", true)) MapNames.draw(c, cv, W, H, lat, lon, z, ox, oy, S, day, halfKm); } catch (Throwable ignored) { }
         Paint at = new Paint(Paint.ANTI_ALIAS_FLAG);
         at.setColor(day ? Color.argb(210, 40, 40, 30) : Color.argb(190, 255, 255, 255));
         at.setTextSize(W * 0.019f);
