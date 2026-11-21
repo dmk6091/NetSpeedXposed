@@ -146,7 +146,15 @@ final class MapNames {
             String q = "[out:json][timeout:40];(node[\"natural\"=\"peak\"][\"name\"]" + bb + ";nwr[\"natural\"=\"wetland\"][\"name\"]" + bb
                     + ";nwr[\"natural\"=\"water\"][\"name\"]" + bb + ";nwr[\"waterway\"=\"dam\"][\"name\"]" + bb
                     + ";way[\"waterway\"=\"river\"][\"name\"]" + bb + ";);out center tags 160;";
-            js = Geo.overpass(q, 45_000);
+            // the wallpaper must not wait for a busy public server: two tries of at most 11 s each, then draw without OpenStreetMap names (the cache fills next time)
+            String enc = java.net.URLEncoder.encode(q, "UTF-8");
+            for (String ep : new String[]{"https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"}) {
+                try {
+                    String r = Geo.get(ep + "?data=" + enc, 11_000);
+                    if (r.contains("\"elements\"")) { js = r; break; }
+                } catch (Throwable ignored) { }
+            }
+            if (js == null) throw new java.io.IOException("OpenStreetMap busy");
             try (java.io.FileOutputStream fo = new java.io.FileOutputStream(f)) { fo.write(js.getBytes("UTF-8")); } catch (Throwable ignored) { }
         }
         org.json.JSONArray els = new org.json.JSONObject(js).getJSONArray("elements");
