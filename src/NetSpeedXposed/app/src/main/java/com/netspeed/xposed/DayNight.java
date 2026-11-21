@@ -83,7 +83,7 @@ public class DayNight extends JobService {
                 msg = mode + " wallpapers set (Sahyadri pictures)";
             } else {
                 boolean day = mode.equals("day");
-                Bitmap home = TerrainMaker.draw(c, p[0], p[1], day, 10, true, null);
+                Bitmap home = TerrainMaker.draw(c, p[0], p[1], day, 10, WallpaperMaker.sp(c).getBoolean("card", false), null);
                 wm.setBitmap(home, null, true, WallpaperManager.FLAG_SYSTEM);
                 home.recycle();
                 Bitmap lock = TerrainMaker.draw(c, p[0], p[1], day, 9, false, null);

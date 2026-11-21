@@ -2031,7 +2031,7 @@ public class SettingsActivity extends Activity {
         r.addView(text(label, 15, fg));
         final java.util.function.IntSupplier cur = () -> {
             if (key.equals("km")) { int km = wp.getInt("km", 2); for (int i = 0; i < WallpaperMaker.KMS.length; i++) if (WallpaperMaker.KMS[i] == km) return i; return def; }
-            if (key.equals("card")) return wp.getBoolean("card", true) ? 0 : 1;
+            if (key.equals("card")) return wp.getBoolean("card", false) ? 0 : 1;
             return Math.max(0, Math.min(o.length - 1, wp.getInt(key, def)));
         };
         final TextView v = text(o[cur.getAsInt()], 13, sub);

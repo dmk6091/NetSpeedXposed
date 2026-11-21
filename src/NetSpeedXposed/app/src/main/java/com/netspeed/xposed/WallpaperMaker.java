@@ -208,8 +208,8 @@ final class WallpaperMaker {
             if (sp.getInt("style", 0) == 1) {   // terrain only: shaded relief, water and forest drawn from elevation data, no road or label tiles
                 TerrainMaker.Info ti = new TerrainMaker.Info();
                 ti.place = place;
-                b = TerrainMaker.draw(c, lat, lon, DayNight.isDay(lat, lon), new int[]{12, 11, 10}[zi], sp.getBoolean("card", true), ti);
-            } else b = draw(c, lat, lon, ZOOMS[zi], 0, sp.getBoolean("card", true), place);
+                b = TerrainMaker.draw(c, lat, lon, DayNight.isDay(lat, lon), new int[]{12, 11, 10}[zi], sp.getBoolean("card", false), ti);
+            } else b = draw(c, lat, lon, ZOOMS[zi], 0, sp.getBoolean("card", false), place);
             WallpaperManager wm = WallpaperManager.getInstance(c);
             int tg = sp.getInt("target", 0);
             int flags = tg == 1 ? WallpaperManager.FLAG_SYSTEM : tg == 2 ? WallpaperManager.FLAG_LOCK : (WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK);
