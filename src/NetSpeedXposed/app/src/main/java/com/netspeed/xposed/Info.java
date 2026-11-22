@@ -79,6 +79,27 @@ final class Info {
             float sh = SkyView.shine(sa);
             add(b, 'A', "Sunshine now", SkyView.rad < 0 ? "no radiation value yet" : String.format(us, "%.0f W/m\u00b2", SkyView.rad) + (sh >= 0 ? String.format(us, " \u00b7 %.0f%% of a clear sky at this sun height", sh * 100) : " \u00b7 sun too low (under 5\u00b0) to compare") + " \u00b7 drives the Sun's glow");
         } catch (Throwable ignored) { }
+        try {   // day / night time left, shown above the weekday
+            double[] st = SunTimes.today(lat, lon);
+            if (Double.isNaN(st[0]) || Double.isNaN(st[1])) add(b, 'A', "Time left (above the weekday)", "no sunrise / sunset for this place today");
+            else {
+                java.util.Calendar cl = java.util.Calendar.getInstance();
+                cl.setTimeInMillis(now);
+                double mm = cl.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cl.get(java.util.Calendar.MINUTE);
+                boolean dayNow = mm >= st[0] && mm < st[1];
+                int lm = (int) Math.round(dayNow ? st[1] - mm : (mm < st[0] ? st[0] - mm : st[0] + 1440 - mm));
+                add(b, 'A', "Time left (above the weekday)", (dayNow ? "day, " : "night, ") + (lm / 60) + "h " + (lm % 60) + "m until " + (dayNow ? "sunset " + SunTimes.hhmm(st[1]) : "sunrise " + SunTimes.hhmm(st[0]))
+                        + String.format(us, " \u00b7 day is %.0f h %.0f min long", Math.floor((st[1] - st[0]) / 60), (st[1] - st[0]) % 60) + " \u00b7 sunrise/sunset from the sun's position at your coordinates");
+            }
+        } catch (Throwable ignored) { }
+        try {   // the point the weather is calculated for
+            add(b, 'A', "Weather is calculated for", Float.isNaN(TowerArea.WX_GRID_KM) ? "model point not known yet (strip falls back to the place name)"
+                    : (TowerArea.WX_GRID_NAME.isEmpty() ? "an unnamed spot" : TowerArea.WX_GRID_NAME) + " \u00b7 " + (TowerArea.WX_GRID_KM < 0.3f ? "on your spot" : String.format(us, "%.1f km %s from you", TowerArea.WX_GRID_KM, TowerArea.WX_GRID_DIR))
+                            + " \u00b7 modelled by Open-Meteo for that grid point, not measured by a station (nearest airport reports are used only within 60 km, none now)");
+        } catch (Throwable ignored) { }
+        add(b, 'A', "Display options (today's additions)", String.format(us, "SIM boxes up %s \u00b7 Q for 2nd SIM %s \u00b7 moon + day-type initials %s \u00b7 layout %s",
+                Cfg.b(Cfg.SIM_UP, Cfg.D_SIM_UP) ? "on" : "off", Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND) ? "on" : "off", Cfg.b(Cfg.SEA_MOON, Cfg.D_SEA_MOON) ? "on" : "off",
+                Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) == 3 ? "Tower column" : String.valueOf(Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT))));
         add(b, 'A', "Weather feed (Open-Meteo)", Diag.line("api.open-meteo.com") + " \u00b7 " + WxSky.why);
         try {
             String pc = EarthSci.plateCode(lat, lon);

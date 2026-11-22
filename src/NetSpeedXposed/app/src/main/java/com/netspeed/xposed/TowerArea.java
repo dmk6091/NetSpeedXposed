@@ -131,6 +131,8 @@ final class TowerArea {
                     }
                 } catch (Throwable ignored) { }
             }
+            r.append("    direction arrow: ").append(BEARING.get(s.slot) == null ? "none (position is only your area, or the tower is within 60 m)"
+                    : BEARING.get(s.slot) + (BEARING_ROUGH.containsKey(s.slot) ? " (rough position: shown faint with ~, after the ping)" : " (exact position: shown after the ping)")).append('\n');
             mapServing.add(new double[]{p[0], p[1], s.slot, near || rough ? 1 : 0});
             mapBands.add(s.band == null ? "" : s.band);
             String k = String.format(Locale.US, "%.3f,%.3f", p[0], p[1]);
