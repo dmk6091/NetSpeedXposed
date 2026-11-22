@@ -1700,6 +1700,7 @@ final class ReadableBar extends View {
         // rows 3 and 4: the weather, moved here from under the SIMs (they now show their towers' areas)
         l4End = 22;
         try { proWeatherLeft(c, e3 > 0 ? e3 + 22 : 22, 22, Math.max(L1, wxEnd), 1e9f); } catch (Throwable ignored) { }
+        try { seaMoon(c); } catch (Throwable ignored) { }
         // where the weather is for: place name in the thin gap between the notification row and the weather
         try {
             // the weather's own place: the name of the coordinates its forecast was fetched with (PLACE until the first fetch)
@@ -4421,6 +4422,44 @@ final class ReadableBar extends View {
                 seaInline = false;
             }
         } catch (Throwable ignored) { seaInline = false; }
+    }
+
+    /**
+     * The day type and the moon phase name ("Day · Waxing gibbous") that used to sit above the SIM boxes: after the sea line on
+     * row 3. Where it runs under the SIM boxes it is drawn faintly, so the box text stays the clear one.
+     */
+    private void seaMoon(Canvas c) {
+        if (!simUp || !Cfg.b(Cfg.SEA_MOON, Cfg.D_SEA_MOON) || row3End <= 0) return;
+        String[] sol = solarNow();
+        String nm;
+        try {
+            Astro.Moon mo = Astro.moon(System.currentTimeMillis(), fix != null ? fix[0] : latLon[0], fix != null ? fix[1] : latLon[1]);
+            nm = phaseName((int) Math.round(mo.illum * 100), mo.phase < 0.5);
+        } catch (Throwable t) {
+            double ph = moonPhase();
+            nm = phaseName((int) Math.round(50 * (1 - Math.cos(2 * Math.PI * ph))), ph < 0.5);
+        }
+        final String txt = (sol != null ? sol[1] + " \u00b7 " : "") + nm;
+        final float x = row3End + 16f, cy = y(P3), sz = 20f;
+        if (x > W - 40f) return;
+        final float boxL = Float.isNaN(simLeft) ? W : simLeft;
+        final float top = cy - 16f * vs, bot = cy + 16f * vs;
+        if (x >= boxL) {
+            c.saveLayerAlpha(x - 2, top, W, bot, 90);
+            text(c, txt, x, cy, sz, semi, grey());
+            c.restore();
+            return;
+        }
+        c.save();
+        c.clipRect(0, top, boxL - 4, bot);
+        text(c, txt, x, cy, sz, semi, grey());
+        c.restore();
+        if (x + tw(txt, sz, semi) > boxL - 4) {
+            c.saveLayerAlpha(boxL - 4, top, W, bot, 90);
+            c.clipRect(boxL - 4, top, W, bot);
+            text(c, txt, x, cy, sz, semi, grey());
+            c.restore();
+        }
     }
 
     /** The weather in the bottom-left: row 3 icon, temperature, rain, UV, AQI pill; row 4 visibility, high/low, humidity, wind. */
