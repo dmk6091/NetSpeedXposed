@@ -3113,6 +3113,24 @@ final class ReadableBar extends View {
         fit(c, x0, y(P2), tw(v, 20, bold), cw, () -> text(c, v, 0, 0, 20, bold, col));
     }
 
+    /** Cell tower: mast with a cross brace, a dot on top and two signal arcs. About 18 wide, 26 tall, centred on cy. */
+    private void towerIcon(Canvas c, float x, float cy, int col) {
+        float mx = x + 9;
+        stroke(2.4f, col);
+        c.drawLine(mx, cy - 3, x + 1.5f, cy + 12, gp);
+        c.drawLine(mx, cy - 3, x + 16.5f, cy + 12, gp);
+        stroke(1.8f, col);
+        c.drawLine(x + 4.5f, cy + 6, x + 13.5f, cy + 6, gp);
+        gp.setStyle(Paint.Style.FILL);
+        gp.setColor(col);
+        c.drawCircle(mx, cy - 6, 2.6f, gp);
+        stroke(1.8f, col);
+        rf.set(mx - 6, cy - 12, mx + 6, cy);
+        c.drawArc(rf, 205, 130, false, gp);
+        rf.set(mx - 10, cy - 16, mx + 10, cy + 4);
+        c.drawArc(rf, 210, 120, false, gp);
+    }
+
     private static final float DISH_W = 22;
 
     /** Phone picking up signals: phone outline (earpiece + home dot) with two waves arriving from the right. */
@@ -3407,7 +3425,10 @@ final class ReadableBar extends View {
         fitK(c, x, yL3, w2, cw, S3, () -> {
             float e = textB(c, band, 0, 0, 26, 26, semi, fade(blue(), k));
             if (dist != null) {
-                e = textB(c, "📡 ", e + 10, 0, 26, 18, bold, fade(grey(), k));
+                if (Cfg.b(Cfg.TOWER_ICON, Cfg.D_TOWER_ICON)) {
+                    towerIcon(c, e + 10, 0, fade(grey(), k));
+                    e += 10 + tw("📡 ", 18, bold);
+                } else e = textB(c, "📡 ", e + 10, 0, 26, 18, bold, fade(grey(), k));
                 e = textB(c, dist, e, 0, 26, 26, semi, fade(color, k));
             }
             if (cells != null) {
