@@ -131,6 +131,13 @@ final class TowerArea {
                     }
                 } catch (Throwable ignored) { }
             }
+            try { r.append("    cell change: ").append(DualRow.cellChangeDiag(s.slot)).append('\n'); } catch (Throwable ignored) { }
+            try {
+                String bd0 = s.band == null ? "" : s.band.split("[+ ,]")[0];
+                r.append("    channel width: ").append(s.bwMhz > 0 ? s.bwMhz + " MHz (reported by the modem)"
+                        : ("n78".equals(bd0) || "n28".equals(bd0)) ? "not reported (5G SA): estimate ~" + ("n78".equals(bd0) ? 100 : 10) + " MHz typical for " + bd0 + ", shown grey with ~"
+                        : "not reported, no estimate for this band").append('\n');
+            } catch (Throwable ignored) { }
             r.append("    direction arrow: ").append(BEARING.get(s.slot) == null ? "none (position is only your area, or the tower is within 60 m)"
                     : BEARING.get(s.slot) + (BEARING_ROUGH.containsKey(s.slot) ? " (rough position: shown faint with ~, after the ping)" : " (exact position: shown after the ping)")).append('\n');
             mapServing.add(new double[]{p[0], p[1], s.slot, near || rough ? 1 : 0});

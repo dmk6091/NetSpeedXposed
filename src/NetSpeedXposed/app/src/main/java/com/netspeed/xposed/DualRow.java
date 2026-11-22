@@ -717,6 +717,14 @@ final class DualRow {
 
     // ------------------------------------------------------------ updater
 
+    /** For diagnostics: how long ago each SIM changed tower (the blue N box shows for 2 minutes after). */
+    static String cellChangeDiag(int slot) {
+        Long chg = Updater.CELL_CHANGED.get(slot);
+        if (chg == null) return "no tower change seen since the app started (blue N box not shown)";
+        long sec = (System.currentTimeMillis() - chg) / 1000L;
+        return "last tower change " + (sec < 60 ? sec + " s" : sec < 3600 ? (sec / 60) + " min" : (sec / 3600) + " h") + " ago \u00b7 blue N box " + (sec < 120 ? "showing (2 min after a change)" : "not shown (over 2 min ago)");
+    }
+
     private static final class Updater {
         final ViewGroup bar;
         final View clock;
