@@ -1730,11 +1730,11 @@ final class ReadableBar extends View {
             String pl = !TowerArea.WX_NAME.isEmpty() ? TowerArea.WX_NAME : TowerArea.PLACE;
             final String gnm = !TowerArea.WX_GRID_NAME.isEmpty() ? TowerArea.WX_GRID_NAME : pl;
             final boolean gridKnown = !Float.isNaN(TowerArea.WX_GRID_KM) && gnm != null && !gnm.isEmpty();
-            final String gdist = !gridKnown ? "" : TowerArea.WX_GRID_KM < 0.3f ? "here"
+            final String gdist = !gridKnown ? "" : TowerArea.WX_GRID_KM < 0.3f ? "<0.3 km"
                     : (TowerArea.WX_GRID_KM < 10 ? String.format(Locale.US, "%.1f", TowerArea.WX_GRID_KM) : String.valueOf(Math.round(TowerArea.WX_GRID_KM))) + " km " + TowerArea.WX_GRID_DIR;
             // longest first; a frame takes the longest one that still fits with it, nothing is cut
             final String[] leadV = !gridKnown ? new String[]{pl == null || pl.isEmpty() ? "" : "\uD83D\uDCCD " + pl}
-                    : new String[]{"\uD83D\uDCCD " + gnm + " \u00b7 model point " + gdist, "\uD83D\uDCCD " + gnm + " \u00b7 " + gdist, "\uD83D\uDCCD " + gnm};
+                    : new String[]{"\uD83D\uDCCD " + gdist};
             if (!gridKnown) pl = pl == null ? "" : pl;
             boolean hasPl = gridKnown || (pl != null && !pl.isEmpty());
             // altitude: GPS height, else the ground height from the weather service (~); GPS accuracy + satellites only while GPS is on
