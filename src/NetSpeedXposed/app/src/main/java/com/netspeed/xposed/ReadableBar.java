@@ -73,6 +73,7 @@ final class ReadableBar extends View {
         String trend;                         // signal change over the last minute: "+4dB" / "−5dB", null steady
         String site;                          // site-sector id, null unknown
         String towerH;                        // tower ground height vs you: "+14 m", null unknown
+        boolean newCell;                      // moved to a different tower in the last 2 minutes: small blue "N" box on the signal line
         boolean towerEst;                     // tower position only a rough guess: tower line drawn grey with a ~
         int los = -1;                         // ground sticking up above the line to the tower, metres; 0 clear; -1 unknown
     }
@@ -3370,7 +3371,7 @@ final class ReadableBar extends View {
         String snr = live && !Float.isNaN(si.snr) ? minus(String.valueOf(Math.round(si.snr))) : null;
         float wb = (dbm != null ? tw(dbm, 28, bold) + 4 + tw("↑", 24, bold) : 0)
                 + (snr != null ? 14 + tw("/", 22, semi) + 6 + tw(snr, 28, bold) + (hideSnrWord(si) ? 0 : 4 + tw("good", 15, semi)) : 0)
-                + (locked(si) ? LOCK_W : 0);
+                + (locked(si) ? LOCK_W : 0) + (si.newCell ? 32 : 0);
         String band = si.band != null ? si.band : "?";
         float w2 = tw(band, 26, semi) + (si.dist != null ? 10 + tw(si.dist, 26, semi) : 0)
                 + (si.cells > 0 ? 12 + DISH_W + 4 + tw(String.valueOf(si.cells), 24, bold) : 0);
@@ -3458,7 +3459,7 @@ final class ReadableBar extends View {
             float wb = (dbm != null ? tw(dbm, 28, bold) + 4 + tw("↑", 24, bold) : 0)
                     + (snr != null ? 14 + tw("/", 22, semi) + 6 + tw(snr, 28, bold) + (hideSnrWord(si) ? 0 : 4 + tw("good", 15, semi)) : 0)
                     + (dbm != null ? 12 + tw(trendLabel(si), 19, bold) : 0)
-                    + (locked(si) ? LOCK_W : 0);
+                    + (locked(si) ? LOCK_W : 0) + (si.newCell ? 32 : 0);
             final boolean lk = locked(si);
             fitK(c, x, yL2, wb, cw, S2, () -> {
                 float e = 0;
@@ -3485,6 +3486,14 @@ final class ReadableBar extends View {
                             trd2 == null ? grey() : trd2.startsWith("+") ? green() : red());
                 }
                 if (lk) lockIcon(c, e + 8, 0, teal());           // bands locked in settings
+                if (lk) e += LOCK_W;
+                if (si.newCell) {   // new tower: small blue box with an N
+                    gp.setStyle(Paint.Style.FILL);
+                    gp.setColor(0xFF2F7DE8);
+                    rf.set(e + 10, -11, e + 32, 11);
+                    c.drawRoundRect(rf, 5, 5, gp);
+                    textB(c, "N", e + 21 - tw("N", 16, bold) / 2f, 0, 16, 16, bold, 0xFFFFFFFF);
+                }
             });
         }
         // line 3: band, distance (📡 symbol + reading - the SIM box's one place for this, 2026-11-14), cells heard

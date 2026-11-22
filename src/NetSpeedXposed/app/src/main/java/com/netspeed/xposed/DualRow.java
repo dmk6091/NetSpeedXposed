@@ -4567,6 +4567,8 @@ final class DualRow {
 
         /** Per SIM: tower key and since when; recent dBm samples {time, dBm}. */
         private static final java.util.Map<Integer, Object[]> CELL_SINCE = new java.util.HashMap<>();
+        /** Per SIM: when it last moved to a different tower (not set for the first tower seen after a restart). */
+        private static final java.util.Map<Integer, Long> CELL_CHANGED = new java.util.HashMap<>();
         private static final java.util.Map<Integer, java.util.ArrayDeque<long[]>> DBM_HIST = new java.util.HashMap<>();
 
         /** How long on this tower ("3m"), and the signal change over the last minute ("+4dB"), when it moved 3 dB or more. */
@@ -4576,11 +4578,13 @@ final class DualRow {
             if (key == null || !s.inService) { CELL_SINCE.remove(s.slot); DBM_HIST.remove(s.slot); return; }
             Object[] cs = CELL_SINCE.get(s.slot);
             if (cs == null || !key.equals(cs[0])) {
-                if (cs != null) ReadableBar.handover(now, s.slot);          // tower switch counted for today
+                if (cs != null) { ReadableBar.handover(now, s.slot); CELL_CHANGED.put(s.slot, now); }          // tower switch counted for today
                 cs = new Object[]{key, now};
                 CELL_SINCE.put(s.slot, cs);
                 DBM_HIST.remove(s.slot);                       // new tower: its own trend
             }
+            Long chg = CELL_CHANGED.get(s.slot);
+            si.newCell = chg != null && now - chg < 120_000L;       // "N" box for 2 minutes after a tower change
             long sec = (now - (Long) cs[1]) / 1000L;
             si.onCell = sec < 60 ? sec + "s" : sec < 3600 ? (sec / 60) + "m"
                     : (sec / 3600) + "h" + String.format(Locale.US, "%02d", (sec % 3600) / 60);
