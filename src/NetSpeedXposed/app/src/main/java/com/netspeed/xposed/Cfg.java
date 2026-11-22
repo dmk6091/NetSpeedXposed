@@ -160,6 +160,10 @@ final class Cfg {
     static final String DIM_NIGHT = "dim_night";       static final boolean D_DIM_NIGHT = true;
     static final String DATA_PERIOD = "data_period";   static final int D_DATA_PERIOD = 0;  // 0 daily (D), 1 monthly (M), 2 both at once, 3 D and M taking turns every 5 s
     static final String Q_BOX = "q_box";               static final boolean D_Q_BOX = true;      // signal quality: the Q in a small box
+    static final String TC_SITE = "tc_site";   static final boolean D_TC_SITE = true;   // tower column: site and sector
+    static final String TC_BW = "tc_bw";       static final boolean D_TC_BW = true;     // tower column: channel width
+    static final String TC_NB = "tc_nb";       static final boolean D_TC_NB = true;     // tower column: strongest neighbour
+    static final String TC_TINT = "tc_tint";   static final boolean D_TC_TINT = true;   // tint behind each SIM box
     static final String TOWER_MAST = "tower_mast";    static final boolean D_TOWER_MAST = true;   // tower mast instead of the satellite dish before the distance to the tower
     static final String DATA_LABELS = "data_labels";   static final boolean D_DATA_LABELS = true; // "4G" / "5G" labels in the data box (off: colour only)
     static final String COAST_MODE = "coast_mode";   static final int D_COAST_MODE = 1;   // 0 nearest water (creeks too), 1 open sea

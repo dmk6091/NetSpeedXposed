@@ -2680,7 +2680,8 @@ final class DualRow {
             rb.chips = false;   // the chip look and the gauge-line switch were removed from Settings: gauge-line look always
             rb.look2 = true;
             rb.fold = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) >= 1;
-            rb.stretch = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) == 2;
+            rb.stretch = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) >= 2;
+            rb.tower = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) == 3;
             if (pro) {
                 rb.soh = batSoh;
                 rb.cycles = batCycles;
@@ -2801,6 +2802,9 @@ final class DualRow {
                 si.arfcn = s.arfcn;
                 si.tac = s.tac;
                 si.site = s.site;
+                si.bw = s.bwMhz;
+                si.nbr = s.nbr;
+                si.nbrDbm = s.nbrDbm;
                 Integer th = TowerElev.DELTA.get(s.slot);
                 si.towerH = th == null ? null : (th >= 0 ? "+" : "\u2212") + Math.abs(th) + " m";
                 String d = Cfg.b(Cfg.SHOW_DIST, Cfg.D_SHOW_DIST) ? distString(s) : "?";

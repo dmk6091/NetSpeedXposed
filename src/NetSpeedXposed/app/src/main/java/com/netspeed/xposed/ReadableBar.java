@@ -63,6 +63,9 @@ final class ReadableBar extends View {
         int cqi = -1;      // channel quality 0..15, -1 unknown
         int rsrq = Integer.MIN_VALUE;
         int pci = -1, arfcn = -1, tac = -1;   // serving cell details, -1 unknown
+        int bw = -1;                          // channel width in MHz, -1 unknown
+        String nbr;                           // strongest neighbour: "B3 \u221296", null none
+        int nbrDbm = Integer.MIN_VALUE;
         long dataToday = -1;                  // bytes on this SIM since midnight
         String bearing;                       // "↗NE" from you to the tower, null unknown
         int hoToday;                          // tower switches today for this SIM
@@ -2922,6 +2925,7 @@ final class ReadableBar extends View {
      * long as that line still clears the curve; the lines under it are lower, below the curve.
      */
     private float simRight(float R1, int n) {
+        if (tower && n > 0) return R1;                  // tower column: the boxes run to the right edge
         float cl = cornerRightX(y(P1A) - 24) - 4;
         float lim = Math.min(R1, cl);
         if (!fold || n <= 0 || sims.size() < n) return lim;
@@ -2984,7 +2988,10 @@ final class ReadableBar extends View {
                 SimInfo si = sims.get(i);
                 float b = bw[i] * f;
                 // (the thin underline that used to mark the data SIM is gone: the boxed d does that now)
+                l1Cap = tower ? cornerRightX(y(P1A) - 24) - 4f : 1e9f;
+                if (tower && Cfg.b(Cfg.TC_TINT, Cfg.D_TC_TINT)) { try { tcTint(c, si, x, b); } catch (Throwable ignored) { } }
                 try { proSim(c, si, x + pad * f, b - 2 * pad * f); } catch (Throwable ignored) { }
+                if (tower) { try { tcColumn(c, si, x + pad * f, b - 2 * pad * f); } catch (Throwable ignored) { } }
                 colX[i] = x; colW[i] = b; colN = i + 1;
                 x += b + gap * f;
             }
@@ -3344,6 +3351,7 @@ final class ReadableBar extends View {
 
     private void proSim(final Canvas c, final SimInfo si, float x, float cw) {
         final boolean live = si.inService;
+        slots.clear();
         final float k = si.data ? 1f : 0.8f;
         // network-type label (5G/4G) only on the SIM actually carrying data (2026-11-14 per request) -
         // showing it on the other SIM too read as if that one were on 5G/4G data as well.
@@ -3357,7 +3365,7 @@ final class ReadableBar extends View {
         float wa = (si.data ? DBOX_W + DBOX_GAP + ARROW_W + 4 : 0) + (rat != null ? ratW(rat) + 2 : 0) + (si.eco ? 6 + tw("E", 22, bold) : 0)
                 + barsW + (vo != null ? 8 + voW(vo) : 0) + modePingW(si);
         // line 1: network, bars, live arrows, voice, and for the data SIM "SA · 28ms"
-        fitK(c, x, yL1, wa, cw, S1, () -> {
+        fitK(c, x, yL1, wa, Math.min(cw, l1Cap - x), S1, () -> {
             float e = 0;
             if (si.data) {
                 // one narrow column: ▲ upload on top, ▼ download below; faint while idle
@@ -3449,6 +3457,7 @@ final class ReadableBar extends View {
                 textB(c, cells, e + 5, 0, 26, 24, bold, grey());
             }
         });
+        slots.add(new float[]{yL3, x + Math.min(w2 * S3, cw)});
         // lines 4-7: radio details of this SIM's serving cell and tower
         if (live) simDetail(c, si, x, cw, y(P2) + 4);
     }
@@ -3537,12 +3546,93 @@ final class ReadableBar extends View {
         return base == null || base.isEmpty() ? null : (si.roaming && si.circle != null ? "R\u00b7" + si.circle + " " : "") + base;
     }
 
+    /** Faint colour behind a SIM box (Tower column layout), from its signal quality; edge-to-edge in height. */
+    private void tcTint(Canvas c, SimInfo si, float x, float b) {
+        int col = !si.inService || si.dbm == Bands.NO_DBM ? grey() : dbmColor(si.dbm);
+        float top = y(24), bot = y(PRO_H) - 5f;
+        gp.setStyle(Paint.Style.FILL);
+        gp.setColor((col & 0x00FFFFFF) | (44 << 24));
+        rf.set(x + 1, top, x + b - 1, bot);
+        c.drawRoundRect(rf, 12, 12, gp);
+        stroke(1.6f, (col & 0x00FFFFFF) | (120 << 24));
+        c.drawRoundRect(rf, 12, 12, gp);
+    }
+
+    /** 24-wide icons for the tower column: 0 site (mast with a tag), 1 channel width, 2 neighbour (tower and a handover arrow). */
+    private void tcIcon(Canvas c, int kind, float x, float cy, int col) {
+        stroke(2f, col);
+        if (kind == 0) {
+            c.drawLine(x + 8, cy - 4, x + 2, cy + 10, gp);
+            c.drawLine(x + 8, cy - 4, x + 14, cy + 10, gp);
+            c.drawLine(x + 4.5f, cy + 3.5f, x + 11.5f, cy + 3.5f, gp);
+            gp.setStyle(Paint.Style.FILL);
+            c.drawCircle(x + 8, cy - 7, 2.2f, gp);
+            stroke(1.6f, col);
+            rf.set(x + 13, cy - 12, x + 21, cy - 6);
+            c.drawRect(rf, gp);
+        } else if (kind == 1) {
+            c.drawLine(x + 1, cy - 7, x + 1, cy + 7, gp);
+            c.drawLine(x + 22, cy - 7, x + 22, cy + 7, gp);
+            c.drawLine(x + 4, cy, x + 19, cy, gp);
+            gp.setStyle(Paint.Style.FILL);
+            Path p = new Path();
+            p.moveTo(x + 4, cy); p.lineTo(x + 9, cy - 4); p.lineTo(x + 9, cy + 4); p.close();
+            p.moveTo(x + 19, cy); p.lineTo(x + 14, cy - 4); p.lineTo(x + 14, cy + 4); p.close();
+            c.drawPath(p, gp);
+        } else {
+            c.drawLine(x + 6, cy - 3, x + 1, cy + 10, gp);
+            c.drawLine(x + 6, cy - 3, x + 11, cy + 10, gp);
+            gp.setStyle(Paint.Style.FILL);
+            c.drawCircle(x + 6, cy - 6, 2.2f, gp);
+            stroke(2f, col);
+            rf.set(x + 8, cy - 10, x + 21, cy + 4);
+            c.drawArc(rf, 270, 180, false, gp);
+            gp.setStyle(Paint.Style.FILL);
+            Path p = new Path();
+            p.moveTo(x + 14.5f, cy + 9); p.lineTo(x + 19, cy + 5.5f); p.lineTo(x + 19, cy + 12.5f); p.close();
+            c.drawPath(p, gp);
+        }
+    }
+
+    /** Tower column: site, channel width, strongest neighbour - each on the lowest free line that has room at the box's right edge. */
+    private void tcColumn(Canvas c, SimInfo si, float x, float cw) {
+        if (!si.inService) return;
+        final float xr = x + cw - 2;
+        String[] txt = new String[3];
+        int[] col = new int[3];
+        if (Cfg.b(Cfg.TC_SITE, Cfg.D_TC_SITE) && si.site != null) { txt[0] = si.site.replace('-', '\u00b7'); col[0] = blue(); }
+        if (Cfg.b(Cfg.TC_BW, Cfg.D_TC_BW) && si.bw > 0) { txt[1] = si.bw + " MHz"; col[1] = grey(); }
+        if (Cfg.b(Cfg.TC_NB, Cfg.D_TC_NB) && si.nbr != null) {
+            txt[2] = si.nbr;
+            col[2] = si.dbm != Bands.NO_DBM && si.nbrDbm > si.dbm ? green() : orange();
+        }
+        int from = 0;
+        for (int i = 0; i < 3; i++) {
+            if (txt[i] == null) continue;
+            float w = 28 + tw(txt[i], 19, bold);
+            for (int j = from; j < slots.size(); j++) {
+                float[] sl = slots.get(j);
+                if (xr - sl[1] >= w + 14) {
+                    tcIcon(c, i, xr - w, sl[0], col[i]);
+                    textB(c, txt[i], xr - w + 28, sl[0], 22, 19, bold, col[i]);
+                    from = j + 1;
+                    break;
+                }
+            }
+        }
+    }
+
     private void simDetail(final Canvas c, SimInfo si, float x, float cw, float y0) {
         float cy = y0;
         boolean first = true;
         for (final java.util.List<DSeg> ln : detailLines(si)) {
             // the place name (if any) is drawn between the first line (CQI) and the rest
-            if (first) { cy += drawPlace(c, si, x, cw, cy); first = false; }
+            if (first) {
+                float ph = drawPlace(c, si, x, cw, cy);
+                if (ph > 0 && ph < 30f) slots.add(new float[]{cy, x + Math.min(placeW(si), cw)});
+                else if (ph > 0) slots.add(new float[]{cy + 22f, x + cw});   // two-line name: both lines are full
+                cy += ph; first = false;
+            }
             if (ln.isEmpty()) continue;
             final float lcy = cy;
             float w = 0;
@@ -3551,6 +3641,7 @@ final class ReadableBar extends View {
                 float e = 0;
                 for (DSeg sg : ln) e = dsDraw(c, sg, e);
             });
+            slots.add(new float[]{lcy, x + Math.min(w, cw)});
             cy += 22f;
         }
         if (first) drawPlace(c, si, x, cw, cy);   // no other lines at all: still show the place name
@@ -4297,6 +4388,9 @@ final class ReadableBar extends View {
     private boolean graphsOn() { return pro && look2 && !chips; }
     /** Folded layout ("Status bar layout" in settings): no far-right column; its data and Q sit under the data SIM box. */
     boolean fold = true;
+    boolean tower = false;        // Tower column layout: stretched, tinted boxes with tower details on the right
+    private float l1Cap = 1e9f;                                   // right limit for a box's first line (the screen's top corner)
+    private final java.util.ArrayList<float[]> slots = new java.util.ArrayList<>();   // {line centre, right end of its text} of the box being drawn
     boolean stretch = false;      // folded, and the SIM boxes also take the width the column used to have
     private boolean colOn() { return graphsOn() && !fold; }
 

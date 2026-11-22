@@ -136,6 +136,14 @@ final class CellDetail {
             if (nci > 0 && nci != Long.MAX_VALUE) sim.site = (nci >> 12) + "-" + (nci & 0xFFF);
             sim.mccMnc = code(n.getMccString(), n.getMncString());
         }
+        // channel width: the LTE identity has it; otherwise the first value of the service state's list (the primary carrier)
+        try {
+            int bwk = -1;
+            if (id instanceof CellIdentityLte) { int b2 = ((CellIdentityLte) id).getBandwidth(); if (ok(b2) && b2 > 0) bwk = b2; }
+            if (bwk < 0 && ss != null) { int[] bws = ss.getCellBandwidths(); if (bws != null && bws.length > 0 && bws[0] > 0) bwk = bws[0]; }
+            sim.bwMhz = bwk > 0 ? Math.round(bwk / 1000f) : -1;
+        } catch (Throwable ignored) { }
+        try { bestNeighbour(sim, si, cells); } catch (Throwable ignored) { }
         if (sim.mccMnc == null) sim.mccMnc = code(si.getMccString(), si.getMncString());
 
         // --- operator name (what the network calls itself, else the SIM's name)
@@ -170,6 +178,40 @@ final class CellDetail {
                 + " cqi " + sim.cqi + " ta " + sim.ta + " pci " + sim.pci + " arfcn " + sim.arfcn
                 + " tac " + sim.tac + " site " + sim.site + " " + sim.mccMnc + " " + sim.operator
                 + " data " + sim.dataToday);
+    }
+
+    /** The strongest cell that is not the serving one and belongs to this SIM's network (or does not say): "B3 \u221296". */
+    private static void bestNeighbour(Bands.Sim sim, SubscriptionInfo si, List<CellInfo> cells) {
+        sim.nbr = null;
+        sim.nbrDbm = Integer.MIN_VALUE;
+        if (cells == null) return;
+        for (CellInfo ci : cells) {
+            if (ci.isRegistered()) continue;
+            String mcc, mnc;
+            int dbm, band;
+            boolean nr;
+            if (ci instanceof CellInfoLte) {
+                CellInfoLte l = (CellInfoLte) ci;
+                mcc = l.getCellIdentity().getMccString(); mnc = l.getCellIdentity().getMncString();
+                dbm = l.getCellSignalStrength().getRsrp();
+                band = Bands.lteBandFromEarfcn(l.getCellIdentity().getEarfcn());
+                nr = false;
+            } else if (ci instanceof CellInfoNr) {
+                CellInfoNr n = (CellInfoNr) ci;
+                CellIdentityNr id = (CellIdentityNr) n.getCellIdentity();
+                mcc = id.getMccString(); mnc = id.getMncString();
+                dbm = ((CellSignalStrengthNr) n.getCellSignalStrength()).getSsRsrp();
+                band = Bands.nrBandFromArfcn(id.getNrarfcn());
+                nr = true;
+            } else continue;
+            if (!ok(dbm) || dbm >= 0 || dbm < -140) continue;
+            if (mcc != null && mnc != null && si.getMccString() != null && si.getMncString() != null
+                    && !(mcc.equals(si.getMccString()) && mnc.equals(si.getMncString()))) continue;   // another operator's tower
+            if (dbm > sim.nbrDbm) {
+                sim.nbrDbm = dbm;
+                sim.nbr = (band > 0 ? (nr ? "n" : "B") + band : "?") + " \u2212" + Math.abs(dbm);
+            }
+        }
     }
 
     private static boolean ok(int v) {

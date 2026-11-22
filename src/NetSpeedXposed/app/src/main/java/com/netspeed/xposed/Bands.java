@@ -51,6 +51,9 @@ final class Bands {
         float snr = Float.NaN;
         int rsrq = CellDetail.NONE, rssi = CellDetail.NONE, cqi = CellDetail.NONE, ta = CellDetail.NONE;
         int pci = -1, arfcn = -1, tac = -1;
+        int bwMhz = -1;                       // serving channel width in MHz, -1 unknown
+        String nbr;                           // strongest other tower this SIM hears: "B3 \u221296", null none
+        int nbrDbm = Integer.MIN_VALUE;
         String site, mccMnc, operator;
         long dataToday = -1;
         boolean inCall = false;

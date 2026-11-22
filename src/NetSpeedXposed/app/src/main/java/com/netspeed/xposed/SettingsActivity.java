@@ -590,7 +590,12 @@ public class SettingsActivity extends Activity {
                 + "brightness up, easing down to about 55 % at the lowest so it isn't glaring in a dark room", Cfg.DIM_NIGHT, Cfg.D_DIM_NIGHT);
         choice(c, "Status bar layout", Cfg.LAYOUT, Cfg.D_LAYOUT, new String[]{"Classic (data and Q in a column at the far right)",
                 "Folded (data and Q under the data SIM box, more room on the left)",
-                "Stretched (as Folded, SIM boxes also take the width of the old column)"});
+                "Stretched (as Folded, SIM boxes also take the width of the old column)",
+                "Tower column (stretched, boxes from camera to edge, tower details on the right)"});
+        toggle(c, "Tower column: site and sector", "Tower number and the side of it you are on (Tower column layout only)", Cfg.TC_SITE, Cfg.D_TC_SITE);
+        toggle(c, "Tower column: channel width", "10 / 20 / 100 MHz of the serving channel, when the modem reports it", Cfg.TC_BW, Cfg.D_TC_BW);
+        toggle(c, "Tower column: strongest neighbour", "Band and signal of the best other tower the phone hears", Cfg.TC_NB, Cfg.D_TC_NB);
+        toggle(c, "Tint behind the SIM boxes", "A faint colour behind each SIM box, from its signal quality (Tower column layout only)", Cfg.TC_TINT, Cfg.D_TC_TINT);
         toggle(c, "Tower icon", "A small cell-tower mast before the distance to the tower. Off: the satellite-dish symbol as before", Cfg.TOWER_MAST, Cfg.D_TOWER_MAST);
         choice(c, "Data used in the SIM box", Cfg.DATA_PERIOD, Cfg.D_DATA_PERIOD, new String[]{"Daily (D)", "Monthly (M)", "Both at once (D and M)", "D and M taking turns (5 s)"});
         toggle(c, "Boxed Q for signal quality", "The data SIM's signal quality figure gets a small box with a Q in it", Cfg.Q_BOX, Cfg.D_Q_BOX);
