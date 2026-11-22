@@ -252,8 +252,8 @@ final class TerrainMaker {
         double bestW = Double.NaN;
         float wbx = 0, wby = 0;
         final boolean bigMap = (H / S * mpp / 2000.0) > 60;
-        if (bigMap) WpStatus.note("wetlands and peak names skipped: the map is too wide for OpenStreetMap to answer");
-        if (!bigMap) try {
+        if (bigMap) { halfLat = Math.min(halfLat, 0.45); halfLon = Math.min(halfLon, 0.47); WpStatus.note("wide map: wetlands and mangroves drawn only within about 50 km, no OpenStreetMap peak names (built-in list used)"); }
+        try {
             String q = String.format(Locale.US, "[out:json][timeout:25][maxsize:60000000];(way[natural=wetland](%.4f,%.4f,%.4f,%.4f);relation[natural=wetland](%.4f,%.4f,%.4f,%.4f);way[wetland=mangrove][natural!=wetland](%.4f,%.4f,%.4f,%.4f););out geom qt;",
                     lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon);
             String js = overpass(q);
@@ -316,12 +316,15 @@ final class TerrainMaker {
         fp.setColor(day ? Color.argb(255, 170, 25, 25) : Color.argb(250, 255, 96, 72));
         fp.setPathEffect(new DashPathEffect(new float[]{26f, 16f}, 0f));
         String faultTxt = "";
+        float nfx = 0, nfy = 0; double nfd = 1e18;
         if (showFaults) try {
             for (float[][] l : Faults.linesIn(lat, lon, halfKm)) {
                 Path p = new Path();
                 for (int i = 0; i < l[0].length; i++) {
                     float x = (float) ((WallpaperMaker.worldX(l[0][i], z) - ox) * S), y = (float) ((WallpaperMaker.worldY(l[1][i], z) - oy) * S);
                     if (i == 0) p.moveTo(x, y); else p.lineTo(x, y);
+                    double dd2 = (double) (x - px) * (x - px) + (double) (y - py) * (y - py);
+                    if (dd2 < nfd) { nfd = dd2; nfx = x; nfy = y; }
                 }
                 cv.drawPath(p, fp);
             }
@@ -350,6 +353,16 @@ final class TerrainMaker {
             cv.drawLine(px, py, wbx, wby, lp);
             cv.drawCircle(wbx, wby, 9 * u, lp);
         }
+        // nearest-place labels (and a dashed line to the nearest fault)
+        if (showCoast) try {
+            if (nfd < 1e17 && showFaults) {
+                lp.setColor(day ? Color.rgb(170, 25, 25) : Color.rgb(255, 130, 110));
+                cv.drawLine(px, py, nfx, nfy, lp); cv.drawCircle(nfx, nfy, 9 * u, lp);
+                RegionNames.tag(cv, "nearest fault " + Math.round(Math.sqrt(nfd) / S * mpp / 1000.0) + " km", nfx, nfy, W, H, u, day ? Color.rgb(170, 25, 25) : Color.rgb(255, 150, 130), day);
+            }
+            if (fbx >= 0 && showForest) RegionNames.tag(cv, "nearest forest " + Math.round(bestF) + " km", fbx * S, fby * S, W, H, u, day ? Color.rgb(20, 90, 30) : Color.rgb(140, 235, 150), day);
+            if ((wbx != 0 || wby != 0) && !Double.isNaN(bestW)) RegionNames.tag(cv, "nearest wetland " + Math.round(bestW) + " km", wbx, wby, W, H, u, day ? Color.rgb(0, 110, 90) : Color.rgb(120, 240, 205), day);
+        } catch (Throwable ignored) { }
         // coast: the nearest sea (or tidal creek) on the picture, with its distance and direction
         if (showCoast) try {
             int gx0 = (int) (px / S), gy0 = (int) (py / S), sbx = -1, sby = -1;
@@ -381,6 +394,10 @@ final class TerrainMaker {
         cv.drawCircle(px, py, 24 * u, dot);
         dot.setColor(Color.rgb(47, 127, 209));
         cv.drawCircle(px, py, 17 * u, dot);
+        if (bigMap) {
+            String me = info != null && info.place != null && !info.place.isEmpty() ? info.place.split(",")[0].trim() : "";
+            RegionNames.tag(cv, (me.isEmpty() ? "you" : me + " \u00b7 you"), px, py + 34 * u, W, H, u, day ? Color.rgb(20, 40, 90) : Color.WHITE, day);
+        }
 
         if (info != null) { info.forestKm = bestF; info.wetKm = bestW; info.wetCount = wetN; }
         if (card) drawCard(c, cv, W, H, lat, lon, day, faultTxt, bestF, bestW, info, mx - mn);
