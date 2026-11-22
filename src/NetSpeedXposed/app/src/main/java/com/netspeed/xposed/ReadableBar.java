@@ -73,6 +73,7 @@ final class ReadableBar extends View {
         String trend;                         // signal change over the last minute: "+4dB" / "−5dB", null steady
         String site;                          // site-sector id, null unknown
         String towerH;                        // tower ground height vs you: "+14 m", null unknown
+        int los = -1;                         // ground sticking up above the line to the tower, metres; 0 clear; -1 unknown
     }
 
     // ------------------------------------------------------------------ model (main thread)
@@ -3540,10 +3541,6 @@ final class ReadableBar extends View {
         // "on cell Ns" dropped (2026-11-14 per request); the tower distance already has its one spot
         // on line 3, next to the band, now with a \uD83D\uDCE1 symbol - not repeated here too.
         java.util.List<DSeg> d = new java.util.ArrayList<>();
-        if (si.towerH != null) {   // "H" tag (green: tower above you, orange: below) then the height: H -3m
-            d.add(new DSeg("H", 17, bold, si.towerH.startsWith("+") ? green() : orange()).chip());
-            d.add(new DSeg(si.towerH.replace(" m", "m"), 20, bold, color));
-        }
         // time on this tower, number and unit only ("45s", "3m", "1h05"); the words "on cell" stay dropped
         if (si.onCell != null) d.add(new DSeg((d.isEmpty() ? "" : " \u00b7 ") + si.onCell, 20, bold, color));
         if (si.hoToday > 0) d.add(new DSeg((d.isEmpty() ? "" : " \u00b7 ") + "\u00d7" + si.hoToday, 17, semi, g));
@@ -3554,6 +3551,18 @@ final class ReadableBar extends View {
             d.add(new DSeg((d.isEmpty() ? "" : " \u00b7 ") + pg, 20, bold, qc));
         }
         if (!d.isEmpty()) L.add(d);
+        // tower line: height against you and line of sight, "\u25b2 +12m \u00b7 LOS clear" / "\u25bc \u22123m \u00b7 rise 8m"
+        java.util.List<DSeg> tl = new java.util.ArrayList<>();
+        if (si.towerH != null) {
+            boolean up = si.towerH.startsWith("+");
+            tl.add(new DSeg(up ? "\u25b2 " : "\u25bc ", 17, bold, up ? green() : orange()));
+            tl.add(new DSeg(si.towerH.replace(" m", "m"), 20, bold, up ? green() : orange()));
+        }
+        if (si.los >= 0) {
+            boolean clr = si.los <= 2;
+            tl.add(new DSeg((tl.isEmpty() ? "" : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 20, bold, clr ? green() : orange()));
+        }
+        if (!tl.isEmpty()) L.add(tl);
         return L;
     }
 
@@ -3588,9 +3597,7 @@ final class ReadableBar extends View {
 
     /** True when this (later) SIM's place text is the same as the first SIM's: it is then shown once, in the first box. */
     private boolean dupPlace(SimInfo si) {
-        if (!fold || sims.size() < 2 || sims.get(0) == si) return false;
-        String a = placeTextRaw(si), b = placeTextRaw(sims.get(0));
-        return a != null && a.equals(b);
+        return false;   // 2026-11-22: the place name shows in every box again
     }
 
     /** Row that takes the place name's spot when it is a duplicate: plain verdicts, "Strong · Clean". Null if none. */

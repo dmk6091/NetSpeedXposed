@@ -2808,6 +2808,8 @@ final class DualRow {
                 si.nbrDbm = s.nbrDbm;
                 Integer th = TowerElev.DELTA.get(s.slot);
                 si.towerH = th == null ? null : (th >= 0 ? "+" : "\u2212") + Math.abs(th) + " m";
+                Integer lr = TowerElev.LOS.get(s.slot);
+                si.los = lr == null ? -1 : lr;
                 String d = Cfg.b(Cfg.SHOW_DIST, Cfg.D_SHOW_DIST) ? distString(s) : "?";
                 si.dist = "?".equals(d) ? null : d;
                 si.voice = Voice.label(s.sub, s.band);
