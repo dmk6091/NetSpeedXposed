@@ -48,7 +48,7 @@ final class SkyView extends View {
         return (float) Math.max(0.0, Math.min(1.0, rad / Math.max(80.0, clear)));
     }
     /** Real weather observed at the nearest airport (METAR): weather string ("-RA", "HZ", "TS"...), when, how far. */
-    static volatile String obsWx = null, obsStation = "";
+    static volatile String obsWx = null, obsStation = "", obsName = "";
     static volatile long obsAt = 0;
     static volatile float obsKm = Float.NaN, obsTemp = Float.NaN;
     private static final int OBS_DRY = 100;

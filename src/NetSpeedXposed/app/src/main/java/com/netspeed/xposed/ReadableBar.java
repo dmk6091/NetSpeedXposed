@@ -1726,8 +1726,16 @@ final class ReadableBar extends View {
         // where the weather is for: place name in the thin gap between the notification row and the weather
         try {
             // the weather's own place: the name of the coordinates its forecast was fetched with (PLACE until the first fetch)
-            String pl = !TowerArea.WX_NAME.isEmpty() ? TowerArea.WX_NAME : TowerArea.PLACE;
-            boolean hasPl = pl != null && !pl.isEmpty();
+            // the strip names the weather station that reports the sky (full name when known, else its code); NRS = no reported station
+            String pl;
+            if (SkyView.obsStation != null && !SkyView.obsStation.isEmpty() && SkyView.obsKm <= 60
+                    && System.currentTimeMillis() - SkyView.obsAt <= 150 * 60_000L) {
+                String sn = SkyView.obsName == null ? "" : SkyView.obsName.trim()
+                        .replaceAll(",\\s*[A-Z]{2}$", "").replace("Arpt", "Airport").replace("Intl", "International").replace("Intnl", "International");
+                if (sn.isEmpty()) sn = SkyView.obsStation;
+                pl = sn + " \u00b7 " + Math.round(SkyView.obsKm) + " km";
+            } else pl = "NRS";
+            boolean hasPl = true;
             // altitude: GPS height, else the ground height from the weather service (~); GPS accuracy + satellites only while GPS is on
             String alt = fix != null && !Double.isNaN(fix[2]) ? "\u25B2" + Math.round(fix[2])
                     : !Float.isNaN(groundElev) ? "\u25B2~" + Math.round(groundElev) : null;

@@ -4273,6 +4273,7 @@ final class DualRow {
                 if (best == null) continue;
                 SkyView.obsWx = best.isNull("wxString") ? "" : best.optString("wxString", "");
                 SkyView.obsStation = best.optString("icaoId", "?");
+                SkyView.obsName = best.isNull("name") ? "" : best.optString("name", "");
                 SkyView.obsKm = (float) bestKm;
                 SkyView.obsTemp = best.isNull("temp") ? Float.NaN : (float) best.optDouble("temp", Double.NaN);
                 long t = best.optLong("obsTime", 0);
@@ -4282,6 +4283,7 @@ final class DualRow {
                 try { refreshWeatherIcon(); } catch (Throwable ignored) { }
                 return;
             }
+            SkyView.obsStation = ""; SkyView.obsName = ""; SkyView.obsKm = Float.NaN;   // no station reports nearby
         }
 
         /** Worker thread: feels-like, humidity, wind, UV, rain chance (next 3 h) and AQI. */
