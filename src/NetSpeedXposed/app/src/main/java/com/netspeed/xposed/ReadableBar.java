@@ -2942,6 +2942,7 @@ final class ReadableBar extends View {
     private float predictSimLeft(float R0, float R1) {
         int n = Math.min(2, sims.size());
         if (n == 0) return Float.NaN;
+        if (stretch) R0 -= STRETCH_CAM;                  // stretched: the boxes start right against the camera cutout
         if (colOn()) R1 -= GW + 8;
         float simR = simRight(R1, n);
         final float pad = 7, gap = 2;
@@ -2959,6 +2960,7 @@ final class ReadableBar extends View {
         colN = 0;
         int n = Math.min(2, sims.size());
         final float R1full = R1;
+        if (stretch) R0 -= STRETCH_CAM;
         if (colOn()) R1 -= GW + 8;
         float simR = simRight(R1, n);
         if (n > 0) {
@@ -3294,7 +3296,7 @@ final class ReadableBar extends View {
     }
 
     /** Both SIM boxes get the width of the wider one, so they match. */
-    private static final float STRETCH_W = 50, STRETCH_TOUCH = 14;   // touch: how far past the usual gap beside the camera the boxes may reach
+    private static final float STRETCH_W = 50, STRETCH_TOUCH = 0, STRETCH_CAM = 18;   // touch: how far past the usual gap beside the camera the boxes may reach
 
     private float boxW(int n) {
         float w = 0;
