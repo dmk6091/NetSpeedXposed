@@ -1591,6 +1591,24 @@ final class ReadableBar extends View {
             String ini = moonInitials();
             if (ini != null && look2) wdEnd = textB(c, ini, wdEnd + 8, y(P1A), 50, 15, semi, fade(grey(), 0.75f));
         } catch (Throwable ignored) { }
+        // time left in the current period (day until sunset, night until sunrise), thin faint row above the weekday
+        try {
+            if (look2) {
+                double[] st = SunTimes.today(latLon[0], latLon[1]);
+                if (!Double.isNaN(st[0]) && !Double.isNaN(st[1])) {
+                    Calendar cl = Calendar.getInstance();
+                    cl.setTimeInMillis(now);
+                    double mm = cl.get(Calendar.HOUR_OF_DAY) * 60 + cl.get(Calendar.MINUTE);
+                    boolean dayNow = mm >= st[0] && mm < st[1];
+                    double left = dayNow ? st[1] - mm : (mm < st[0] ? st[0] - mm : st[0] + 1440 - mm);
+                    int lm = (int) Math.round(left);
+                    String lt = (lm / 60) + "h " + (lm % 60) + "m";
+                    float gx = clkEnd + 5;
+                    if (dayNow) glyph(c, G_SUN, gx, y(P1A) - 17, 14, yellow()); else moon(c, gx + 7, y(P1A) - 17, 6, moonPhase());
+                    textB(c, lt, gx + 17, y(P1A) - 17, 50, 13, semi, fade(dayNow ? yellow() : blue(), 0.85f));
+                }
+            }
+        } catch (Throwable ignored) { }
         e = Math.max(e, wdEnd);
 
         // network speed goes right after the last column (drawn at the end); it must stay clear of the camera
