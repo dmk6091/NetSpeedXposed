@@ -1604,8 +1604,8 @@ final class ReadableBar extends View {
                     int lm = (int) Math.round(left);
                     String lt = (lm / 60) + "h " + (lm % 60) + "m";
                     float gx = clkEnd + 5;
-                    if (dayNow) glyph(c, G_SUN, gx, y(P1A) - 17, 14, yellow()); else moon(c, gx + 7, y(P1A) - 17, 6, moonPhase());
-                    textB(c, lt, gx + 17, y(P1A) - 17, 50, 13, semi, fade(dayNow ? yellow() : blue(), 0.85f));
+                    if (dayNow) glyph(c, G_SUN, gx, y(P1A) - 12, 17, yellow()); else moon(c, gx + 8, y(P1A) - 12, 7, moonPhase());
+                    textB(c, lt, gx + 21, y(P1A) - 15, 50, 17, semi, fade(dayNow ? yellow() : blue(), 0.85f));
                 }
             }
         } catch (Throwable ignored) { }
