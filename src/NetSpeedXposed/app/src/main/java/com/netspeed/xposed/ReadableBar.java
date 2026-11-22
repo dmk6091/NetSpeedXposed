@@ -2200,14 +2200,16 @@ final class ReadableBar extends View {
                     }
                     if (bs >= 11 && solB != null && bx + sw + 16 + bw <= bEnd) {
                         // solar time and phase name both above the SIM boxes; the name pushed to the right end
-                        float e1 = text(c, solB[0], solX, by, bs, bold, yellow());
-                        text(c, solB[1], e1 + 8, by, bs, semi, color);
-                        text(c, nm, bEnd - bw, by, bs, semi, grey());
+                        if (!simUp) {
+                            float e1 = text(c, solB[0], solX, by, bs, bold, yellow());
+                            text(c, solB[1], e1 + 8, by, bs, semi, color);
+                            text(c, nm, bEnd - bw, by, bs, semi, grey());
+                        }
                         upTop = solUp = true;
                         nameX = simLeft + 14;                     // the ISS line may now run up to the SIM boxes
                         half = 0;
                     } else if (bs >= 11 && bx + bw <= bEnd) {
-                        text(c, nm, bEnd - bw, by, bs, semi, grey());   // name only, as far right as it goes
+                        if (!simUp) text(c, nm, bEnd - bw, by, bs, semi, grey());   // name only, as far right as it goes
                         upTop = true;
                         nameX = simLeft + 14;                     // so the solar time (nameX - 22) ends 8 short of the SIM boxes
                         half = 0;
@@ -2215,7 +2217,7 @@ final class ReadableBar extends View {
                         nameX = Math.max(nameX, simLeft - 10 - 2 * half);
                     }
                 }
-                if (!upTop) text(c, nm, nameX, top, size, semi, grey());
+                if (!upTop && !simUp) text(c, nm, nameX, top, size, semi, grey());
                 // ISS / satellite line at the left of the strip, above the clock (a bit larger than the strip text)
                 try {
                     String sat = satText;
@@ -2228,7 +2230,7 @@ final class ReadableBar extends View {
                         float camL = (Float.isNaN(camX) ? W / 2f : camX / s) - (Float.isNaN(camR) ? 24f : Math.max(14f, Math.min(34f, camR / s))) - 4;
                         maxX = Math.min(maxX, camL);
                         String[] sol0 = solarNow();
-                        if (sol0 != null && !solUp) maxX -= tw(sol0[0], size, bold) + 8 + tw(sol0[1], size, semi) + 14;
+                        if (sol0 != null && !solUp && !simUp) maxX -= tw(sol0[0], size, bold) + 8 + tw(sol0[1], size, semi) + 14;
                         int scol = satLive ? teal() : grey();
                         String st = sat;
                         // too long: shorten the satellite's name first, keeping "ISS ..." and the city / country after it
@@ -2267,7 +2269,7 @@ final class ReadableBar extends View {
                     }
                 } catch (Throwable ignored) { }
                 try {
-                    String[] sol = solUp ? null : solarNow();
+                    String[] sol = solUp || simUp ? null : solarNow();
                     if (sol != null) {
                         float sx1 = nameX - 22;
                         float w1 = tw(sol[0], size, bold), w2 = tw(sol[1], size, semi);
@@ -2926,7 +2928,7 @@ final class ReadableBar extends View {
      */
     private float simRight(float R1, int n) {
         if (tower && n > 0) return R1;                  // tower column: the boxes run to the right edge
-        float cl = cornerRightX(y(P1A) - 24) - 4;
+        float cl = cornerRightX(y(P1A) - 24 - upPx()) - 4;
         float lim = Math.min(R1, cl);
         if (!fold || n <= 0 || sims.size() < n) return lim;
         try {
@@ -2988,10 +2990,13 @@ final class ReadableBar extends View {
                 SimInfo si = sims.get(i);
                 float b = bw[i] * f;
                 // (the thin underline that used to mark the data SIM is gone: the boxed d does that now)
-                l1Cap = tower ? cornerRightX(y(P1A) - 24) - 4f : 1e9f;
+                l1Cap = tower ? cornerRightX(y(P1A) - 24 - upPx()) - 4f : 1e9f;
+                c.save();
+                c.translate(0, -upPx());
                 if (tower && Cfg.b(Cfg.TC_TINT, Cfg.D_TC_TINT)) { try { tcTint(c, si, x, b); } catch (Throwable ignored) { } }
                 try { proSim(c, si, x + pad * f, b - 2 * pad * f); } catch (Throwable ignored) { }
                 if (tower) { try { tcColumn(c, si, x + pad * f, b - 2 * pad * f); } catch (Throwable ignored) { } }
+                c.restore();
                 colX[i] = x; colW[i] = b; colN = i + 1;
                 x += b + gap * f;
             }
@@ -2999,7 +3004,7 @@ final class ReadableBar extends View {
         // corner beside the SIMs: today's 5G share, or the data SIM's signal quality, or nothing
         int corner = Cfg.i(Cfg.CORNER, Cfg.D_CORNER);
         try {
-            if (graphsOn()) { if (fold) { foldData(c); for (int qi = 0; qi < colN && qi < sims.size(); qi++) foldQOther(c, qi); } else graphColumn(c, R1full); }
+            if (graphsOn()) { if (fold) { c.save(); c.translate(0, -upPx()); foldData(c); for (int qi = 0; qi < colN && qi < sims.size(); qi++) foldQOther(c, qi); c.restore(); } else graphColumn(c, R1full); }
             else if (corner == 1) proNrShare(c, simR + 3, W - 4);
             else if (corner == 2) proQuality(c, simR + 3, W - 4);
         } catch (Throwable ignored) { }
@@ -3043,7 +3048,7 @@ final class ReadableBar extends View {
         float y0 = y(P2) + 4;
         float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
         final float cy = Math.max(y(P3), lastCy + 24f);
-        if (cy > y(P4) - 14f) return;
+        if (cy > y(P4) - 14f + upPx()) return;
         final boolean mo = monthly();
         final String pl = mo ? "M" : "D";
         final String v4 = dataText(true, mo), v5 = dataText(false, mo);
@@ -3105,7 +3110,7 @@ final class ReadableBar extends View {
         float y0 = y(P2) + 4;
         float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
         final float cy = Math.max(y(P3), lastCy + 24f);
-        if (cy > y(P4) - 14f) return;
+        if (cy > y(P4) - 14f + upPx()) return;
         final String qv = q + "%";
         final int qc = q >= 70 ? green() : q >= 45 ? yellow() : q >= 25 ? orange() : red();
         final boolean qbox = Cfg.b(Cfg.Q_BOX, Cfg.D_Q_BOX);
@@ -4474,6 +4479,9 @@ final class ReadableBar extends View {
     private boolean graphsOn() { return pro && look2 && !chips; }
     /** Folded layout ("Status bar layout" in settings): no far-right column; its data and Q sit under the data SIM box. */
     boolean fold = true;
+    boolean simUp;                                   // SIM boxes shifted up into the (dropped) moon / time-name band
+    private static final float UP = 16f;           // design units: the band height, y(P1A) - 25
+    private float upPx() { return simUp ? UP * vs : 0f; }
     boolean tower = false;        // Tower column layout: stretched, tinted boxes with tower details on the right
     private float l1Cap = 1e9f;                                   // right limit for a box's first line (the screen's top corner)
     private final java.util.ArrayList<float[]> slots = new java.util.ArrayList<>();   // {line centre, right end of its text} of the box being drawn

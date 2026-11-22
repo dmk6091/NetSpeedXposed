@@ -592,6 +592,7 @@ public class SettingsActivity extends Activity {
                 "Folded (data and Q under the data SIM box, more room on the left)",
                 "Stretched (as Folded, SIM boxes also take the width of the old column)",
                 "Tower column (stretched, boxes from camera to edge, tower details on the right)"});
+        toggle(c, "SIM boxes up (moon line off)", "Drops the moon phase and time-name line above the SIM boxes and moves the boxes up into its space", Cfg.SIM_UP, Cfg.D_SIM_UP);
         toggle(c, "Q for the second SIM", "The SIM that is not carrying data also gets its own signal quality Q in the bottom row of its box (folded layouts)", Cfg.Q_SECOND, Cfg.D_Q_SECOND);
         toggle(c, "Tower column: site and sector", "Tower number and the side of it you are on (Tower column layout only)", Cfg.TC_SITE, Cfg.D_TC_SITE);
         toggle(c, "Tower column: channel width", "10 / 20 / 100 MHz of the serving channel, when the modem reports it", Cfg.TC_BW, Cfg.D_TC_BW);

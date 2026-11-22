@@ -2682,6 +2682,7 @@ final class DualRow {
             rb.fold = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) >= 1;
             rb.stretch = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) >= 2;
             rb.tower = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) == 3;
+            rb.simUp = Cfg.b(Cfg.SIM_UP, Cfg.D_SIM_UP);
             if (pro) {
                 rb.soh = batSoh;
                 rb.cycles = batCycles;
