@@ -3008,6 +3008,7 @@ final class ReadableBar extends View {
 
     /** Height the data SIM's place name takes under its box (0 none, 22 one line, 44 two), same rules as drawPlace. */
     private float placeH(SimInfo d, float cw) {
+        if (dupPlace(d)) return qParts(d) == null ? 0 : 22f;
         String ar = placeText(d);
         if (ar == null) return 0;
         String bearing = d.bearing != null ? "  " + d.bearing : "";
@@ -3355,7 +3356,7 @@ final class ReadableBar extends View {
         String dbm = live && si.dbm != Bands.NO_DBM ? minus(String.valueOf(si.dbm)) : null;
         String snr = live && !Float.isNaN(si.snr) ? minus(String.valueOf(Math.round(si.snr))) : null;
         float wb = (dbm != null ? tw(dbm, 28, bold) + 4 + tw("↑", 24, bold) : 0)
-                + (snr != null ? 14 + tw("/", 22, semi) + 6 + tw(snr, 28, bold) + 4 + tw("good", 15, semi) : 0)
+                + (snr != null ? 14 + tw("/", 22, semi) + 6 + tw(snr, 28, bold) + (hideSnrWord(si) ? 0 : 4 + tw("good", 15, semi)) : 0)
                 + (locked(si) ? LOCK_W : 0);
         String band = si.band != null ? si.band : "?";
         float w2 = tw(band, 26, semi) + (si.dist != null ? 10 + tw(si.dist, 26, semi) : 0)
@@ -3442,7 +3443,7 @@ final class ReadableBar extends View {
         final String snr = live && !Float.isNaN(si.snr) ? minus(String.valueOf(Math.round(si.snr))) : null;
         if (dbm != null || snr != null) {
             float wb = (dbm != null ? tw(dbm, 28, bold) + 4 + tw("↑", 24, bold) : 0)
-                    + (snr != null ? 14 + tw("/", 22, semi) + 6 + tw(snr, 28, bold) + 4 + tw("good", 15, semi) : 0)
+                    + (snr != null ? 14 + tw("/", 22, semi) + 6 + tw(snr, 28, bold) + (hideSnrWord(si) ? 0 : 4 + tw("good", 15, semi)) : 0)
                     + (dbm != null ? 12 + tw(trendLabel(si), 19, bold) : 0)
                     + (locked(si) ? LOCK_W : 0);
             final boolean lk = locked(si);
@@ -3460,8 +3461,9 @@ final class ReadableBar extends View {
                     int sc = si.snr >= 13 ? green() : si.snr >= 5 ? yellow() : si.snr >= 0 ? orange() : red();
                     if (dbm != null) e = textB(c, "/", e + 8, 0, 28, 22, semi, grey()) + 6;
                     e = textB(c, snr, e, 0, 28, 28, bold, fade(sc, k));
-                    e = textB(c, si.snr >= 13 ? "good" : si.snr >= 5 ? "ok" : si.snr >= 0 ? "poor" : "bad",
-                            e + 4, 0, 28, 15, semi, fade(sc, k));
+                    if (!hideSnrWord(si))   // the boxed Q says the same thing (folded layouts)
+                        e = textB(c, si.snr >= 13 ? "good" : si.snr >= 5 ? "ok" : si.snr >= 0 ? "poor" : "bad",
+                                e + 4, 0, 28, 15, semi, fade(sc, k));
                 }
                 if (dbm != null) {
                     // "\u0394" = change in signal over the last minute, with its number: "\u0394\u22125dB", "\u0394+3dB", "\u03940" when steady
@@ -3566,6 +3568,7 @@ final class ReadableBar extends View {
 
     /** Widest the place name (pin + roam tag + name + bearing) would need at natural size, for box-width fitting. */
     private float placeW(SimInfo si) {
+        if (dupPlace(si)) { String qp = qParts(si); return qp == null ? 0 : tw(qp, 19, bold); }
         String ar = placeText(si);
         if (ar == null) return 0;
         float w = tw(ar, 20, bold);
@@ -3573,7 +3576,32 @@ final class ReadableBar extends View {
         return w;
     }
 
+    /** Folded layouts: the quality word after SINR (good/ok/poor) is left out when this SIM shows its boxed Q. */
+    private boolean hideSnrWord(SimInfo si) {
+        return fold && graphsOn() && quality(si) >= 0 && (si.data || Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND));
+    }
+
+    /** True when this (later) SIM's place text is the same as the first SIM's: it is then shown once, in the first box. */
+    private boolean dupPlace(SimInfo si) {
+        if (!fold || sims.size() < 2 || sims.get(0) == si) return false;
+        String a = placeTextRaw(si), b = placeTextRaw(sims.get(0));
+        return a != null && a.equals(b);
+    }
+
+    /** Row that takes the place name's spot when it is a duplicate: what Q is made of, "sig 78% · snr 83%". Null if none. */
+    private String qParts(SimInfo si) {
+        if (!Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND) || quality(si) < 0) return null;
+        int a = Math.round(Math.max(0, Math.min(1, (si.dbm + 125f) / 45f)) * 100);
+        String t = "sig " + a + "%";
+        if (!Float.isNaN(si.snr)) t += " \u00b7 snr " + Math.round(Math.max(0, Math.min(1, (si.snr + 5f) / 30f)) * 100) + "%";
+        return t;
+    }
+
     private String placeText(SimInfo si) {
+        return dupPlace(si) ? null : placeTextRaw(si);
+    }
+
+    private String placeTextRaw(SimInfo si) {
         // TowerArea.PLACE read live here (2026-11-14), not just via the cached si.area: the SimInfo list is
         // rebuilt only occasionally, and could keep whatever si.area was at that moment - empty, say, from
         // before your location first resolved - even once TowerArea.PLACE has long since had a real answer.
@@ -3689,6 +3717,13 @@ final class ReadableBar extends View {
      * the hyphen/space), shrinking first and cutting with "\u2026" only as a last resort. Returns the height used.
      */
     private float drawPlace(Canvas c, SimInfo si, float x, float cw, float cy) {
+        if (dupPlace(si)) {
+            final String qp = qParts(si);
+            if (qp == null) return 0;
+            final float cx = x, ccy = cy;
+            fit(c, x, cy, tw(qp, 19, bold), cw, () -> textB(c, qp, 0, 0, 19, 19, bold, grey()));
+            return 22f;
+        }
         String ar = placeText(si);
         if (ar == null) return 0;
         int g = grey();
