@@ -2948,7 +2948,9 @@ final class ReadableBar extends View {
         float total = gap * (n - 1);
         float eq = boxW(n);
         for (int i = 0; i < n; i++) total += eq + 2 * pad;
+        if (stretch && simR - (R0 - STRETCH_TOUCH) > total) total = simR - (R0 - STRETCH_TOUCH);   // boxes fill up to the camera cutout
         float f = total > simR - R0 ? (simR - R0) / total : 1f;
+        if (stretch && total * f < simR - (R0 - STRETCH_TOUCH) + 0.5f) f = 1f;
         return simR - total * f;
     }
 
@@ -2967,7 +2969,13 @@ final class ReadableBar extends View {
                 bw[i] = boxW(n) + 2 * pad;
                 total += bw[i];
             }
-            float f = total > simR - R0 ? (simR - R0) / total : 1f;
+            boolean fill = stretch && simR - (R0 - STRETCH_TOUCH) > total;
+            if (fill) {                                   // boxes fill up to the camera cutout, equal shares
+                float add = (simR - (R0 - STRETCH_TOUCH) - total) / n;
+                for (int i = 0; i < n; i++) bw[i] += add;
+                total += add * n;
+            }
+            float f = total > simR - R0 && !fill ? (simR - R0) / total : 1f;
             float x = simR - total * f;
             simLeft = x;
             for (int i = 0; i < n; i++) {
@@ -3286,7 +3294,7 @@ final class ReadableBar extends View {
     }
 
     /** Both SIM boxes get the width of the wider one, so they match. */
-    private static final float STRETCH_W = 50;
+    private static final float STRETCH_W = 50, STRETCH_TOUCH = 14;   // touch: how far past the usual gap beside the camera the boxes may reach
 
     private float boxW(int n) {
         float w = 0;
