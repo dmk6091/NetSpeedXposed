@@ -73,6 +73,7 @@ final class ReadableBar extends View {
         String trend;                         // signal change over the last minute: "+4dB" / "−5dB", null steady
         String site;                          // site-sector id, null unknown
         String towerH;                        // tower ground height vs you: "+14 m", null unknown
+        boolean towerEst;                     // tower position only a rough guess: tower line drawn grey with a ~
         int los = -1;                         // ground sticking up above the line to the tower, metres; 0 clear; -1 unknown
     }
 
@@ -3553,14 +3554,16 @@ final class ReadableBar extends View {
         if (!d.isEmpty()) L.add(d);
         // tower line: height against you and line of sight, "\u25b2 +12m \u00b7 LOS clear" / "\u25bc \u22123m \u00b7 rise 8m"
         java.util.List<DSeg> tl = new java.util.ArrayList<>();
+        final boolean est = si.towerEst;
         if (si.towerH != null) {
             boolean up = si.towerH.startsWith("+");
-            tl.add(new DSeg(up ? "\u25b2 " : "\u25bc ", 17, bold, up ? green() : orange()));
-            tl.add(new DSeg(si.towerH.replace(" m", "m"), 20, bold, up ? green() : orange()));
+            int hc = est ? g : up ? green() : orange();
+            tl.add(new DSeg((est ? "~" : "") + (up ? "\u25b2 " : "\u25bc "), 17, bold, hc));
+            tl.add(new DSeg(si.towerH.replace(" m", "m"), 20, bold, hc));
         }
         if (si.los >= 0) {
             boolean clr = si.los <= 2;
-            tl.add(new DSeg((tl.isEmpty() ? "" : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 20, bold, clr ? green() : orange()));
+            tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 20, bold, est ? g : clr ? green() : orange()));
         }
         if (!tl.isEmpty()) L.add(tl);
         return L;

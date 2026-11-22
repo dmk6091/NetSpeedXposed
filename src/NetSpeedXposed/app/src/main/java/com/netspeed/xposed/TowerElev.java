@@ -13,6 +13,8 @@ final class TowerElev {
     /** SIM slot -> metres the tower's ground is above yours. */
     static final Map<Integer, Integer> DELTA = new ConcurrentHashMap<>();
     /** SIM slot -> metres the ground between you and the tower sticks up above the straight line to the antenna (<= 2: clear). */
+    /** SIM slots whose tower position is only a rough guess: the numbers are shown as estimates. */
+    static final java.util.Set<Integer> EST = java.util.concurrent.ConcurrentHashMap.newKeySet();
     static final Map<Integer, Integer> LOS = new ConcurrentHashMap<>();
     private static final double YOU_H = 1.5, MAST_H = 30, REFF = 8.5e6;   // assumed antenna heights, 4/3-earth radius
     private static String lastKey = "";
@@ -25,7 +27,7 @@ final class TowerElev {
             TowerMap.Snap sn = TowerMap.SNAP;
             if (sn == null) { why = "no tower map yet"; return; }
             java.util.List<TowerMap.Pt> ts = new java.util.ArrayList<>();
-            for (TowerMap.Pt t : sn.pts) if (t.kind >= 1 && !t.rough && Math.abs(t.lat) > 0.001) ts.add(t);
+            for (TowerMap.Pt t : sn.pts) if (t.kind >= 1 && Math.abs(t.lat) > 0.001) { ts.add(t); if (t.rough) EST.add(t.slot); else EST.remove(t.slot); }
             if (ts.isEmpty()) { why = "no tower with a known exact position (" + sn.pts.size() + " points, all unknown/rough)"; return; }
             StringBuilder la = new StringBuilder(), lo = new StringBuilder(), key = new StringBuilder();
             la.append(String.format(Locale.US, "%.4f", sn.meLat));
