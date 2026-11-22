@@ -2915,7 +2915,7 @@ final class ReadableBar extends View {
 
     private float healthX = Float.NaN;
     private static final float HP2_SIZE = 15;
-    private float hP2X = 1e9f, hP2W = 0, wxEnd = 0, row3End = 0;
+    private float hP2X = 1e9f, hP2W = 0, wxEnd = 0, row3End = 0, seaLineEnd = 0;
 
     /** Natural width of a SIM box's first line (network, bars, voice, mode), same sums as proSim. */
     private float line1W(SimInfo si) {
@@ -4402,6 +4402,7 @@ final class ReadableBar extends View {
 
         // row 3: tide, then the sea temperature; the disaster item follows (proSky)
         row3End = 0;
+        seaLineEnd = 0;
         try {
             if (Cfg.b(Cfg.TIDE, Cfg.D_TIDE)) {
                 final boolean side = Cfg.b(Cfg.SEA_ROW3, Cfg.D_SEA_ROW3);
@@ -4419,6 +4420,7 @@ final class ReadableBar extends View {
                     seaInlineFit = se > row3End || Tide.sea(System.currentTimeMillis()) == null;   // nothing fitted: next frame the sea takes turns in the tide slot
                     if (se > row3End) row3End = se;
                 }
+                seaLineEnd = row3End;   // where the tide / sea line itself ends (row3End is moved on later by what follows it)
                 seaInline = false;
             }
         } catch (Throwable ignored) { seaInline = false; }
@@ -4429,7 +4431,7 @@ final class ReadableBar extends View {
      * row 3. Where it runs under the SIM boxes it is drawn faintly, so the box text stays the clear one.
      */
     private void seaMoon(Canvas c) {
-        if (!simUp || !Cfg.b(Cfg.SEA_MOON, Cfg.D_SEA_MOON) || row3End <= 0) return;
+        if (!simUp || !Cfg.b(Cfg.SEA_MOON, Cfg.D_SEA_MOON) || seaLineEnd <= 0) return;
         String[] sol = solarNow();
         String nm;
         try {
@@ -4440,7 +4442,7 @@ final class ReadableBar extends View {
             nm = phaseName((int) Math.round(50 * (1 - Math.cos(2 * Math.PI * ph))), ph < 0.5);
         }
         final String txt = (sol != null ? sol[1] + " \u00b7 " : "") + nm;
-        final float x = row3End + 16f, cy = y(P3), sz = 20f;
+        final float x = seaLineEnd + 16f, cy = y(P3), sz = 20f;
         if (x > W - 40f) return;
         final float boxL = Float.isNaN(simLeft) ? W : simLeft;
         final float top = cy - 16f * vs, bot = cy + 16f * vs;
