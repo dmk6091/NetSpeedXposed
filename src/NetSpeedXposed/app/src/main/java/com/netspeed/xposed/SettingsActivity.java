@@ -403,7 +403,7 @@ public class SettingsActivity extends Activity {
                 Cfg.WX_DETAILS, Cfg.D_WX_DETAILS);
         slider(c, "Earthquakes shown from", "mag", Cfg.QUAKE_MIN, Cfg.D_QUAKE_MIN, 10, 70);
         slider(c, "Earthquakes within", "km100", Cfg.QUAKE_KM, Cfg.D_QUAKE_KM, 1, 200);
-        button(c, "SIM box guide", false, v -> showSimGuide());
+        button(c, "SIM box guide", false, v -> showSimGuide(-1));
         button(c, "Live diagnostics", false, v -> showSatellites());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
@@ -2241,7 +2241,7 @@ public class SettingsActivity extends Activity {
     private static String g(java.util.Map<String, String> m, String k) { String v = m.get(k); return v == null || v.isEmpty() ? null : v; }
 
     /** One line per item on the SIM boxes: how it looks on the bar, what it means, your value right now, and a plain-words note for the hard terms. */
-    private void showSimGuide() {
+    private void showSimGuide(int pick) {
         java.util.List<java.util.Map<String, String>> sims = new java.util.ArrayList<>();
         try {
             String f = android.provider.Settings.Global.getString(getContentResolver(), "netspeed_info");
@@ -2255,16 +2255,17 @@ public class SettingsActivity extends Activity {
             }
         } catch (Throwable ignored) { }
         java.util.Map<String, String> m = new java.util.HashMap<>();
-        for (java.util.Map<String, String> x : sims) if ("1".equals(x.get("data"))) m = x;
+        for (java.util.Map<String, String> x : sims) if (pick < 0 ? "1".equals(x.get("data")) : String.valueOf(pick).equals(x.get("slot"))) m = x;
         if (m.isEmpty() && !sims.isEmpty()) m = sims.get(0);
         final boolean live = !m.isEmpty();
+        final java.util.Map<String, String> cur = m;
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         col.setPadding(dp(16), dp(10), dp(16), dp(4));
         TextView top = new TextView(this);
         top.setTextSize(12);
         top.setTextColor(sub);
-        top.setText(live ? "Blue = what the status bar shows for SIM " + (Integer.parseInt(m.get("slot")) + 1) + " (the data SIM) right now. A ~ in front means a rough estimate, not exact."
+        top.setText(live ? "Blue = what the status bar shows for SIM " + (Integer.parseInt(m.get("slot")) + 1) + ("1".equals(m.get("data")) ? " (the data SIM)" : "") + " right now. A ~ in front means a rough estimate, not exact."
                 : "No live values yet. Install this build, restart System UI and wait a minute. The meanings below still apply. A ~ in front of a value means a rough estimate.");
         col.addView(top);
         String rat = g(m, "rat"), nr = g(m, "nr"), dbm = g(m, "dbm"), snr = g(m, "snr"), q = g(m, "q"), tr = g(m, "trend");
@@ -2340,7 +2341,10 @@ public class SettingsActivity extends Activity {
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(col);
         new AlertDialog.Builder(this).setTitle("SIM box guide").setView(sv)
-                .setPositiveButton("Refresh", (d, w) -> showSimGuide())
+                .setPositiveButton("Refresh", (d, w) -> showSimGuide(live ? Integer.parseInt(cur.get("slot")) : -1))
+                .setNeutralButton(sims.size() > 1 ? "Other SIM" : null, (d, w) -> {
+                    for (java.util.Map<String, String> x : sims) if (!x.get("slot").equals(cur.get("slot"))) { showSimGuide(Integer.parseInt(x.get("slot"))); return; }
+                })
                 .setNegativeButton("Close", null).show();
     }
 
