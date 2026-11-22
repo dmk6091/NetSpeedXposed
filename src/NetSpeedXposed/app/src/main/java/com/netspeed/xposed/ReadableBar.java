@@ -3543,6 +3543,7 @@ final class ReadableBar extends View {
     private void proSim(final Canvas c, final SimInfo si, float x, float cw) {
         final boolean live = si.inService;
         slots.clear();
+        nameYs.clear();
         final float k = si.data ? 1f : 0.8f;
         // network-type label (5G/4G) only on the SIM actually carrying data (2026-11-14 per request) -
         // showing it on the other SIM too read as if that one were on 5G/4G data as well.
@@ -3907,7 +3908,7 @@ final class ReadableBar extends View {
             txt[2] = si.nbr;
             col[2] = si.dbm != Bands.NO_DBM && si.nbrDbm > si.dbm ? green() : orange();
         }
-        int from = 0;
+        int from = 0, nOver = 0;
         for (int i = 0; i < 3; i++) {
             if (txt[i] == null) continue;
             float w = 28 + tw(txt[i], 19, bold);
@@ -3922,11 +3923,18 @@ final class ReadableBar extends View {
                     break;
                 }
             }
-            if (!placed && !slots.isEmpty()) {   // no free space: nothing is left out, it is drawn faint over the last line
-                float[] sl = slots.get(Math.min(slots.size() - 1, Math.max(from, 0)));
-                c.saveLayerAlpha(xr - w - 4, sl[0] - 16, xr + 4, sl[0] + 16, 90);
-                tcIcon(c, i, xr - w, sl[0], col[i]);
-                textB(c, txt[i], xr - w + 28, sl[0], 22, 19, bold, col[i]);
+            if (!placed && !slots.isEmpty()) {   // no free space: nothing is left out, it is drawn faint behind the place name (else over the last line)
+                float ly;
+                if (!nameYs.isEmpty()) ly = nameYs.get(Math.min(nameYs.size() - 1, nOver++));
+                else ly = slots.get(Math.min(slots.size() - 1, Math.max(from, 0)))[0];
+                c.saveLayerAlpha(xr - w - 4, ly - 16, xr + 4, ly + 16, 165);
+                for (int dx = -1; dx <= 1; dx += 2) for (int dy = -1; dy <= 1; dy += 2) {   // thin dark rim so it stays readable over the name's letters
+                    c.save(); c.translate(dx, dy);
+                    textB(c, txt[i], xr - w + 28, ly, 22, 19, bold, 0xFF000000);
+                    c.restore();
+                }
+                tcIcon(c, i, xr - w, ly, col[i]);
+                textB(c, txt[i], xr - w + 28, ly, 22, 19, bold, col[i]);
                 c.restore();
             }
         }
@@ -3939,6 +3947,7 @@ final class ReadableBar extends View {
             // the place name (if any) is drawn between the first line (CQI) and the rest
             if (first) {
                 float ph = drawPlace(c, si, x, cw, cy);
+                if (ph > 0) { nameYs.add(cy); if (ph >= 30f) nameYs.add(cy + 22f); }
                 if (ph > 0 && ph < 30f) slots.add(new float[]{cy, x + Math.min(placeW(si), cw)});
                 else if (ph > 0) slots.add(new float[]{cy + 22f, x + cw});   // two-line name: both lines are full
                 cy += ph; first = false;
@@ -4786,6 +4795,7 @@ final class ReadableBar extends View {
     private float upPx() { return simUp ? UP * vs : 0f; }
     boolean tower = false;        // Tower column layout: stretched, tinted boxes with tower details on the right
     private float l1Cap = 1e9f;                                   // right limit for a box's first line (the screen's top corner)
+    private final java.util.ArrayList<Float> nameYs = new java.util.ArrayList<>();   // line centres the place name was drawn on
     private final java.util.ArrayList<float[]> slots = new java.util.ArrayList<>();   // {line centre, right end of its text} of the box being drawn
     boolean stretch = false;      // folded, and the SIM boxes also take the width the column used to have
     private boolean colOn() { return graphsOn() && !fold; }
