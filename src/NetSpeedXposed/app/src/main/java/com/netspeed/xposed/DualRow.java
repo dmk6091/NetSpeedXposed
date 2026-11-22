@@ -2864,6 +2864,7 @@ final class DualRow {
                 out.add(si);
             }
             rb.sims = out;
+            try { ReadableBar.liveText = rb.liveLines(); } catch (Throwable ignored) { }
             rb.dataIn = DataActivity.in();
             rb.dataOut = DataActivity.out();
 
@@ -4907,7 +4908,7 @@ final class DualRow {
                             rep = rep + "\nMAHARASHTRA DAM SOURCE\n  " + DamMh.why + "\n";
                             android.provider.Settings.Global.putString(ctx.getContentResolver(), "netspeed_sat_report", rep);
                             try { android.provider.Settings.Global.putString(ctx.getContentResolver(), "netspeed_info", Info.feed(me[0], me[1], System.currentTimeMillis())
-                                    + "T|fix|" + me[0] + "," + me[1] + "|" + System.currentTimeMillis() + "\n"); } catch (Throwable ignored) { }
+                                    + "T|fix|" + me[0] + "," + me[1] + "|" + System.currentTimeMillis() + "\n" + ReadableBar.liveText); } catch (Throwable ignored) { }
                             if (EarthLine.district != null && !EarthLine.district.isEmpty())
                                 android.provider.Settings.Global.putString(ctx.getContentResolver(), "netspeed_district", EarthLine.district);
                         } catch (Throwable t) {

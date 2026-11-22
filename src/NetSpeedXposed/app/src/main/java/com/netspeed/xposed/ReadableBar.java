@@ -3245,6 +3245,42 @@ final class ReadableBar extends View {
         });
     }
 
+    static volatile String liveText = "";
+
+    /** One "L|slot|k=v;k=v" line per SIM for the app's SIM box guide (values as the bar sees them). */
+    String liveLines() {
+        StringBuilder b = new StringBuilder();
+        for (SimInfo si : sims) {
+            StringBuilder k = new StringBuilder();
+            k.append("data=").append(si.data ? 1 : 0);
+            if (si.rat != null) k.append(";rat=").append(si.rat);
+            if (si.nrMode != null) k.append(";nr=").append(si.nrMode);
+            if (si.voice != null) k.append(";voice=").append(si.voice);
+            if (si.dbm != Bands.NO_DBM) k.append(";dbm=").append(si.dbm);
+            if (si.trend != null) k.append(";trend=").append(si.trend);
+            if (!Float.isNaN(si.snr)) k.append(";snr=").append(Math.round(si.snr));
+            k.append(";new=").append(si.newCell ? 1 : 0);
+            int q = quality(si); if (q >= 0) k.append(";q=").append(q);
+            if (si.band != null) k.append(";band=").append(si.band);
+            if (si.dist != null) k.append(";dist=").append(si.dist);
+            if (si.cells >= 0) k.append(";cells=").append(si.cells);
+            if (si.area != null) k.append(";area=").append(si.area.replace(";", ",").replace("|", "/"));
+            if (si.onCell != null) k.append(";oncell=").append(si.onCell);
+            k.append(";ho=").append(si.hoToday);
+            if (si.dirArrow != null) k.append(";dir=").append(si.dirArrow).append(si.dirRough ? "~" : "");
+            if (si.bw > 0) k.append(";bw=").append(si.bw);
+            if (si.nbr != null) k.append(";nbr=").append(si.nbr);
+            if (si.los >= 0) k.append(";los=").append(si.los);
+            if (si.angle != Integer.MIN_VALUE) k.append(";angle=").append(si.angle);
+            if (si.clearPct >= 0) k.append(";clear=").append(si.clearPct);
+            if (si.towerH != null) k.append(";h=").append(si.towerH);
+            k.append(";est=").append(si.towerEst ? 1 : 0);
+            if (si.dataToday >= 0) k.append(";today=").append(fmtBytes(si.dataToday));
+            b.append("L|").append(si.slot).append('|').append(k).append('\n');
+        }
+        return b.toString();
+    }
+
     /** Data SIM signal quality 0-100: 60 % from RSRP (-125..-80 dBm), 40 % from SNR (-5..25 dB). */
     private int quality(SimInfo si) {
         if (!si.inService || si.dbm == Bands.NO_DBM) return -1;

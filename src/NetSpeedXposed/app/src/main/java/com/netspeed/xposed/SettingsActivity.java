@@ -403,6 +403,7 @@ public class SettingsActivity extends Activity {
                 Cfg.WX_DETAILS, Cfg.D_WX_DETAILS);
         slider(c, "Earthquakes shown from", "mag", Cfg.QUAKE_MIN, Cfg.D_QUAKE_MIN, 10, 70);
         slider(c, "Earthquakes within", "km100", Cfg.QUAKE_KM, Cfg.D_QUAKE_KM, 1, 200);
+        button(c, "SIM box guide", false, v -> showSimGuide());
         button(c, "Live diagnostics", false, v -> showSatellites());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
@@ -2233,6 +2234,114 @@ public class SettingsActivity extends Activity {
             if (!v.isEmpty()) out.put(e.getKey(), v);
         }
         return out;
+    }
+
+
+    // ------------------------------------------------------------------ SIM box guide
+    private static String g(java.util.Map<String, String> m, String k) { String v = m.get(k); return v == null || v.isEmpty() ? null : v; }
+
+    /** One line per item on the SIM boxes: how it looks on the bar, what it means, your value right now, and a plain-words note for the hard terms. */
+    private void showSimGuide() {
+        java.util.List<java.util.Map<String, String>> sims = new java.util.ArrayList<>();
+        try {
+            String f = android.provider.Settings.Global.getString(getContentResolver(), "netspeed_info");
+            if (f != null) for (String ln : f.split("\n")) {
+                String[] p = ln.split("\\|", 3);
+                if (p.length < 3 || !p[0].equals("L")) continue;
+                java.util.Map<String, String> m = new java.util.HashMap<>();
+                m.put("slot", p[1]);
+                for (String kv : p[2].split(";")) { int i = kv.indexOf('='); if (i > 0) m.put(kv.substring(0, i), kv.substring(i + 1)); }
+                sims.add(m);
+            }
+        } catch (Throwable ignored) { }
+        java.util.Map<String, String> m = new java.util.HashMap<>();
+        for (java.util.Map<String, String> x : sims) if ("1".equals(x.get("data"))) m = x;
+        if (m.isEmpty() && !sims.isEmpty()) m = sims.get(0);
+        final boolean live = !m.isEmpty();
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(dp(16), dp(10), dp(16), dp(4));
+        TextView top = new TextView(this);
+        top.setTextSize(12);
+        top.setTextColor(sub);
+        top.setText(live ? "Blue = what the status bar shows for SIM " + (Integer.parseInt(m.get("slot")) + 1) + " (the data SIM) right now. A ~ in front means a rough estimate, not exact."
+                : "No live values yet. Install this build, restart System UI and wait a minute. The meanings below still apply. A ~ in front of a value means a rough estimate.");
+        col.addView(top);
+        String rat = g(m, "rat"), nr = g(m, "nr"), dbm = g(m, "dbm"), snr = g(m, "snr"), q = g(m, "q"), tr = g(m, "trend");
+        int qn = -1; try { qn = Integer.parseInt(q); } catch (Throwable ignored) { }
+        String qc = qn < 0 ? null : qn >= 70 ? "green" : qn >= 45 ? "yellow" : qn >= 25 ? "orange" : "red";
+        String dir = g(m, "dir"), h = g(m, "h"), ang = g(m, "angle"), cl = g(m, "clear"), los = g(m, "los");
+        String est = "1".equals(m.get("est")) || (dir != null && dir.endsWith("~")) ? "~" : "";
+        String[][] rows = {
+            {"HEADER"},
+            {"5G+ / 4G+ / 5G / 4G", "Network type your SIM is on. The + means several channels are joined for more speed.", live ? (rat == null ? "no network" : rat) : null, ""},
+            {"\u2582\u2584\u2586\u2588 bars", "Signal strength as bars, same as the phone's own signal icon.", null, ""},
+            {"SA / NSA", "How 5G is carried.", nr, "NSA = 5G speed on top of a 4G anchor connection. SA = pure 5G that needs no 4G."},
+            {"VoNR / VoLTE", "What your calls run on: data, not old 2G/3G.", live ? g(m, "voice") : null, "VoNR = calls on 5G. VoLTE = calls on 4G. WiFi = calls over WiFi."},
+            {"SIGNAL LINE"},
+            {"-92 dBm", "How strong the tower's signal is when it reaches you.", dbm == null ? null : dbm + " dBm", "dBm is signal power. Closer to 0 is stronger: -70 is great, -90 is okay, -110 is poor."},
+            {"\u2191 / \u2193  +4dB", "Signal getting better or worse over the last minute.", tr == null ? (live ? "steady" : null) : tr, ""},
+            {"SINR", "How clean the signal is, compared with noise and other towers.", snr == null ? null : snr + " dB", "SINR = signal to interference plus noise. Higher is cleaner. Above 13 is good, below 3 is bad."},
+            {"N", "You just moved to a different tower (last 2 minutes).", live ? ("1".equals(m.get("new")) ? "yes, new cell" : "no") : null, "A cell is one antenna sector on a tower. A tower has several."},
+            {"Q 68%", "Quality score from dBm (60%) and SINR (40%). Green 70+, yellow 45+, orange 25+, red below.", q == null ? null : q + "% " + qc, ""},
+            {"BAND LINE"},
+            {"n78 \u00b7 2.0km", "Channel group (band) in use and the distance to the tower.", g(m, "band") == null ? null : g(m, "band") + (g(m, "dist") == null ? "" : " \u00b7 " + g(m, "dist")), "Band = the radio frequency slot. n78 is 3.5 GHz: fast but short range. Lower bands such as B5 or B28 reach farther but are slower."},
+            {"cells heard", "How many cells the phone can hear at the moment.", g(m, "cells"), ""},
+            {"TOWER AND CELL LINE"},
+            {"12m \u00d73", "Time on this cell, and how many times you changed cells today.", g(m, "oncell") == null ? null : g(m, "oncell") + " on it, " + g(m, "ho") + " changes today", "A change of cell as you move is called a handover."},
+            {"\u2197 arrow", "Direction from you to the tower.", dir, "Yellow = exact tower position. Grey with ~ = rough guess."},
+            {"~MHz", "Width of the channel. More MHz, more speed.", g(m, "bw") == null ? null : g(m, "bw") + " MHz", ""},
+            {"LOS clear / LOS +6m", "Line of sight from you to the tower: clear, or how many metres of ground stick up in the way.", los == null ? (live ? "clear" : null) : "+" + los + " m in the way", "LOS = line of sight, looked at from your place toward the tower."},
+            {"\u2220+1\u00b0", "Angle you look up (+) or down (-) to the antenna.", ang == null ? null : est + (Integer.parseInt(ang) >= 0 ? "+" : "\u2212") + Math.abs(Integer.parseInt(ang)) + "\u00b0", ""},
+            {"28 km", "Radio horizon: how far a signal can reach before the Earth's curve hides it.", live ? est + "28 km" : null, "Radio waves bend slightly with the air, so the horizon is a bit farther than what the eye sees."},
+            {"85%", "Clearance: how free the signal's oval path is of hills and buildings.", cl == null ? null : est + cl + "%", "This oval is called the Fresnel zone. 60% or more free is fine. Less means hills or buildings eat signal."},
+            {"BOTTOM ROW"},
+            {"D 1.2G  M 0.4G", "Data used on this SIM. D = today, M = this month.", g(m, "today"), ""},
+            {"\u25B2 +6m", "Tower's ground compared with yours. Not the mast height, a phone cannot know that.", h, "Green = tower ground higher than yours, orange = lower, grey = rough."},
+        };
+        for (String[] r : rows) {
+            if (r.length == 1) {
+                TextView hd = new TextView(this);
+                hd.setText(r[0]);
+                hd.setTextSize(12);
+                hd.setTextColor(sub);
+                hd.setTypeface(null, android.graphics.Typeface.BOLD);
+                hd.setPadding(0, dp(16), 0, dp(2));
+                col.addView(hd);
+                continue;
+            }
+            TextView a = new TextView(this);
+            a.setText(r[0]);
+            a.setTextSize(16);
+            a.setTypeface(null, android.graphics.Typeface.BOLD);
+            a.setTextColor(accent);
+            a.setPadding(0, dp(8), 0, 0);
+            col.addView(a);
+            TextView b = new TextView(this);
+            b.setText(r[1]);
+            b.setTextSize(14);
+            b.setTextColor(fg);
+            col.addView(b);
+            if (r[2] != null) {
+                TextView v = new TextView(this);
+                v.setText("now: " + r[2]);
+                v.setTextSize(14);
+                v.setTextColor(0xFF4FA3FF);
+                col.addView(v);
+            }
+            if (!r[3].isEmpty()) {
+                TextView e = new TextView(this);
+                e.setText("\u24D8 " + r[3]);
+                e.setTextSize(12);
+                e.setTextColor(sub);
+                col.addView(e);
+            }
+        }
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(col);
+        new AlertDialog.Builder(this).setTitle("SIM box guide").setView(sv)
+                .setPositiveButton("Refresh", (d, w) -> showSimGuide())
+                .setNegativeButton("Close", null).show();
     }
 
     /** The topic list; tap one to see only its diagnostics. */
