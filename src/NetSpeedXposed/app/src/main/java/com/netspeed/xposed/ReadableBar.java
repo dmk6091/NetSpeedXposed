@@ -75,6 +75,8 @@ final class ReadableBar extends View {
         String trend;                         // signal change over the last minute: "+4dB" / "−5dB", null steady
         String site;                          // site-sector id, null unknown
         String towerH;                        // tower ground height vs you: "+14 m", null unknown
+        int angle = Integer.MIN_VALUE;        // degrees up (+) / down (-) to the antenna, MIN_VALUE unknown
+        int clearPct = -1;                    // Fresnel clearance %, -1 unknown
         boolean newCell;                      // moved to a different tower in the last 2 minutes: small blue "N" box on the signal line
         boolean towerEst;                     // tower position only a rough guess: tower line drawn grey with a ~
         int los = -1;                         // ground sticking up above the line to the tower, metres; 0 clear; -1 unknown
@@ -3643,8 +3645,10 @@ final class ReadableBar extends View {
     private static final class DSeg {
         final String t; final float sz; final Typeface f; final int col;
         boolean chip;   // drawn as dark text on a filled, coloured rounded tag
+        boolean extra;  // extra info after a line: drawn with its own room, never widens the box or squeezes the main text
         DSeg(String t, float sz, Typeface f, int col) { this.t = t; this.sz = sz; this.f = f; this.col = col; }
         DSeg chip() { chip = true; return this; }
+        DSeg extra() { extra = true; return this; }
     }
 
     private float dsW(DSeg sg) { return tw(sg.t, sg.sz, sg.f) + (sg.chip ? 11 : 0); }
@@ -3700,6 +3704,13 @@ final class ReadableBar extends View {
             boolean clr = si.los <= 2;
             tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 20, bold, est ? g : clr ? green() : orange()));
         }
+        // geometry to the antenna: angle up, radio horizon, how clear the path is; small and faint, in its own room after the line
+        if (si.angle != Integer.MIN_VALUE && tower && fold) {
+            final String tl0 = si.towerEst ? "~" : "";
+            String ex = tl0 + "\u2220" + (si.angle >= 0 ? "+" : "\u2212") + Math.abs(si.angle) + "\u00b0 \u00b7 " + tl0 + TowerElev.HORIZON_KM + " km"
+                    + (si.clearPct >= 0 ? " \u00b7 " + tl0 + si.clearPct + "%" : "");
+            tl.add(new DSeg(ex, 17, bold, fade(grey(), si.towerEst ? 0.9f : 1f)).extra());
+        }
         if (!tl.isEmpty()) L.add(tl);
         return L;
     }
@@ -3712,7 +3723,7 @@ final class ReadableBar extends View {
         float m = 0;
         for (java.util.List<DSeg> ln : detailLines(si)) {
             float w = 0;
-            for (DSeg sg : ln) w += dsW(sg) + (sg.chip ? 5 : 0);
+            for (DSeg sg : ln) if (!sg.extra) w += dsW(sg) + (sg.chip ? 5 : 0);
             m = Math.max(m, w);
         }
         return Math.max(m, placeW(si));
@@ -3874,15 +3885,22 @@ final class ReadableBar extends View {
             }
             if (ln.isEmpty()) continue;
             final float lcy = cy;
-            float w = 0;
-            for (DSeg sg : ln) w += dsW(sg) + (sg.chip ? 5 : 0);
+            float w = 0, wx = 0;
+            for (DSeg sg : ln) { if (sg.extra) wx += dsW(sg); else w += dsW(sg) + (sg.chip ? 5 : 0); }
             // the last row (data / Q) is the more important one: a line it lands on shows faintly behind it
             boolean under = hasFoldRow(si) && Math.abs(lcy - foldRowY(si, cw)) < 21f;
             if (under) c.saveLayerAlpha(x - 6, lcy - 16, x + cw + 6, lcy + 16, 90);
             fit(c, x, lcy, w, cw, () -> {
                 float e = 0;
-                for (DSeg sg : ln) e = dsDraw(c, sg, e);
+                for (DSeg sg : ln) if (!sg.extra) e = dsDraw(c, sg, e);
             });
+            if (wx > 0) {   // the extra info: after the line's own end, scaled down only if the room is short
+                final float xe = x + Math.min(w, cw) + 10, room = x + cw - xe;
+                if (room > 24f) fit(c, xe, lcy, wx, room, () -> {
+                    float e = 0;
+                    for (DSeg sg : ln) if (sg.extra) e = dsDraw(c, sg, e);
+                });
+            }
             if (under) c.restore();
             slots.add(new float[]{lcy, x + Math.min(w, cw)});
             cy += 22f;

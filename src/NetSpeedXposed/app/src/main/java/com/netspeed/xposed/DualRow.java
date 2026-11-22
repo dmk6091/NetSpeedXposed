@@ -2819,6 +2819,9 @@ final class DualRow {
                 Integer lr = TowerElev.LOS.get(s.slot);
                 si.los = lr == null ? -1 : lr;
                 si.towerEst = TowerElev.EST.contains(s.slot);
+                Integer an = TowerElev.ANGLE.get(s.slot), cl = TowerElev.CLEAR.get(s.slot);
+                si.angle = an == null ? Integer.MIN_VALUE : an;
+                si.clearPct = cl == null ? -1 : cl;
                 String d = Cfg.b(Cfg.SHOW_DIST, Cfg.D_SHOW_DIST) ? distString(s) : "?";
                 si.dist = "?".equals(d) ? null : d;
                 si.voice = Voice.label(s.sub, s.band);

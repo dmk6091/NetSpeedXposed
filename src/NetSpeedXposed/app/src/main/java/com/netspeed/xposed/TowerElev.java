@@ -16,6 +16,12 @@ final class TowerElev {
     /** SIM slots whose tower position is only a rough guess: the numbers are shown as estimates. */
     static final java.util.Set<Integer> EST = java.util.concurrent.ConcurrentHashMap.newKeySet();
     static final Map<Integer, Integer> LOS = new ConcurrentHashMap<>();
+    /** SIM slot -> degrees above (+) or below (-) the horizon you look to the antenna (assumed mast). */
+    static final Map<Integer, Integer> ANGLE = new ConcurrentHashMap<>();
+    /** SIM slot -> % of the first Fresnel zone (about 2.5 GHz) that stays clear of the ground along the path, capped at 100. */
+    static final Map<Integer, Integer> CLEAR = new ConcurrentHashMap<>();
+    /** Radio horizon in km between your phone and an antenna on the assumed mast (4/3-earth). */
+    static final int HORIZON_KM = (int) Math.round((Math.sqrt(2 * 8.5e6 * 30) + Math.sqrt(2 * 8.5e6 * 1.5)) / 1000.0);
     private static final double YOU_H = 1.5, MAST_H = 30, REFF = 8.5e6;   // assumed antenna heights, 4/3-earth radius
     private static String lastKey = "";
     private static long lastAt, tried;
@@ -70,14 +76,22 @@ final class TowerElev {
             TowerMap.Pt t = ts.get(i);
             double dLat = Math.toRadians(t.lat - meLat), dLon = Math.toRadians(t.lon - meLon) * Math.cos(Math.toRadians(meLat));
             double dist = 6371000 * Math.sqrt(dLat * dLat + dLon * dLon);
-            double a0 = meElev + YOU_H, a1 = tw.getDouble(i + 1) + MAST_H, worst = -1e9;
+            double a0 = meElev + YOU_H, a1 = tw.getDouble(i + 1) + MAST_H, worst = -1e9, tightest = 1e9;
+            double dKm = dist / 1000.0;
             for (int k = 1; k <= N; k++) {
                 double f = k / (N + 1.0);
                 double line = a0 + (a1 - a0) * f;
                 double bulge = dist * dist * f * (1 - f) / (2 * REFF);   // the earth's curve lifts the ground into the path
-                worst = Math.max(worst, a.getDouble(i * N + k - 1) + bulge - line);
+                double over = a.getDouble(i * N + k - 1) + bulge - line;
+                worst = Math.max(worst, over);
+                double r1 = 17.3 * Math.sqrt(Math.max(1e-6, dKm * f * dKm * (1 - f) / (2.5 * Math.max(dKm, 1e-3))));   // first Fresnel radius (m) at 2.5 GHz
+                tightest = Math.min(tightest, (-over) / Math.max(r1, 0.5));
             }
             LOS.put(t.slot, (int) Math.round(Math.max(0, worst)));
+            if (dist >= 30) {
+                ANGLE.put(t.slot, (int) Math.round(Math.toDegrees(Math.atan2(a1 - a0, dist))));
+                CLEAR.put(t.slot, (int) Math.round(Math.max(0, Math.min(1, tightest)) * 100));
+            } else { ANGLE.remove(t.slot); CLEAR.remove(t.slot); }
         }
     }
 }
