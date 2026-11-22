@@ -3246,6 +3246,8 @@ final class ReadableBar extends View {
     }
 
     static volatile String liveText = "";
+    /** Debug only: `settings put global netspeed_test_place "Long name"` shows that name on the SIM boxes (read every 30 s); empty = off. */
+    static volatile String testPlace = "";
 
     /** One "L|slot|k=v;k=v" line per SIM for the app's SIM box guide (values as the bar sees them). */
     String liveLines() {
@@ -3838,7 +3840,7 @@ final class ReadableBar extends View {
         // rebuilt only occasionally, and could keep whatever si.area was at that moment - empty, say, from
         // before your location first resolved - even once TowerArea.PLACE has long since had a real answer.
         // The weather-location row above the boxes already reads PLACE live each frame; this now matches it.
-        String base = !TowerArea.PLACE.isEmpty() ? TowerArea.PLACE : si.area;
+        String base = !testPlace.isEmpty() ? testPlace : !TowerArea.PLACE.isEmpty() ? TowerArea.PLACE : si.area;
         return base == null || base.isEmpty() ? null : (si.roaming && si.circle != null ? "R\u00b7" + si.circle + " " : "") + base;
     }
 

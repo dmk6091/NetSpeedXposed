@@ -4907,6 +4907,7 @@ final class DualRow {
                                     + "SATELLITES\n" + (Sat.report.isEmpty() ? "  not computed yet\n" : Sat.report) + "\n" + SkyStrip.report();
                             rep = rep + "\nMAHARASHTRA DAM SOURCE\n  " + DamMh.why + "\n";
                             android.provider.Settings.Global.putString(ctx.getContentResolver(), "netspeed_sat_report", rep);
+                            try { String tp = android.provider.Settings.Global.getString(ctx.getContentResolver(), "netspeed_test_place"); ReadableBar.testPlace = tp == null ? "" : tp; } catch (Throwable ignored) { }
                             try { android.provider.Settings.Global.putString(ctx.getContentResolver(), "netspeed_info", Info.feed(me[0], me[1], System.currentTimeMillis())
                                     + "T|fix|" + me[0] + "," + me[1] + "|" + System.currentTimeMillis() + "\n" + ReadableBar.liveText); } catch (Throwable ignored) { }
                             if (EarthLine.district != null && !EarthLine.district.isEmpty())
