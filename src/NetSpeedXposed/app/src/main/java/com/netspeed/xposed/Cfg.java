@@ -160,6 +160,7 @@ final class Cfg {
     static final String DIM_NIGHT = "dim_night";       static final boolean D_DIM_NIGHT = true;
     static final String DATA_PERIOD = "data_period";   static final int D_DATA_PERIOD = 0;  // 0 daily (D), 1 monthly (M), 2 both at once, 3 D and M taking turns every 5 s
     static final String Q_BOX = "q_box";               static final boolean D_Q_BOX = true;      // signal quality: the Q in a small box
+    static final String Q_SECOND = "q_second"; static final boolean D_Q_SECOND = true;   // signal quality Q also for the SIM that is not carrying data (folded layouts)
     static final String TC_SITE = "tc_site";   static final boolean D_TC_SITE = false;   // tower column: site and sector
     static final String TC_BW = "tc_bw";       static final boolean D_TC_BW = true;     // tower column: channel width
     static final String TC_NB = "tc_nb";       static final boolean D_TC_NB = true;     // tower column: strongest neighbour

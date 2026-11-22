@@ -2999,7 +2999,7 @@ final class ReadableBar extends View {
         // corner beside the SIMs: today's 5G share, or the data SIM's signal quality, or nothing
         int corner = Cfg.i(Cfg.CORNER, Cfg.D_CORNER);
         try {
-            if (graphsOn()) { if (fold) foldData(c); else graphColumn(c, R1full); }
+            if (graphsOn()) { if (fold) { foldData(c); for (int qi = 0; qi < colN && qi < sims.size(); qi++) foldQOther(c, qi); } else graphColumn(c, R1full); }
             else if (corner == 1) proNrShare(c, simR + 3, W - 4);
             else if (corner == 2) proQuality(c, simR + 3, W - 4);
         } catch (Throwable ignored) { }
@@ -3087,6 +3087,42 @@ final class ReadableBar extends View {
                 } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
                 textB(c, qv, e, 0, 20, 20, bold, qc);
             }
+        });
+    }
+
+    /** The SIM that is not carrying data: its own boxed Q and percent in the bottom row of its box. */
+    private void foldQOther(final Canvas c, int i) {
+        if (!Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND)) return;
+        final SimInfo d = sims.get(i);
+        if (d.data) return;
+        final int q = quality(d);
+        if (q < 0) return;
+        final float x = colX[i] + 8, cw = colW[i] - 16;
+        int nLines = 0;
+        for (java.util.List<DSeg> ln : detailLines(d)) if (!ln.isEmpty()) nLines++;
+        float ph = placeH(d, cw);
+        float y0 = y(P2) + 4;
+        float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
+        final float cy = Math.max(y(P3), lastCy + 24f);
+        if (cy > y(P4) - 14f) return;
+        final String qv = q + "%";
+        final int qc = q >= 70 ? green() : q >= 45 ? yellow() : q >= 25 ? orange() : red();
+        final boolean qbox = Cfg.b(Cfg.Q_BOX, Cfg.D_Q_BOX);
+        final int dim = fade(grey(), 0.85f);
+        float w = (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold);
+        fit(c, x, cy, w, cw, () -> {
+            float e = 0;
+            if (qbox) {
+                gp.setStyle(Paint.Style.STROKE);
+                gp.setStrokeWidth(2f);
+                gp.setColor(dim);
+                rf.set(e + 1, -11, e + 21, 11);
+                c.drawRoundRect(rf, 4, 4, gp);
+                gp.setStyle(Paint.Style.FILL);
+                textB(c, "Q", e + 11 - tw("Q", 15, bold) / 2f, -0.5f, 15, 15, bold, dim);
+                e += 25;
+            } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
+            textB(c, qv, e, 0, 20, 20, bold, qc);
         });
     }
 
