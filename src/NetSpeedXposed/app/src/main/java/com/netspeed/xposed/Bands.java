@@ -213,6 +213,8 @@ final class Bands {
                     CellDetail.fill(ctx, sim, tm, si, freshCells(tm, si.getSubscriptionId()), sorted);
                     // registration briefly reports no mode (e.g. just after a 5G fallback ends) while the serving band is an NR one: that is standalone
                     if (sim.nrMode == null && sim.band != null && sim.band.startsWith("n") && sim.net != null && sim.net.startsWith("5G")) sim.nrMode = "SA";
+                    // the SIM that is not carrying data reports no NR state, yet the phone still shows 5G on an LTE band: that is NSA
+                    if (sim.nrMode == null && sim.band != null && sim.band.startsWith("B") && sim.net != null && sim.net.startsWith("5G")) sim.nrMode = "NSA";
                     if (Cfg.b(Cfg.LEARN, Cfg.D_LEARN)) TowerLearn.sampleCells(ctx, freshCells(tm, si.getSubscriptionId()));
                 } catch (Throwable t) {
                     logOnce("detailfail", "cell details failed: " + t);
