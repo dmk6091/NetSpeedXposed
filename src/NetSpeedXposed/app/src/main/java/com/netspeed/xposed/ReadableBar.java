@@ -3705,14 +3705,38 @@ final class ReadableBar extends View {
             tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 20, bold, est ? g : clr ? green() : orange()));
         }
         // geometry to the antenna: angle up, radio horizon, how clear the path is; small and faint, in its own room after the line
-        if (si.angle != Integer.MIN_VALUE && tower && fold) {
-            final String tl0 = si.towerEst ? "~" : "";
-            String ex = tl0 + "\u2220" + (si.angle >= 0 ? "+" : "\u2212") + Math.abs(si.angle) + "\u00b0 \u00b7 " + tl0 + TowerElev.HORIZON_KM + " km"
-                    + (si.clearPct >= 0 ? " \u00b7 " + tl0 + si.clearPct + "%" : "");
-            tl.add(new DSeg(ex, 17, bold, fade(grey(), si.towerEst ? 0.9f : 1f)).extra());
+        if (tower && fold) {
+            int ang = si.angle;
+            boolean roughAll = si.towerEst;
+            if (ang == Integer.MIN_VALUE) {   // no exact position: a rough angle from the distance the box shows (\u2248 / ~), ground assumed level
+                double dm = distMetres(si.dist);
+                if (dm >= 30) {
+                    double dh = 0;
+                    try { if (si.towerH != null) dh = Integer.parseInt(si.towerH.replace(" m", "").replace("\u2212", "-").replace("+", "")); } catch (Throwable ignored) { }
+                    ang = (int) Math.round(Math.toDegrees(Math.atan2(28.5 + dh, dm)));
+                    roughAll = true;
+                }
+            }
+            if (ang != Integer.MIN_VALUE) {
+                final String t0 = roughAll ? "~" : "";
+                String ex = t0 + "\u2220" + (ang >= 0 ? "+" : "\u2212") + Math.abs(ang) + "\u00b0 \u00b7 " + t0 + TowerElev.HORIZON_KM + " km"
+                        + (si.clearPct >= 0 ? " \u00b7 " + t0 + si.clearPct + "%" : "");
+                tl.add(new DSeg(ex, 17, bold, fade(grey(), roughAll ? 0.9f : 1f)).extra());
+            }
         }
         if (!tl.isEmpty()) L.add(tl);
         return L;
+    }
+
+    /** Metres from a distance label like "\u22482.0km" / "~266m" / "1.0km", or -1. */
+    private static double distMetres(String s) {
+        if (s == null) return -1;
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("([0-9]+(?:\\.[0-9]+)?)\\s*(km|m)").matcher(s);
+            if (!m.find()) return -1;
+            double v = Double.parseDouble(m.group(1));
+            return "km".equals(m.group(2)) ? v * 1000 : v;
+        } catch (Throwable e) { return -1; }
     }
 
     private String trendLabel(SimInfo si) {
