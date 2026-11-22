@@ -1726,16 +1726,17 @@ final class ReadableBar extends View {
         // where the weather is for: place name in the thin gap between the notification row and the weather
         try {
             // the weather's own place: the name of the coordinates its forecast was fetched with (PLACE until the first fetch)
-            // the strip names the weather station that reports the sky (full name when known, else its code); NRS = no reported station
-            String pl;
-            if (SkyView.obsStation != null && !SkyView.obsStation.isEmpty() && SkyView.obsKm <= 60
-                    && System.currentTimeMillis() - SkyView.obsAt <= 150 * 60_000L) {
-                String sn = SkyView.obsName == null ? "" : SkyView.obsName.trim()
-                        .replaceAll("(,\\s*[A-Z]{2})+$", "").replace("Arpt", "Airport").replace("Intl", "International").replace("Intnl", "International");
-                if (sn.isEmpty()) sn = SkyView.obsStation;
-                pl = sn + " \u00b7 " + Math.round(SkyView.obsKm) + " km";
-            } else pl = "NRS";
-            boolean hasPl = true;
+            // the strip names the model point the weather is calculated for: name, then how far / which way from you
+            String pl = !TowerArea.WX_NAME.isEmpty() ? TowerArea.WX_NAME : TowerArea.PLACE;
+            final String gnm = !TowerArea.WX_GRID_NAME.isEmpty() ? TowerArea.WX_GRID_NAME : pl;
+            final boolean gridKnown = !Float.isNaN(TowerArea.WX_GRID_KM) && gnm != null && !gnm.isEmpty();
+            final String gdist = !gridKnown ? "" : TowerArea.WX_GRID_KM < 0.3f ? "here"
+                    : (TowerArea.WX_GRID_KM < 10 ? String.format(Locale.US, "%.1f", TowerArea.WX_GRID_KM) : String.valueOf(Math.round(TowerArea.WX_GRID_KM))) + " km " + TowerArea.WX_GRID_DIR;
+            // longest first; a frame takes the longest one that still fits with it, nothing is cut
+            final String[] leadV = !gridKnown ? new String[]{pl == null || pl.isEmpty() ? "" : "\uD83D\uDCCD " + pl}
+                    : new String[]{"\uD83D\uDCCD " + gnm + " \u00b7 model point " + gdist, "\uD83D\uDCCD " + gnm + " \u00b7 " + gdist, "\uD83D\uDCCD " + gnm};
+            if (!gridKnown) pl = pl == null ? "" : pl;
+            boolean hasPl = gridKnown || (pl != null && !pl.isEmpty());
             // altitude: GPS height, else the ground height from the weather service (~); GPS accuracy + satellites only while GPS is on
             String alt = fix != null && !Double.isNaN(fix[2]) ? "\u25B2" + Math.round(fix[2])
                     : !Float.isNaN(groundElev) ? "\u25B2~" + Math.round(groundElev) : null;
@@ -1761,7 +1762,7 @@ final class ReadableBar extends View {
                     String rv0 = RiverFlow.text(), dm0 = EarthLine.dam;
                     if (rv0 != null && !rv0.isEmpty() && dm0 != null && !dm0.isEmpty()) {
                         // keep the river and the nearest dam/weir on one line: if they do not fit, drop the river's distance and the word "Dam"
-                        String l0 = hasPl ? "\uD83D\uDCCD " + pl : "";
+                        String l0 = hasPl ? leadV[leadV.length - 1] : "";
                         if (px + tw(join(l0, rv0 + " \u00b7 " + dm0), 18, semi) > lineEnd) {
                             rv0 = rv0.replaceAll("\\s*\\(\\d+(\\.\\d+)?\\s*k?m\\)", "");
                             dm0 = dm0.replaceAll("(?i)\\s+Dam(?=\\s+\\d)", "");
@@ -1850,26 +1851,32 @@ final class ReadableBar extends View {
                 int spd = Math.max(3, Math.min(8, Cfg.i(Cfg.EL_SPEED, Cfg.D_EL_SPEED)));
                 // fixed size 18; a frame that does not fit is split into two (or more) screens of whole pieces
                 final float sz = 18;
-                String lead = hasPl ? "\uD83D\uDCCD " + pl : "";
+                final String lead = hasPl ? leadV[leadV.length - 1] : "";      // shortest form, used when a frame has to be split
                 java.util.List<String> screens = new java.util.ArrayList<>();
                 for (String frame : fr) {
                     String cur = null;
-                    // a frame that only fits without the place name drops "Ravet" (marked with \u0002, removed when drawn)
-                    boolean noLead = !lead.isEmpty() && px + tw(join(lead, frame.replace("\u0001", " \u00b7 ")), sz, semi) > lineEnd
-                            && px + tw(frame.replace("\u0001", " \u00b7 "), sz, semi) <= lineEnd;
-                    if (noLead) { screens.add("\u0002" + frame.replace("\u0001", " \u00b7 ")); continue; }
+                    String ft = frame.replace("\u0001", " \u00b7 ");
+                    // the longest place text that fits with this frame; none fits: the frame alone (marked \u0002, the lead is not drawn)
+                    int vi = -1;
+                    if (hasPl) for (int k = 0; k < leadV.length; k++) if (px + tw(join(leadV[k], ft), sz, semi) <= lineEnd) { vi = k; break; }
+                    if (vi >= 0) { screens.add("\u0004" + (char) ('0' + vi) + frame.replace("\u0001", " \u00b7 ")); continue; }
+                    boolean noLead = hasPl && px + tw(ft, sz, semi) <= lineEnd;
+                    if (noLead) { screens.add("\u0002" + ft); continue; }
                     for (String piece : frame.split("\u0001")) {
                         if (cur == null) { cur = piece; continue; }
                         String trial = join(lead, cur + " \u00b7 " + piece);
                         if (px + tw(trial, sz, semi) <= lineEnd) cur += " \u00b7 " + piece;
-                        else { screens.add(cur); cur = piece; }
+                        else { screens.add("\u0004" + (char) ('0' + (leadV.length - 1)) + cur); cur = piece; }
                     }
-                    if (cur != null) screens.add(cur);
+                    if (cur != null) screens.add("\u0004" + (char) ('0' + (leadV.length - 1)) + cur);
                 }
-                if (screens.isEmpty()) screens.add("");
+                if (screens.isEmpty()) screens.add("\u0004" + (char) ('0' + (leadV.length - 1)));
                 String body = screens.get((int) ((System.currentTimeMillis() / (spd * 1000L)) % screens.size()));
                 boolean dropLead = body.startsWith("\u0002");
-                String t = dropLead ? body.substring(1) : join(lead, body);
+                String t;
+                if (dropLead) t = body.substring(1);
+                else if (body.startsWith("\u0004")) t = hasPl ? join(leadV[Math.min(leadV.length - 1, body.charAt(1) - '0')], body.substring(2)) : body.substring(2);
+                else t = join(lead, body);
                 boolean withGps = gps != null && t.contains(gps);   // the GPS text lives in the altitude frame, not on every frame
                 while (t.length() > 4 && px + tw(t, sz, semi) > lineEnd) t = t.substring(0, t.length() - 2) + "\u2026";
                 if (!t.isEmpty()) text(c, t, px, y(P2) + 26, sz, semi, withGps ? (sats >= 8 ? green() : yellow()) : grey());

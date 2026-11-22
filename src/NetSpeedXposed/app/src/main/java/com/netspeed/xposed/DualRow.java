@@ -4348,6 +4348,19 @@ final class DualRow {
                         + ",weather_code,wind_gusts_10m,dew_point_2m,cloud_cover_low,cloud_cover_mid,cloud_cover_high,shortwave_radiation"
                         + "&hourly=precipitation_probability,cape,wind_direction_850hPa,wind_direction_700hPa,wind_direction_500hPa&forecast_hours=3"
                         + "&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto"));
+                try {   // the model grid point the numbers are really for (the reply carries its coordinates)
+                    double gla = f.optDouble("latitude", Double.NaN), glo = f.optDouble("longitude", Double.NaN);
+                    if (!Double.isNaN(gla) && !Double.isNaN(glo)) {
+                        double km = kmBetween(wxLatLon[0], wxLatLon[1], gla, glo);
+                        double dy = gla - wxLatLon[0], dx = (glo - wxLatLon[1]) * Math.cos(Math.toRadians(wxLatLon[0]));
+                        String[] pts = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+                        String dir = km < 0.3 ? "" : pts[(int) Math.round(((Math.toDegrees(Math.atan2(dx, dy)) + 360) % 360) / 45.0) % 8];
+                        String gn = TowerArea.nameAt(ctx, gla, glo);
+                        TowerArea.WX_GRID_NAME = gn == null ? "" : gn;
+                        TowerArea.WX_GRID_DIR = dir;
+                        TowerArea.WX_GRID_KM = (float) km;
+                    }
+                } catch (Throwable ignored) { }
                 try {
                     org.json.JSONObject dly = f.getJSONObject("daily");
                     wxMax = (float) dly.getJSONArray("temperature_2m_max").getDouble(0);

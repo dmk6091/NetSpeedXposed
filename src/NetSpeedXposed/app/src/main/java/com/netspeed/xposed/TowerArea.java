@@ -159,6 +159,9 @@ final class TowerArea {
     static volatile String PLACE = "";
     /** The place the weather row is for: the name of the exact coordinates the forecast was fetched with. */
     static volatile String WX_NAME = "";
+    /** The grid point the forecast model really used: its place name, and its distance (km) and direction from the phone. */
+    static volatile String WX_GRID_NAME = "", WX_GRID_DIR = "";
+    static volatile float WX_GRID_KM = Float.NaN;
     static volatile String WX_WHERE = "weather not fetched yet";
 
     /** Name at these coordinates (cache, then OpenStreetMap / Geocoder). Worker thread; null when none yet. */
