@@ -191,7 +191,9 @@ final class WallpaperMaker {
                 float[] d = new float[1];
                 android.location.Location.distanceBetween(sp.getFloat("lastLat", 0), sp.getFloat("lastLon", 0), lat, lon, d);
                 long age = System.currentTimeMillis() - sp.getLong("lastAt", 0);
-                if (d[0] < sp.getInt("km", 2) * 1000f && age < 24 * 3600_000L) { WpStatus.end(); return "still near the last picture"; }
+                boolean dayNow = DayNight.isDay(lat, lon);
+                boolean sameLook = sp.getInt("style", 0) != 1 || !sp.contains("lastDay") || sp.getBoolean("lastDay", true) == dayNow;   // terrain look: redraw when day turns to night or back
+                if (d[0] < sp.getInt("km", 2) * 1000f && age < 24 * 3600_000L && sameLook) { WpStatus.end(); return "still near the last picture"; }
             }
             String place = "";
             WpStatus.step(0);
@@ -221,7 +223,7 @@ final class WallpaperMaker {
             String nt = WpStatus.notesText();
             long took = WpStatus.end();
             sp.edit().putFloat("lastLat", (float) lat).putFloat("lastLon", (float) lon).putLong("lastAt", System.currentTimeMillis())
-                    .putLong("lastMs", took).putString("notes", nt).putString("status", "ok").apply();
+                    .putBoolean("lastDay", DayNight.isDay(lat, lon)).putLong("lastMs", took).putString("notes", nt).putString("status", "ok").apply();
             return "Wallpaper set for " + (place.isEmpty() ? String.format(Locale.US, "%.3f, %.3f", lat, lon) : place);
         } catch (Throwable t) {
             String m = t.getClass().getSimpleName() + (t.getMessage() != null ? ": " + t.getMessage() : "");
