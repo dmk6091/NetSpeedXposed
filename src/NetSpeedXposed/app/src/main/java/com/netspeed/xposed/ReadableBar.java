@@ -3095,8 +3095,9 @@ final class ReadableBar extends View {
         final SimInfo d = sims.get(di);
         final float x = colX[di] + 8, cw = colW[di] - 16;
         final boolean showData = dataTodayW(d) > 0 && Cfg.b(Cfg.SH_DATA, Cfg.D_SH_DATA);
-        final int q = quality(d);
-        if (!showData && q < 0) return;
+        final int q = qUp(d, cw) ? -1 : quality(d);
+        final boolean hIn = heightInRow(d);
+        if (!showData && q < 0 && !hIn) return;
         final float cy = foldRowY(d, cw);
         final boolean mo = monthly();
         final String pl = mo ? "M" : "D";
@@ -3112,7 +3113,7 @@ final class ReadableBar extends View {
         float wd = showData ? bw0 + 5 + tw(v4, 20, bold) + tw(" · ", 17, semi) + tw(v5, 20, bold) : 0;
         float wl = showData ? tw("4G ", 15, semi) + tw("5G ", 15, semi) : 0;
         final boolean lab = Cfg.b(Cfg.DATA_LABELS, Cfg.D_DATA_LABELS) && wd + wl + wq <= cw * 1.05f;
-        final float w = wd + (lab ? wl : 0) + wq;
+        final float w = wd + (lab ? wl : 0) + wq + (hIn ? (showData || q >= 0 ? 12 : 0) + heightW(d) : 0);
         fit(c, x, cy, w, cw, () -> {
             float e = 0;
             if (showData) {
@@ -3140,9 +3141,53 @@ final class ReadableBar extends View {
                     textB(c, "Q", e + 11 - tw("Q", 15, bold) / 2f, -0.5f, 15, 15, bold, dim);
                     e += 25;
                 } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
-                textB(c, qv, e, 0, 20, 20, bold, qc);
+                e = textB(c, qv, e, 0, 20, 20, bold, qc);
             }
+            if (hIn) heightItem(c, d, e + (q >= 0 ? 12 : 0));
         });
+    }
+
+
+    // ---- Tower column: height difference in the bottom row (boxed mountain + value), Q up on the dBm line when it fits ----
+    private boolean heightInRow(SimInfo si) { return tower && fold && graphsOn() && si.towerH != null; }
+
+    private float qBoxW(int q) { return 25 + tw(q + "%", 20, bold); }
+
+    private float sigLineW(SimInfo si) {
+        boolean live = si.inService;
+        String dbm = live && si.dbm != Bands.NO_DBM ? minus(String.valueOf(si.dbm)) : null;
+        String snr = live && !Float.isNaN(si.snr) ? minus(String.valueOf(Math.round(si.snr))) : null;
+        return (dbm != null ? tw(dbm, 28, bold) + 4 + tw("↑", 24, bold) : 0)
+                + (snr != null ? 14 + tw("/", 22, semi) + 6 + tw(snr, 28, bold) + (hideSnrWord(si) ? 0 : 4 + tw("good", 15, semi)) : 0)
+                + (dbm != null ? 12 + tw(trendLabel(si), 19, bold) : 0)
+                + (locked(si) ? LOCK_W : 0) + (si.newCell ? 32 : 0);
+    }
+
+    /** Q goes after the signal numbers (beside the Δ) when it fits at natural size; otherwise it stays in the bottom row. */
+    private boolean qUp(SimInfo si, float cw) {
+        if (!tower || !fold || !graphsOn() || !(si.data || Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND))) return false;
+        int q = quality(si);
+        if (q < 0) return false;
+        return sigLineW(si) + 12 + qBoxW(q) <= cw - 4;
+    }
+
+    private float heightW(SimInfo d) {
+        return 28 + 5 + tw((d.towerEst ? "~" : "") + d.towerH.replace(" m", "m"), 20, bold);
+    }
+
+    private float heightItem(Canvas c, SimInfo d, float e) {
+        final boolean up = d.towerH.startsWith("+");
+        final int hc = d.towerEst ? grey() : up ? green() : orange();
+        gp.setStyle(Paint.Style.STROKE);
+        gp.setStrokeWidth(2f);
+        gp.setColor(hc);
+        rf.set(e + 1, -11, e + 27, 11);
+        c.drawRoundRect(rf, 4, 4, gp);
+        gp.setStyle(Paint.Style.FILL);
+        path.reset();                                  // a small mountain with a second, lower peak
+        path.moveTo(e + 5, 7); path.lineTo(e + 12, -5); path.lineTo(e + 16.5f, 1.5f); path.lineTo(e + 19, -2); path.lineTo(e + 23, 7); path.close();
+        c.drawPath(path, gp);
+        return textB(c, (d.towerEst ? "~" : "") + d.towerH.replace(" m", "m"), e + 33, 0, 20, 20, bold, hc);
     }
 
     /** Where a box's last row (data and Q, or Q) goes: under its lines, but never lower than the limit, so it is never dropped. */
@@ -3159,6 +3204,7 @@ final class ReadableBar extends View {
     private boolean hasFoldRow(SimInfo d) {
         if (!fold || !graphsOn()) return false;
         int q = quality(d);
+        if (heightInRow(d)) return true;
         if (d.data) return q >= 0 || (dataTodayW(d) > 0 && Cfg.b(Cfg.SH_DATA, Cfg.D_SH_DATA));
         return Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND) && q >= 0;
     }
@@ -3168,28 +3214,32 @@ final class ReadableBar extends View {
         if (!Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND)) return;
         final SimInfo d = sims.get(i);
         if (d.data) return;
-        final int q = quality(d);
-        if (q < 0) return;
         final float x = colX[i] + 8, cw = colW[i] - 16;
+        final int q = qUp(d, cw) ? -1 : quality(d);
+        final boolean hIn = heightInRow(d);
+        if (q < 0 && !hIn) return;
         final float cy = foldRowY(d, cw);
         final String qv = q + "%";
         final int qc = q >= 70 ? green() : q >= 45 ? yellow() : q >= 25 ? orange() : red();
         final boolean qbox = Cfg.b(Cfg.Q_BOX, Cfg.D_Q_BOX);
         final int dim = fade(grey(), 0.85f);
-        float w = (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold);
+        float w = (q >= 0 ? (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold) : 0) + (hIn ? (q >= 0 ? 12 : 0) + heightW(d) : 0);
         fit(c, x, cy, w, cw, () -> {
             float e = 0;
-            if (qbox) {
-                gp.setStyle(Paint.Style.STROKE);
-                gp.setStrokeWidth(2f);
-                gp.setColor(dim);
-                rf.set(e + 1, -11, e + 21, 11);
-                c.drawRoundRect(rf, 4, 4, gp);
-                gp.setStyle(Paint.Style.FILL);
-                textB(c, "Q", e + 11 - tw("Q", 15, bold) / 2f, -0.5f, 15, 15, bold, dim);
-                e += 25;
-            } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
-            textB(c, qv, e, 0, 20, 20, bold, qc);
+            if (q >= 0) {
+                if (qbox) {
+                    gp.setStyle(Paint.Style.STROKE);
+                    gp.setStrokeWidth(2f);
+                    gp.setColor(dim);
+                    rf.set(e + 1, -11, e + 21, 11);
+                    c.drawRoundRect(rf, 4, 4, gp);
+                    gp.setStyle(Paint.Style.FILL);
+                    textB(c, "Q", e + 11 - tw("Q", 15, bold) / 2f, -0.5f, 15, 15, bold, dim);
+                    e += 25;
+                } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
+                e = textB(c, qv, e, 0, 20, 20, bold, qc);
+            }
+            if (hIn) heightItem(c, d, e + (q >= 0 ? 12 : 0));
         });
     }
 
@@ -3512,6 +3562,9 @@ final class ReadableBar extends View {
                     + (snr != null ? 14 + tw("/", 22, semi) + 6 + tw(snr, 28, bold) + (hideSnrWord(si) ? 0 : 4 + tw("good", 15, semi)) : 0)
                     + (dbm != null ? 12 + tw(trendLabel(si), 19, bold) : 0)
                     + (locked(si) ? LOCK_W : 0) + (si.newCell ? 32 : 0);
+            final boolean qOn = qUp(si, cw);
+            final int qUpV = qOn ? quality(si) : -1;
+            if (qOn) wb += 12 + qBoxW(qUpV);
             final boolean lk = locked(si);
             fitK(c, x, yL2, wb, cw, S2, () -> {
                 float e = 0;
@@ -3545,6 +3598,19 @@ final class ReadableBar extends View {
                     rf.set(e + 10, -11, e + 32, 11);
                     c.drawRoundRect(rf, 5, 5, gp);
                     textB(c, "N", e + 21 - tw("N", 16, bold) / 2f, 0, 16, 16, bold, 0xFFFFFFFF);
+                }
+                if (qOn) {   // Q after the signal numbers: boxed Q and percent, same look as in the bottom row
+                    final int qcu = qUpV >= 70 ? green() : qUpV >= 45 ? yellow() : qUpV >= 25 ? orange() : red();
+                    final int dimu = fade(grey(), 0.85f);
+                    float qx = e + (si.newCell ? 34 : 0) + 12;
+                    gp.setStyle(Paint.Style.STROKE);
+                    gp.setStrokeWidth(2f);
+                    gp.setColor(dimu);
+                    rf.set(qx + 1, -11, qx + 21, 11);
+                    c.drawRoundRect(rf, 4, 4, gp);
+                    gp.setStyle(Paint.Style.FILL);
+                    textB(c, "Q", qx + 11 - tw("Q", 15, bold) / 2f, -0.5f, 15, 15, bold, dimu);
+                    textB(c, qUpV + "%", qx + 25, 0, 20, 20, bold, qcu);
                 }
             });
         }
@@ -3624,7 +3690,7 @@ final class ReadableBar extends View {
         // tower line: height against you and line of sight, "\u25b2 +12m \u00b7 LOS clear" / "\u25bc \u22123m \u00b7 rise 8m"
         java.util.List<DSeg> tl = new java.util.ArrayList<>();
         final boolean est = si.towerEst;
-        if (si.towerH != null) {
+        if (si.towerH != null && !heightInRow(si)) {
             boolean up = si.towerH.startsWith("+");
             int hc = est ? g : up ? green() : orange();
             tl.add(new DSeg((est ? "~" : "") + (up ? "\u25b2 " : "\u25bc "), 17, bold, hc));
