@@ -2915,7 +2915,7 @@ final class ReadableBar extends View {
 
     private float healthX = Float.NaN;
     private static final float HP2_SIZE = 15;
-    private float hP2X = 1e9f, hP2W = 0, wxEnd = 0, row3End = 0, seaLineEnd = 0;
+    private float hP2X = 1e9f, hP2W = 0, wxEnd = 0, row3End = 0, seaLineEnd = 0, seaTextEnd = 0;
 
     /** Natural width of a SIM box's first line (network, bars, voice, mode), same sums as proSim. */
     private float line1W(SimInfo si) {
@@ -4245,6 +4245,9 @@ final class ReadableBar extends View {
         seaNote = fr.size() + " sea frame(s) fit and take turns every 5 s";
         if (fr.isEmpty()) { seaNote = "no sea frame fits: the sea takes turns in the tide slot instead"; return x0; }
         Item pick = fr.get((int) ((System.currentTimeMillis() / 5000L) % fr.size()));
+        float wMax = 0;
+        for (Item i : fr) wMax = Math.max(wMax, i.w());
+        seaTextEnd = x0 + 14 + wMax;                       // the widest frame, so what follows does not jump as the frames turn
         drawItem(c, pick, x0 + 14, y(P3));
         return x1;
     }
@@ -4403,6 +4406,7 @@ final class ReadableBar extends View {
         // row 3: tide, then the sea temperature; the disaster item follows (proSky)
         row3End = 0;
         seaLineEnd = 0;
+        seaTextEnd = 0;
         try {
             if (Cfg.b(Cfg.TIDE, Cfg.D_TIDE)) {
                 final boolean side = Cfg.b(Cfg.SEA_ROW3, Cfg.D_SEA_ROW3);
@@ -4420,7 +4424,7 @@ final class ReadableBar extends View {
                     seaInlineFit = se > row3End || Tide.sea(System.currentTimeMillis()) == null;   // nothing fitted: next frame the sea takes turns in the tide slot
                     if (se > row3End) row3End = se;
                 }
-                seaLineEnd = row3End;   // where the tide / sea line itself ends (row3End is moved on later by what follows it)
+                seaLineEnd = seaTextEnd > 0 ? seaTextEnd : row3End;   // where the tide / sea line itself ends (row3End is moved on later by what follows it)
                 seaInline = false;
             }
         } catch (Throwable ignored) { seaInline = false; }
