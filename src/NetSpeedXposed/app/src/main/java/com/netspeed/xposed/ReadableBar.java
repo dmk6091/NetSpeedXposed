@@ -3691,6 +3691,12 @@ final class ReadableBar extends View {
         int[] col = new int[3];
         if (Cfg.b(Cfg.TC_SITE, Cfg.D_TC_SITE) && si.site != null) { txt[0] = si.site.replace('-', '\u00b7'); col[0] = blue(); }
         if (Cfg.b(Cfg.TC_BW, Cfg.D_TC_BW) && si.bw > 0) { txt[1] = si.bw + " MHz"; col[1] = grey(); }
+        else if (Cfg.b(Cfg.TC_BW, Cfg.D_TC_BW) && si.bw <= 0 && si.band != null) {
+            // the modem reports no width for 5G SA: a typical-for-the-band estimate, marked with a ~
+            String bd = si.band.split("[+ ,]")[0];
+            int est = "n78".equals(bd) ? 100 : "n28".equals(bd) ? 10 : 0;
+            if (est > 0) { txt[1] = "~" + est + " MHz"; col[1] = grey(); }
+        }
         if (Cfg.b(Cfg.TC_NB, Cfg.D_TC_NB) && si.nbr != null) {
             txt[2] = si.nbr;
             col[2] = si.dbm != Bands.NO_DBM && si.nbrDbm > si.dbm ? green() : orange();
