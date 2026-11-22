@@ -1700,7 +1700,6 @@ final class ReadableBar extends View {
         // rows 3 and 4: the weather, moved here from under the SIMs (they now show their towers' areas)
         l4End = 22;
         try { proWeatherLeft(c, e3 > 0 ? e3 + 22 : 22, 22, Math.max(L1, wxEnd), 1e9f); } catch (Throwable ignored) { }
-        try { seaMoon(c); } catch (Throwable ignored) { }
         // where the weather is for: place name in the thin gap between the notification row and the weather
         try {
             // the weather's own place: the name of the coordinates its forecast was fetched with (PLACE until the first fetch)
@@ -1717,7 +1716,10 @@ final class ReadableBar extends View {
             if (hasPl || alt != null || gps != null) {
                 float px = Math.max(22, cornerX(y(P2) + 18) + 4);
                 // below the camera the line may run on up to the SIM boxes
-                float lineEnd = Math.max(L1, wxEnd);
+                final float lineEnd0 = Math.max(L1, wxEnd);
+                final String moonT = moonDayText();                           // day type + moon phase, right end of this line
+                final float moonTw = moonT == null ? 0 : tw(moonT, 18, semi);
+                float lineEnd = moonT == null ? lineEnd0 : lineEnd0 - moonTw - 16;    // the frames fit before it; longer ones split in more screens
                 String cl = climbOn ? "\u2191" + Math.round(climbUp) + " \u2193" + Math.round(climbDown) : null;
                 // rotating frames: each shows the place, then one group of earth facts; empty frames are skipped
                 java.util.List<String> fr = new java.util.ArrayList<>();
@@ -1840,6 +1842,7 @@ final class ReadableBar extends View {
                 boolean withGps = gps != null && t.contains(gps);   // the GPS text lives in the altitude frame, not on every frame
                 while (t.length() > 4 && px + tw(t, sz, semi) > lineEnd) t = t.substring(0, t.length() - 2) + "\u2026";
                 if (!t.isEmpty()) text(c, t, px, y(P2) + 26, sz, semi, withGps ? (sats >= 8 ? green() : yellow()) : grey());
+                if (moonT != null && lineEnd0 - moonTw > px + 40) text(c, moonT, lineEnd0 - moonTw, y(P2) + 26, sz, semi, grey());
             }
         } catch (Throwable ignored) { }
     }
@@ -4430,12 +4433,9 @@ final class ReadableBar extends View {
         } catch (Throwable ignored) { seaInline = false; }
     }
 
-    /**
-     * The day type and the moon phase name ("Day · Waxing gibbous") that used to sit above the SIM boxes: after the sea line on
-     * row 3. Where it runs under the SIM boxes it is drawn faintly, so the box text stays the clear one.
-     */
-    private void seaMoon(Canvas c) {
-        if (!simUp || !Cfg.b(Cfg.SEA_MOON, Cfg.D_SEA_MOON) || seaLineEnd <= 0) return;
+    /** "Day \u00b7 Waxing gibbous": the day type and the moon phase name that used to sit above the SIM boxes; null when off. */
+    private String moonDayText() {
+        if (!simUp || !Cfg.b(Cfg.SEA_MOON, Cfg.D_SEA_MOON)) return null;
         String[] sol = solarNow();
         String nm;
         try {
@@ -4445,27 +4445,7 @@ final class ReadableBar extends View {
             double ph = moonPhase();
             nm = phaseName((int) Math.round(50 * (1 - Math.cos(2 * Math.PI * ph))), ph < 0.5);
         }
-        final String txt = (sol != null ? sol[1] + " \u00b7 " : "") + nm;
-        final float x = seaLineEnd + 16f, cy = y(P3), sz = 20f;
-        if (x > W - 40f) return;
-        final float boxL = Float.isNaN(simLeft) ? W : simLeft;
-        final float top = cy - 16f * vs, bot = cy + 16f * vs;
-        if (x >= boxL) {
-            c.saveLayerAlpha(x - 2, top, W, bot, 90);
-            text(c, txt, x, cy, sz, semi, grey());
-            c.restore();
-            return;
-        }
-        c.save();
-        c.clipRect(0, top, boxL - 4, bot);
-        text(c, txt, x, cy, sz, semi, grey());
-        c.restore();
-        if (x + tw(txt, sz, semi) > boxL - 4) {
-            c.saveLayerAlpha(boxL - 4, top, W, bot, 90);
-            c.clipRect(boxL - 4, top, W, bot);
-            text(c, txt, x, cy, sz, semi, grey());
-            c.restore();
-        }
+        return (sol != null ? sol[1] + " \u00b7 " : "") + nm;
     }
 
     /** The weather in the bottom-left: row 3 icon, temperature, rain, UV, AQI pill; row 4 visibility, high/low, humidity, wind. */
