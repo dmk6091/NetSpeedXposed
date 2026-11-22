@@ -2043,6 +2043,11 @@ public class SettingsActivity extends Activity {
         wpChoice(opts, wp, "Map style", "style", 0, WallpaperMaker.STYLES);
         wpChoice(opts, wp, "Put it on", "target", 0, WallpaperMaker.TARGETS);
         wpChoice(opts, wp, "Names on the map", "names", 0, new String[]{"Show peaks, dams, lakes, wetlands, faults", "Hide"});
+        wpChoice(opts, wp, "Faults", "faults", 0, new String[]{"Show the fault lines", "Hide"});
+        wpChoice(opts, wp, "Coast and distance", "coast", 0, new String[]{"Show the nearest coast (line, km and direction)", "Hide"});
+        wpChoice(opts, wp, "Cities (Region and Far sizes)", "cities", 0, new String[]{"Show big towns and cities", "Hide"});
+        wpChoice(opts, wp, "Forest and grass colour", "forest", 0, new String[]{"Show", "Hide (plain terrain)"});
+        wpChoice(opts, wp, "Colour key (legend)", "legend", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "Info card on the picture", "card", 0, new String[]{"Show rock, soil, fault, relief", "Hide"});
         TextView n = text("The job runs about every 30 min but only draws when you have moved. Needs location permission and the phone not on low battery. Maps: OpenStreetMap.", 11, sub);
         n.setPadding(0, dp(8), 0, 0);

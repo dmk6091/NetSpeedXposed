@@ -13,8 +13,9 @@ final class WallpaperMaker {
     private WallpaperMaker() {}
 
     static final String PREFS = "wp";
-    static final int[] ZOOMS = {15, 14, 12};
-    static final String[] ZOOM_NAMES = {"Street (about 2 km across)", "Area (about 5 km across)", "Wide (about 20 km across)"};
+    static final int[] ZOOMS = {15, 14, 12, 10, 9};
+    static final String[] ZOOM_NAMES = {"Street (about 2 km across)", "Area (about 5 km across)", "Wide (about 20 km across)",
+            "Region (about 190 km across: coast, big cities)", "Far (about 370 km across: whole region)"};
     static final int[] KMS = {1, 2, 5, 10};
     static final String[] STYLES = {"Street map", "Terrain only (hills, water, forest; no roads or labels)"};
     static final String[] TARGETS = {"Home and lock screen", "Home screen only", "Lock screen only"};
@@ -207,12 +208,12 @@ final class WallpaperMaker {
                     place = p2.isEmpty() ? p1 : p1 + ", " + p2;
                 }
             } catch (Throwable ignored) { }
-            int zi = Math.max(0, Math.min(2, sp.getInt("zoom", 1)));
+            int zi = Math.max(0, Math.min(ZOOMS.length - 1, sp.getInt("zoom", 1)));
             Bitmap b;
             if (sp.getInt("style", 0) == 1) {   // terrain only: shaded relief, water and forest drawn from elevation data, no road or label tiles
                 TerrainMaker.Info ti = new TerrainMaker.Info();
                 ti.place = place;
-                b = TerrainMaker.draw(c, lat, lon, DayNight.isDay(lat, lon), new int[]{12, 11, 10}[zi], sp.getBoolean("card", false), ti);
+                b = TerrainMaker.draw(c, lat, lon, DayNight.isDay(lat, lon), new int[]{12, 11, 10, 9, 8}[zi], sp.getBoolean("card", false), ti);
             } else b = draw(c, lat, lon, ZOOMS[zi], 0, sp.getBoolean("card", false), place);
             WpStatus.step(6);
             WallpaperManager wm = WallpaperManager.getInstance(c);

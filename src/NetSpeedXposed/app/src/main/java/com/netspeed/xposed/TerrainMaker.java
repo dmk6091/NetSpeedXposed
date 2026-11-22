@@ -109,6 +109,9 @@ final class TerrainMaker {
         final float[] el = new float[gw * gh];
         final byte[] cls = new byte[gw * gh];
         final boolean[] elOk = new boolean[1];
+        final android.content.SharedPreferences wsp = WallpaperMaker.sp(c);
+        final boolean showFaults = wsp.getInt("faults", 0) == 0, showCoast = wsp.getInt("coast", 0) == 0, showCities = wsp.getInt("cities", 0) == 0,
+                showForest = wsp.getInt("forest", 0) == 0, showLegend = wsp.getInt("legend", 0) == 0;
         WpStatus.step(1);
         final List<int[]> need = new ArrayList<>();
         for (int ty = ty0; ty <= ty1; ty++) if (ty >= 0 && ty < n) for (int tx = tx0; tx <= tx1; tx++) need.add(new int[]{tx, ty});
@@ -160,6 +163,7 @@ final class TerrainMaker {
         for (int i = 0; i < gr.length; i++) { gr[i] = cls[i] == GRASS ? (byte) GRASS : 0; sc[i] = cls[i] == SCRUB ? (byte) SCRUB : 0; }
         gr = majority(gr, gw, gh, GRASS);
         sc = majority(sc, gw, gh, SCRUB);
+        if (!showForest) { java.util.Arrays.fill(fo, (byte) 0); java.util.Arrays.fill(gr, (byte) 0); java.util.Arrays.fill(sc, (byte) 0); }
 
         // smooth elevation (two box passes), then gradient
         float[] e2 = el.clone(), tmp = new float[el.length];
@@ -247,7 +251,9 @@ final class TerrainMaker {
         int wetN = 0, mangN = 0;
         double bestW = Double.NaN;
         float wbx = 0, wby = 0;
-        try {
+        final boolean bigMap = (H / S * mpp / 2000.0) > 60;
+        if (bigMap) WpStatus.note("wetlands and peak names skipped: the map is too wide for OpenStreetMap to answer");
+        if (!bigMap) try {
             String q = String.format(Locale.US, "[out:json][timeout:25][maxsize:60000000];(way[natural=wetland](%.4f,%.4f,%.4f,%.4f);relation[natural=wetland](%.4f,%.4f,%.4f,%.4f);way[wetland=mangrove][natural!=wetland](%.4f,%.4f,%.4f,%.4f););out geom qt;",
                     lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon, lat - halfLat, lon - halfLon, lat + halfLat, lon + halfLon);
             String js = overpass(q);
@@ -310,7 +316,7 @@ final class TerrainMaker {
         fp.setColor(day ? Color.argb(255, 170, 25, 25) : Color.argb(250, 255, 96, 72));
         fp.setPathEffect(new DashPathEffect(new float[]{26f, 16f}, 0f));
         String faultTxt = "";
-        try {
+        if (showFaults) try {
             for (float[][] l : Faults.linesIn(lat, lon, halfKm)) {
                 Path p = new Path();
                 for (int i = 0; i < l[0].length; i++) {
@@ -344,6 +350,29 @@ final class TerrainMaker {
             cv.drawLine(px, py, wbx, wby, lp);
             cv.drawCircle(wbx, wby, 9 * u, lp);
         }
+        // coast: the nearest sea (or tidal creek) on the picture, with its distance and direction
+        if (showCoast) try {
+            int gx0 = (int) (px / S), gy0 = (int) (py / S), sbx = -1, sby = -1;
+            double bd = 1e18;
+            for (int y = 0; y < gh; y++) for (int x = 0; x < gw; x++) if (cls[y * gw + x] == WATER && e2[y * gw + x] < 1f) {
+                double d = (double) (x - gx0) * (x - gx0) + (double) (y - gy0) * (y - gy0);
+                if (d < bd) { bd = d; sbx = x; sby = y; }
+            }
+            if (sbx >= 0) {
+                double km = Math.sqrt(bd) * mpp / 1000.0;
+                lp.setColor(day ? Color.rgb(20, 70, 160) : Color.rgb(140, 200, 255));
+                cv.drawLine(px, py, sbx * S, sby * S, lp);
+                cv.drawCircle(sbx * S, sby * S, 9 * u, lp);
+                String dir = RegionNames.dir8((gy0 - sby) * mpp / 1000.0, (sbx - gx0) * mpp / 1000.0);
+                Paint ct = new Paint(Paint.ANTI_ALIAS_FLAG);
+                ct.setTextSize(22 * u); ct.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
+                Paint ch = new Paint(ct); ch.setStyle(Paint.Style.STROKE); ch.setStrokeWidth(3.2f * u); ch.setColor(day ? 0xD2FFFFFF : 0xDC000000);
+                ct.setColor(day ? Color.rgb(20, 70, 160) : Color.rgb(170, 215, 255));
+                String ctx = "coast " + Math.round(km) + " km " + dir;
+                float tx = Math.max(20 * u, Math.min(W - 20 * u - ct.measureText(ctx), sbx * S + 14 * u)), ty = Math.max(H * 0.24f, Math.min(H * 0.64f, sby * S - 14 * u));
+                cv.drawText(ctx, tx, ty, ch); cv.drawText(ctx, tx, ty, ct);
+            }
+        } catch (Throwable ignored) { }
         // you
         Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG);
         dot.setColor(Color.argb(70, 47, 127, 209));
@@ -355,9 +384,10 @@ final class TerrainMaker {
 
         if (info != null) { info.forestKm = bestF; info.wetKm = bestW; info.wetCount = wetN; }
         if (card) drawCard(c, cv, W, H, lat, lon, day, faultTxt, bestF, bestW, info, mx - mn);
-        drawLegend(cv, W, H, day);
+        if (showLegend) drawLegend(cv, W, H, day);
         WpStatus.step(5);
         try { if (WallpaperMaker.sp(c).getBoolean("names", true)) MapNames.draw(c, cv, W, H, lat, lon, z, ox, oy, S, day, halfKm); } catch (Throwable ignored) { }
+        if (showCities && halfKm > 40) try { RegionNames.draw(cv, W, H, lat, lon, z, ox, oy, S, day); } catch (Throwable ignored) { }
         Paint at = new Paint(Paint.ANTI_ALIAS_FLAG);
         at.setColor(day ? Color.argb(210, 40, 40, 30) : Color.argb(190, 255, 255, 255));
         at.setTextSize(W * 0.019f);

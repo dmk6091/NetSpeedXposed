@@ -38,7 +38,7 @@ final class MapNames {
         List<L> all = new ArrayList<>();
         try { dams(all, lat, lon, halfKm); } catch (Throwable t) { WpStatus.note("dam names skipped: " + t.getClass().getSimpleName()); }
         try { faults(all, lat, lon, halfKm); } catch (Throwable ignored) { }
-        try { osm(c, all, lat, lon, halfKm, z); } catch (Throwable t) {
+        if (halfKm <= 60) try { osm(c, all, lat, lon, halfKm, z); } catch (Throwable t) {
             WpStatus.note("peaks, lakes, wetland, river and forest names skipped: " + (String.valueOf(t.getMessage()).contains("busy") ? "OpenStreetMap servers busy" : t.getClass().getSimpleName()));
         }
         for (L l : all) {
