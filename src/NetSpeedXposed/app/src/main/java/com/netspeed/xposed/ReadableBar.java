@@ -3008,7 +3008,7 @@ final class ReadableBar extends View {
 
     /** Height the data SIM's place name takes under its box (0 none, 22 one line, 44 two), same rules as drawPlace. */
     private float placeH(SimInfo d, float cw) {
-        if (dupPlace(d)) return qParts(d) == null ? 0 : 22f;
+        if (dupPlace(d)) return qWords(d) == null ? 0 : 22f;
         String ar = placeText(d);
         if (ar == null) return 0;
         String bearing = d.bearing != null ? "  " + d.bearing : "";
@@ -3568,7 +3568,7 @@ final class ReadableBar extends View {
 
     /** Widest the place name (pin + roam tag + name + bearing) would need at natural size, for box-width fitting. */
     private float placeW(SimInfo si) {
-        if (dupPlace(si)) { String qp = qParts(si); return qp == null ? 0 : tw(qp, 19, bold); }
+        if (dupPlace(si)) { String[] qp = qWords(si); return qp == null ? 0 : qWordsW(qp); }
         String ar = placeText(si);
         if (ar == null) return 0;
         float w = tw(ar, 20, bold);
@@ -3588,13 +3588,23 @@ final class ReadableBar extends View {
         return a != null && a.equals(b);
     }
 
-    /** Row that takes the place name's spot when it is a duplicate: what Q is made of, "sig 78% · snr 83%". Null if none. */
-    private String qParts(SimInfo si) {
+    /** Row that takes the place name's spot when it is a duplicate: plain verdicts, "Strong · Clean". Null if none. */
+    private String[] qWords(SimInfo si) {
         if (!Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND) || quality(si) < 0) return null;
-        int a = Math.round(Math.max(0, Math.min(1, (si.dbm + 125f) / 45f)) * 100);
-        String t = "sig " + a + "%";
-        if (!Float.isNaN(si.snr)) t += " \u00b7 snr " + Math.round(Math.max(0, Math.min(1, (si.snr + 5f) / 30f)) * 100) + "%";
-        return t;
+        float a = Math.max(0, Math.min(1, (si.dbm + 125f) / 45f));
+        String w1 = a >= 0.7f ? "Strong" : a >= 0.45f ? "Fair" : a >= 0.25f ? "Weak" : "Poor";
+        if (Float.isNaN(si.snr)) return new String[]{w1, null};
+        float b = Math.max(0, Math.min(1, (si.snr + 5f) / 30f));
+        return new String[]{w1, b >= 0.7f ? "Clean" : b >= 0.45f ? "Okay" : b >= 0.25f ? "Noisy" : "Bad"};
+    }
+
+    private int qWordCol(String w) {
+        return "Strong".equals(w) || "Clean".equals(w) ? green() : "Fair".equals(w) || "Okay".equals(w) ? yellow()
+                : "Weak".equals(w) || "Noisy".equals(w) ? orange() : red();
+    }
+
+    private float qWordsW(String[] q) {
+        return tw(q[0], 20, bold) + (q[1] == null ? 0 : tw(" \u00b7 ", 20, bold) + tw(q[1], 20, bold));
     }
 
     private String placeText(SimInfo si) {
@@ -3718,10 +3728,15 @@ final class ReadableBar extends View {
      */
     private float drawPlace(Canvas c, SimInfo si, float x, float cw, float cy) {
         if (dupPlace(si)) {
-            final String qp = qParts(si);
+            final String[] qp = qWords(si);
             if (qp == null) return 0;
-            final float cx = x, ccy = cy;
-            fit(c, x, cy, tw(qp, 19, bold), cw, () -> textB(c, qp, 0, 0, 19, 19, bold, grey()));
+            fit(c, x, cy, qWordsW(qp), cw, () -> {
+                float e = textB(c, qp[0], 0, 0, 20, 20, bold, qWordCol(qp[0]));
+                if (qp[1] != null) {
+                    e = textB(c, " \u00b7 ", e, 0, 20, 20, bold, grey());
+                    textB(c, qp[1], e, 0, 20, 20, bold, qWordCol(qp[1]));
+                }
+            });
             return 22f;
         }
         String ar = placeText(si);
