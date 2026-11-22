@@ -3044,13 +3044,7 @@ final class ReadableBar extends View {
         final boolean showData = dataTodayW(d) > 0 && Cfg.b(Cfg.SH_DATA, Cfg.D_SH_DATA);
         final int q = quality(d);
         if (!showData && q < 0) return;
-        int nLines = 0;
-        for (java.util.List<DSeg> ln : detailLines(d)) if (!ln.isEmpty()) nLines++;
-        float ph = placeH(d, cw);
-        float y0 = y(P2) + 4;
-        float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
-        final float cy = Math.max(y(P3), lastCy + 24f);
-        if (cy > y(P4) - 14f + upPx()) return;
+        final float cy = foldRowY(d, cw);
         final boolean mo = monthly();
         final String pl = mo ? "M" : "D";
         final String v4 = dataText(true, mo), v5 = dataText(false, mo);
@@ -3098,6 +3092,24 @@ final class ReadableBar extends View {
         });
     }
 
+    /** Where a box's last row (data and Q, or Q) goes: under its lines, but never lower than the limit, so it is never dropped. */
+    private float foldRowY(SimInfo d, float cw) {
+        int nLines = 0;
+        for (java.util.List<DSeg> ln : detailLines(d)) if (!ln.isEmpty()) nLines++;
+        float ph = placeH(d, cw);
+        float y0 = y(P2) + 4;
+        float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
+        return Math.min(Math.max(y(P3), lastCy + 24f), y(P4) - 14f + upPx());
+    }
+
+    /** Whether this SIM's box gets a last row (data and Q for the data SIM, Q for the other, folded layouts only). */
+    private boolean hasFoldRow(SimInfo d) {
+        if (!fold || !graphsOn()) return false;
+        int q = quality(d);
+        if (d.data) return q >= 0 || (dataTodayW(d) > 0 && Cfg.b(Cfg.SH_DATA, Cfg.D_SH_DATA));
+        return Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND) && q >= 0;
+    }
+
     /** The SIM that is not carrying data: its own boxed Q and percent in the bottom row of its box. */
     private void foldQOther(final Canvas c, int i) {
         if (!Cfg.b(Cfg.Q_SECOND, Cfg.D_Q_SECOND)) return;
@@ -3106,13 +3118,7 @@ final class ReadableBar extends View {
         final int q = quality(d);
         if (q < 0) return;
         final float x = colX[i] + 8, cw = colW[i] - 16;
-        int nLines = 0;
-        for (java.util.List<DSeg> ln : detailLines(d)) if (!ln.isEmpty()) nLines++;
-        float ph = placeH(d, cw);
-        float y0 = y(P2) + 4;
-        float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
-        final float cy = Math.max(y(P3), lastCy + 24f);
-        if (cy > y(P4) - 14f + upPx()) return;
+        final float cy = foldRowY(d, cw);
         final String qv = q + "%";
         final int qc = q >= 70 ? green() : q >= 45 ? yellow() : q >= 25 ? orange() : red();
         final boolean qbox = Cfg.b(Cfg.Q_BOX, Cfg.D_Q_BOX);
@@ -3705,14 +3711,23 @@ final class ReadableBar extends View {
         for (int i = 0; i < 3; i++) {
             if (txt[i] == null) continue;
             float w = 28 + tw(txt[i], 19, bold);
+            boolean placed = false;
             for (int j = from; j < slots.size(); j++) {
                 float[] sl = slots.get(j);
                 if (xr - sl[1] >= w + 16) {
                     tcIcon(c, i, xr - w, sl[0], col[i]);
                     textB(c, txt[i], xr - w + 28, sl[0], 22, 19, bold, col[i]);
                     from = j + 1;
+                    placed = true;
                     break;
                 }
+            }
+            if (!placed && !slots.isEmpty()) {   // no free space: nothing is left out, it is drawn faint over the last line
+                float[] sl = slots.get(Math.min(slots.size() - 1, Math.max(from, 0)));
+                c.saveLayerAlpha(xr - w - 4, sl[0] - 16, xr + 4, sl[0] + 16, 90);
+                tcIcon(c, i, xr - w, sl[0], col[i]);
+                textB(c, txt[i], xr - w + 28, sl[0], 22, 19, bold, col[i]);
+                c.restore();
             }
         }
     }
@@ -3732,10 +3747,14 @@ final class ReadableBar extends View {
             final float lcy = cy;
             float w = 0;
             for (DSeg sg : ln) w += dsW(sg) + (sg.chip ? 5 : 0);
+            // the last row (data / Q) is the more important one: a line it lands on shows faintly behind it
+            boolean under = hasFoldRow(si) && Math.abs(lcy - foldRowY(si, cw)) < 21f;
+            if (under) c.saveLayerAlpha(x - 6, lcy - 16, x + cw + 6, lcy + 16, 90);
             fit(c, x, lcy, w, cw, () -> {
                 float e = 0;
                 for (DSeg sg : ln) e = dsDraw(c, sg, e);
             });
+            if (under) c.restore();
             slots.add(new float[]{lcy, x + Math.min(w, cw)});
             cy += 22f;
         }
