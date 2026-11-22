@@ -3276,7 +3276,7 @@ final class ReadableBar extends View {
             if (si.towerH != null) k.append(";h=").append(si.towerH);
             k.append(";est=").append(si.towerEst ? 1 : 0);
             if (si.dataToday >= 0) k.append(";today=").append(fmtBytes(si.dataToday));
-            b.append("L|").append(si.slot).append('|').append(k).append('\n');
+            b.append("SIMLIVE|").append(si.slot).append('|').append(k).append('\n');
         }
         return b.toString();
     }

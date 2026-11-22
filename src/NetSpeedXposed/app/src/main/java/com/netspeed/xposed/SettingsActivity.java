@@ -2247,7 +2247,7 @@ public class SettingsActivity extends Activity {
             String f = android.provider.Settings.Global.getString(getContentResolver(), "netspeed_info");
             if (f != null) for (String ln : f.split("\n")) {
                 String[] p = ln.split("\\|", 3);
-                if (p.length < 3 || !p[0].equals("L")) continue;
+                if (p.length < 3 || !p[0].equals("SIMLIVE")) continue;
                 java.util.Map<String, String> m = new java.util.HashMap<>();
                 m.put("slot", p[1]);
                 for (String kv : p[2].split(";")) { int i = kv.indexOf('='); if (i > 0) m.put(kv.substring(0, i), kv.substring(i + 1)); }
