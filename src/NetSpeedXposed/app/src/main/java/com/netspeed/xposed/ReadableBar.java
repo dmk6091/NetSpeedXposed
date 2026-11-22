@@ -1586,6 +1586,11 @@ final class ReadableBar extends View {
         // weekday ("Mon") in small grey right after the clock, on the clock's baseline
         String wd = new SimpleDateFormat("EEE", Locale.getDefault()).format(d);
         float wdEnd = look2 ? textB(c, wd, clkEnd + 5, y(P1A), 50, 18, semi, grey()) : textB(c, wd, clkEnd + 6, y(P1A), 38, 19, semi, grey());
+        // day type and moon phase as initials, dot-separated ("D\u00b7WxG"), faint, right after the weekday
+        try {
+            String ini = moonInitials();
+            if (ini != null && look2) wdEnd = textB(c, ini, wdEnd + 8, y(P1A), 50, 15, semi, fade(grey(), 0.75f));
+        } catch (Throwable ignored) { }
         e = Math.max(e, wdEnd);
 
         // network speed goes right after the last column (drawn at the end); it must stay clear of the camera
@@ -1717,7 +1722,7 @@ final class ReadableBar extends View {
                 float px = Math.max(22, cornerX(y(P2) + 18) + 4);
                 // below the camera the line may run on up to the SIM boxes
                 final float lineEnd0 = Math.max(L1, wxEnd);
-                final String moonT = moonDayText();                           // day type + moon phase, right end of this line
+                final String moonT = null;                                    // (the day type + moon phase now sit as initials beside the clock)
                 final float moonTw = moonT == null ? 0 : tw(moonT, 18, semi);
                 float lineEnd = lineEnd0;                                     // the earth frames keep their whole width: nothing of them is cut for the moon text
                 String cl = climbOn ? "\u2191" + Math.round(climbUp) + " \u2193" + Math.round(climbDown) : null;
@@ -4439,6 +4444,45 @@ final class ReadableBar extends View {
                 seaInline = false;
             }
         } catch (Throwable ignored) { seaInline = false; }
+    }
+
+    /** Initials of the day type and the moon phase, "D\u00b7WxG"; null when off. */
+    private String moonInitials() {
+        String full = moonDayText();
+        if (full == null) return null;
+        String[] p = full.split(" \u00b7 ");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < p.length; i++) {
+            if (i > 0) sb.append('\u00b7');
+            sb.append(initialsOf(p[i]));
+        }
+        return sb.toString();
+    }
+
+    private static String initialsOf(String name) {
+        switch (name) {
+            case "Day": return "D";
+            case "Night": return "N";
+            case "Solar noon": return "SN";
+            case "Solar midnight": return "SM";
+            case "Golden hour": return "GH";
+            case "Civil twilight": return "CT";
+            case "Nautical twilight": return "NT";
+            case "Astronomical twilight": return "AT";
+            case "New moon": return "NM";
+            case "Full moon": return "FM";
+            case "First quarter": return "FQ";
+            case "Last quarter": case "Third quarter": return "LQ";
+            case "Waxing crescent": return "WxC";
+            case "Waxing gibbous": return "WxG";
+            case "Waning gibbous": return "WnG";
+            case "Waning crescent": return "WnC";
+            default: {
+                StringBuilder b = new StringBuilder();
+                for (String w : name.split(" ")) if (!w.isEmpty()) b.append(Character.toUpperCase(w.charAt(0)));
+                return b.toString();
+            }
+        }
     }
 
     /** "Day \u00b7 Waxing gibbous": the day type and the moon phase name that used to sit above the SIM boxes; null when off. */
