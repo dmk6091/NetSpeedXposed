@@ -2842,7 +2842,10 @@ final class DualRow {
                 // per-tower name only while your own fix has nothing yet.
                 String ar = !TowerArea.PLACE.isEmpty() ? TowerArea.PLACE : TowerArea.BY_SLOT.get(s.slot);
                 si.area = ar == null || ar.isEmpty() ? null : ar;
-                si.bearing = TowerArea.BEARING.get(s.slot);
+                si.dirArrow = TowerArea.BEARING.get(s.slot);
+                si.dirRough = TowerArea.BEARING_ROUGH.containsKey(s.slot);
+                // the arrow beside the place name keeps exact positions only; with the Tower column layout it moves to the cell line (not drawn twice)
+                si.bearing = si.dirRough || Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) == 3 ? null : si.dirArrow;
                 si.hoToday = ReadableBar.handoversFor(s.slot);
                 try { cellTimeAndTrend(si, s); } catch (Throwable ignored) { }
                 si.snr = s.snr;

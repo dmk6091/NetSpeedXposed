@@ -68,6 +68,8 @@ final class ReadableBar extends View {
         int nbrDbm = Integer.MIN_VALUE;
         long dataToday = -1;                  // bytes on this SIM since midnight
         String bearing;                       // "↗NE" from you to the tower, null unknown
+        String dirArrow;                      // same arrow for the Tower column cell line; dirRough = rough tower position
+        boolean dirRough;
         int hoToday;                          // tower switches today for this SIM
         String onCell;                        // time on this tower: "45s", "3m", "1h05"
         String trend;                         // signal change over the last minute: "+4dB" / "−5dB", null steady
@@ -3616,6 +3618,8 @@ final class ReadableBar extends View {
             int qc = ping < 60 ? green() : ping < 150 ? yellow() : ping < 400 ? orange() : red();
             d.add(new DSeg((d.isEmpty() ? "" : " \u00b7 ") + pg, 20, bold, qc));
         }
+        // direction to the tower after the ping (Tower column layout): faint grey while the position is only rough
+        if (tower && si.dirArrow != null) d.add(new DSeg((d.isEmpty() ? "" : "  ") + (si.dirRough ? "~" : "") + si.dirArrow, 21, bold, si.dirRough ? fade(g, 0.8f) : yellow()));
         if (!d.isEmpty()) L.add(d);
         // tower line: height against you and line of sight, "\u25b2 +12m \u00b7 LOS clear" / "\u25bc \u22123m \u00b7 rise 8m"
         java.util.List<DSeg> tl = new java.util.ArrayList<>();

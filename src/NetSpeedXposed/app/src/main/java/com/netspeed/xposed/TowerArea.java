@@ -20,6 +20,8 @@ final class TowerArea {
     static final Map<Integer, String> BY_SLOT = new ConcurrentHashMap<>();
     /** SIM slot -> direction from you to the tower ("↗NE"), only when the tower's position is known or learned. */
     static final Map<Integer, String> BEARING = new ConcurrentHashMap<>();
+    /** slots whose direction arrow comes from a rough tower position (shown faint, with the Tower column layout only). */
+    static final Map<Integer, Boolean> BEARING_ROUGH = new ConcurrentHashMap<>();
     /** Last real name per slot and when it was seen: kept for 3 min while the SIM hops to a tower without one. */
     private static final Map<Integer, String> LAST = new ConcurrentHashMap<>();
     private static final Map<Integer, Long> LAST_AT = new ConcurrentHashMap<>();
@@ -112,7 +114,8 @@ final class TowerArea {
                 continue;
             }
             BEARING.remove(s.slot);
-            if (!near && !rough) {   // a rough spot is just where you were: no real direction
+            BEARING_ROUGH.remove(s.slot);
+            if (!near) {   // a rough spot is where the signal was strongest: direction is an estimate (flagged)
                 try {
                     android.location.Location me = TowerDb.myLocation(ctx);
                     if (me != null) {
@@ -123,6 +126,7 @@ final class TowerArea {
                             String[] arrows = {"↑", "↗", "→", "↘", "↓", "↙", "←", "↖"};
                             String[] pts = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
                             BEARING.put(s.slot, arrows[i8]);
+                            if (rough) BEARING_ROUGH.put(s.slot, Boolean.TRUE);
                         }
                     }
                 } catch (Throwable ignored) { }
