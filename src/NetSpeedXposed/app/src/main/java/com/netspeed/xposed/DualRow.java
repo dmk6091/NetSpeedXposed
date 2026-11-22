@@ -2679,7 +2679,8 @@ final class DualRow {
             rb.pro = pro;
             rb.chips = false;   // the chip look and the gauge-line switch were removed from Settings: gauge-line look always
             rb.look2 = true;
-            rb.fold = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) == 1;
+            rb.fold = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) >= 1;
+            rb.stretch = Cfg.i(Cfg.LAYOUT, Cfg.D_LAYOUT) == 2;
             if (pro) {
                 rb.soh = batSoh;
                 rb.cycles = batCycles;

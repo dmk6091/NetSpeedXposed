@@ -3286,10 +3286,12 @@ final class ReadableBar extends View {
     }
 
     /** Both SIM boxes get the width of the wider one, so they match. */
+    private static final float STRETCH_W = 50;
+
     private float boxW(int n) {
         float w = 0;
         for (int i = 0; i < n; i++) w = Math.max(w, simW(sims.get(i)));
-        return w;
+        return stretch ? w + STRETCH_W : w;
     }
 
     private float simW(SimInfo si) {
@@ -4285,6 +4287,7 @@ final class ReadableBar extends View {
     private boolean graphsOn() { return pro && look2 && !chips; }
     /** Folded layout ("Status bar layout" in settings): no far-right column; its data and Q sit under the data SIM box. */
     boolean fold = true;
+    boolean stretch = false;      // folded, and the SIM boxes also take the width the column used to have
     private boolean colOn() { return graphsOn() && !fold; }
 
     private void graphColumn(Canvas c, float R1) {
