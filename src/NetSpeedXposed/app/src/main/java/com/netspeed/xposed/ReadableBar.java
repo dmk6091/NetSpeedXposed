@@ -1719,7 +1719,7 @@ final class ReadableBar extends View {
                 final float lineEnd0 = Math.max(L1, wxEnd);
                 final String moonT = moonDayText();                           // day type + moon phase, right end of this line
                 final float moonTw = moonT == null ? 0 : tw(moonT, 18, semi);
-                float lineEnd = moonT == null ? lineEnd0 : lineEnd0 - moonTw - 16;    // the frames fit before it; longer ones split in more screens
+                float lineEnd = lineEnd0;                                     // the earth frames keep their whole width: nothing of them is cut for the moon text
                 String cl = climbOn ? "\u2191" + Math.round(climbUp) + " \u2193" + Math.round(climbDown) : null;
                 // rotating frames: each shows the place, then one group of earth facts; empty frames are skipped
                 java.util.List<String> fr = new java.util.ArrayList<>();
@@ -1842,7 +1842,15 @@ final class ReadableBar extends View {
                 boolean withGps = gps != null && t.contains(gps);   // the GPS text lives in the altitude frame, not on every frame
                 while (t.length() > 4 && px + tw(t, sz, semi) > lineEnd) t = t.substring(0, t.length() - 2) + "\u2026";
                 if (!t.isEmpty()) text(c, t, px, y(P2) + 26, sz, semi, withGps ? (sats >= 8 ? green() : yellow()) : grey());
-                if (moonT != null && lineEnd0 - moonTw > px + 40) text(c, moonT, lineEnd0 - moonTw, y(P2) + 26, sz, semi, grey());
+                if (moonT != null) {
+                    float tEnd = px + tw(t, sz, semi), mx = lineEnd0 - moonTw;
+                    if (tEnd + 16 <= mx) text(c, moonT, mx, y(P2) + 26, sz, semi, grey());       // room beside the frame: full strength
+                    else {                                                                         // frame runs long: the moon text shows faintly behind its end
+                        c.saveLayerAlpha(mx - 4, y(P2) + 26 - 16, lineEnd0 + 4, y(P2) + 26 + 16, 80);
+                        text(c, moonT, mx, y(P2) + 26, sz, semi, grey());
+                        c.restore();
+                    }
+                }
             }
         } catch (Throwable ignored) { }
     }
