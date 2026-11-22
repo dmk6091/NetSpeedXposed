@@ -1731,7 +1731,7 @@ final class ReadableBar extends View {
             if (SkyView.obsStation != null && !SkyView.obsStation.isEmpty() && SkyView.obsKm <= 60
                     && System.currentTimeMillis() - SkyView.obsAt <= 150 * 60_000L) {
                 String sn = SkyView.obsName == null ? "" : SkyView.obsName.trim()
-                        .replaceAll(",\\s*[A-Z]{2}$", "").replace("Arpt", "Airport").replace("Intl", "International").replace("Intnl", "International");
+                        .replaceAll("(,\\s*[A-Z]{2})+$", "").replace("Arpt", "Airport").replace("Intl", "International").replace("Intnl", "International");
                 if (sn.isEmpty()) sn = SkyView.obsStation;
                 pl = sn + " \u00b7 " + Math.round(SkyView.obsKm) + " km";
             } else pl = "NRS";
