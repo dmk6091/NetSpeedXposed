@@ -590,7 +590,7 @@ public class SettingsActivity extends Activity {
                 + "brightness up, easing down to about 55 % at the lowest so it isn't glaring in a dark room", Cfg.DIM_NIGHT, Cfg.D_DIM_NIGHT);
         choice(c, "Status bar layout", Cfg.LAYOUT, Cfg.D_LAYOUT, new String[]{"Classic (data and Q in a column at the far right)",
                 "Folded (data and Q under the data SIM box, more room on the left)"});
-        toggle(c, "Tower icon", "A small cell-tower mast before the distance to the tower. Off: the satellite-dish symbol as before", Cfg.TOWER_ICON, Cfg.D_TOWER_ICON);
+        toggle(c, "Tower icon", "A small cell-tower mast before the distance to the tower. Off: the satellite-dish symbol as before", Cfg.TOWER_MAST, Cfg.D_TOWER_MAST);
         choice(c, "Data used in the SIM box", Cfg.DATA_PERIOD, Cfg.D_DATA_PERIOD, new String[]{"Daily (D)", "Monthly (M)", "Both at once (D and M)", "D and M taking turns (5 s)"});
         toggle(c, "Boxed Q for signal quality", "The data SIM's signal quality figure gets a small box with a Q in it", Cfg.Q_BOX, Cfg.D_Q_BOX);
         toggle(c, "4G / 5G labels in the data box", "Off: 4G and 5G are told apart by colour only (4G green to red by how close it is to the limit, 5G teal)", Cfg.DATA_LABELS, Cfg.D_DATA_LABELS);

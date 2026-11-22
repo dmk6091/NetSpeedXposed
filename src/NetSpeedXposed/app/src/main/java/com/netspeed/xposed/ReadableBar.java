@@ -3425,7 +3425,7 @@ final class ReadableBar extends View {
         fitK(c, x, yL3, w2, cw, S3, () -> {
             float e = textB(c, band, 0, 0, 26, 26, semi, fade(blue(), k));
             if (dist != null) {
-                if (Cfg.b(Cfg.TOWER_ICON, Cfg.D_TOWER_ICON)) {
+                if (Cfg.b(Cfg.TOWER_MAST, Cfg.D_TOWER_MAST)) {
                     towerIcon(c, e + 10, 0, fade(grey(), k));
                     e += 10 + tw("📡 ", 18, bold);
                 } else e = textB(c, "📡 ", e + 10, 0, 26, 18, bold, fade(grey(), k));
