@@ -30,6 +30,7 @@ final class MapNames {
         String text;
         double lat, lon, rank;
         float x, y;
+        int sub;            // feature kind: 1 cave, 2 spring, 3 waterfall
         double[] flow;      // downstream direction as {dLat, dLon} for rivers and streams
     }
 
@@ -61,7 +62,7 @@ final class MapNames {
         used.add(new RectF(0, H * 0.66f, W, H));                           // icons, dock, search bar
         used.add(new RectF(W * 0.02f, H * 0.165f, W * 0.66f, H * 0.265f)); // legend
         used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));   // you
-        int[] cap = {3, 4, 2, 2, 2, 1, 2, 2, 1, 1};
+        int[] cap = {3, 4, 2, 2, 2, 1, 2, 3, 1, 1};
         int[] got = new int[KINDS];
         int total = 0;
         for (L l : all) {
@@ -70,13 +71,27 @@ final class MapNames {
             t.setTypeface(Typeface.create(Typeface.DEFAULT, italic ? Typeface.ITALIC : Typeface.NORMAL));
             halo.setTypeface(t.getTypeface());
             float tw = t.measureText(l.text);
-            boolean sym = l.kind == DAM || l.kind == PEAK || l.kind == WET || l.kind == PASS || l.kind == FEAT;
+            boolean sym = l.kind == DAM || l.kind == PEAK || l.kind == WET || l.kind == PASS || l.kind == FEAT || l.kind == WATER;
             float ic = sym ? 13 * u : 0;
-            float left = sym ? l.x + ic : l.x - tw / 2, right = left + tw;
+            // the real spot is off the picture (more than a screen away): pin it to the edge with an arrow, its distance and direction
+            boolean off = l.x < 14 * u || l.x > W - 14 * u, rightPin = false;
+            String text = l.text;
+            if (off) {
+                if (!sym) continue;   // rivers, faults, forests: only shown where they really are
+                rightPin = l.x > W / 2f;
+                double dyk = (l.lat - lat) * 110.57, dxk = (l.lon - lon) * 111.32 * Math.cos(Math.toRadians(lat));
+                int di = (int) Math.round(Math.toDegrees(Math.atan2(dxk, dyk)) / 45.0); di = ((di % 8) + 8) % 8;
+                text = l.text + " \u00b7 " + Math.round(Math.hypot(dxk, dyk)) + " km " + new String[]{"N", "NE", "E", "SE", "S", "SW", "W", "NW"}[di];
+                tw = t.measureText(text);
+                l.x = rightPin ? W - 34 * u : 34 * u;
+            }
+            float left = sym ? (rightPin ? l.x - ic - tw : l.x + ic) : l.x - tw / 2, right = left + tw;
             float top = l.y - 12 * u, bottom = l.y + 8 * u;
-            if (right > W - 20 * u) { float s = right - (W - 20 * u); left -= s; right -= s; }
-            if (left < 20 * u) { float s = 20 * u - left; left += s; right += s; }
-            RectF r = new RectF(left - (sym ? ic + 4 * u : 4 * u), top - 12 * u * (l.flow != null ? 1 : 0) - 4 * u, right + 4 * u, bottom + 4 * u);
+            if (!off) {
+                if (right > W - 20 * u) { float s = right - (W - 20 * u); left -= s; right -= s; }
+                if (left < 20 * u) { float s = 20 * u - left; left += s; right += s; }
+            }
+            RectF r = new RectF(left - (sym && !rightPin ? ic + 4 * u : 4 * u), top - 12 * u * (l.flow != null ? 1 : 0) - 4 * u, right + (rightPin ? ic + 4 * u : 4 * u), bottom + 4 * u);
             boolean ok = r.top > 0 && r.bottom < H;
             for (RectF o : used) if (ok && RectF.intersects(o, r)) ok = false;
             if (!ok) continue;
@@ -86,13 +101,16 @@ final class MapNames {
             float by = l.y + 6 * u;
             int ink;
             switch (l.kind) {
-                case DAM:
-                    ip.setStyle(Paint.Style.FILL); ip.setColor(0xFFFAD728);
-                    cv.drawRect(l.x - 7 * u, l.y - 4.5f * u, l.x + 7 * u, l.y + 4.5f * u, ip);
-                    ip.setStyle(Paint.Style.STROKE); ip.setStrokeWidth(1.6f * u); ip.setColor(0xFF3C2800);
-                    cv.drawRect(l.x - 7 * u, l.y - 4.5f * u, l.x + 7 * u, l.y + 4.5f * u, ip);
+                case DAM: {   // a wall holding blue water behind it
+                    ip.setStyle(Paint.Style.FILL); ip.setColor(0xFF4A8FD6);
+                    cv.drawRect(l.x - 9 * u, l.y - 6 * u, l.x + 1 * u, l.y + 5 * u, ip);
+                    ip.setColor(0xFFB9B9B9);
+                    cv.drawRect(l.x + 1 * u, l.y - 8 * u, l.x + 6.5f * u, l.y + 6 * u, ip);
+                    ip.setStyle(Paint.Style.STROKE); ip.setStrokeWidth(1.3f * u); ip.setColor(0xFF3C3C3C);
+                    cv.drawRect(l.x + 1 * u, l.y - 8 * u, l.x + 6.5f * u, l.y + 6 * u, ip);
                     ink = day ? 0xFF32230A : 0xFFFFEB8C;
                     break;
+                }
                 case PEAK: {
                     Path p = new Path();
                     p.moveTo(l.x, l.y - 7 * u); p.lineTo(l.x + 6.5f * u, l.y + 5 * u); p.lineTo(l.x - 6.5f * u, l.y + 5 * u); p.close();
@@ -114,11 +132,44 @@ final class MapNames {
                     ink = day ? 0xFF46280F : 0xFFFFFFFF;
                     break;
                 }
-                case FEAT: {   // waterfall, spring, cave: a small ring with a dot
-                    ip.setStyle(Paint.Style.STROKE); ip.setStrokeWidth(2f * u); ip.setColor(day ? 0xFF143C96 : 0xFFBEE1FF);
-                    cv.drawCircle(l.x, l.y, 5.5f * u, ip);
+                case FEAT: {
+                    ink = day ? 0xFF143C96 : 0xFFBEE1FF;
                     ip.setStyle(Paint.Style.FILL);
-                    cv.drawCircle(l.x, l.y, 1.8f * u, ip);
+                    if (l.sub == 1) {   // cave: solid arch with the dark opening
+                        ip.setColor(day ? 0xFF46280F : 0xFFFFFFFF);
+                        cv.drawArc(new RectF(l.x - 8 * u, l.y - 9 * u, l.x + 8 * u, l.y + 7 * u), 180, 180, true, ip);
+                        cv.drawRect(l.x - 8 * u, l.y - 1 * u, l.x + 8 * u, l.y + 6 * u, ip);
+                        ip.setColor(0xFF141414);
+                        cv.drawArc(new RectF(l.x - 3.5f * u, l.y - 4 * u, l.x + 3.5f * u, l.y + 4 * u), 180, 180, true, ip);
+                        cv.drawRect(l.x - 3.5f * u, l.y, l.x + 3.5f * u, l.y + 6 * u, ip);
+                        ink = day ? 0xFF46280F : 0xFFFFFFFF;
+                    } else if (l.sub == 3) {   // waterfall: cliff, white water falling, pool below
+                        ip.setColor(0xFF7A6450);
+                        cv.drawRect(l.x - 8 * u, l.y - 8 * u, l.x - 3 * u, l.y + 4 * u, ip);
+                        cv.drawRect(l.x + 3 * u, l.y - 8 * u, l.x + 8 * u, l.y + 4 * u, ip);
+                        ip.setColor(0xFFE6F4FF);
+                        cv.drawRect(l.x - 3 * u, l.y - 8 * u, l.x + 3 * u, l.y + 3 * u, ip);
+                        ip.setColor(0xFF4A8FD6);
+                        cv.drawOval(new RectF(l.x - 8 * u, l.y + 2 * u, l.x + 8 * u, l.y + 8 * u), ip);
+                    } else {   // spring: water welling out of a rock, with a ripple
+                        ip.setColor(0xFF7A6450);
+                        cv.drawArc(new RectF(l.x - 8 * u, l.y - 4 * u, l.x + 2 * u, l.y + 8 * u), 180, 180, true, ip);
+                        ip.setColor(0xFF4A8FD6);
+                        cv.drawOval(new RectF(l.x - 1 * u, l.y + 0 * u, l.x + 9 * u, l.y + 6 * u), ip);
+                        ip.setStyle(Paint.Style.STROKE); ip.setStrokeWidth(1.2f * u); ip.setColor(0xFF4A8FD6);
+                        cv.drawCircle(l.x - 4 * u, l.y - 7 * u, 1.6f * u, ip);
+                        cv.drawCircle(l.x - 1 * u, l.y - 10 * u, 1.2f * u, ip);
+                    }
+                    break;
+                }
+                case WATER: {   // lake / pond: blue water shape with a wavy line
+                    ip.setStyle(Paint.Style.FILL); ip.setColor(0xFFAAD2F5);
+                    cv.drawOval(new RectF(l.x - 9 * u, l.y - 6 * u, l.x + 9 * u, l.y + 6 * u), ip);
+                    ip.setStyle(Paint.Style.STROKE); ip.setStrokeWidth(1.4f * u); ip.setColor(0xFF2870BE);
+                    cv.drawOval(new RectF(l.x - 9 * u, l.y - 6 * u, l.x + 9 * u, l.y + 6 * u), ip);
+                    Path wv = new Path();
+                    wv.moveTo(l.x - 5 * u, l.y); wv.quadTo(l.x - 3 * u, l.y - 2.5f * u, l.x - 1 * u, l.y); wv.quadTo(l.x + 1 * u, l.y + 2.5f * u, l.x + 3 * u, l.y); wv.quadTo(l.x + 4.2f * u, l.y - 1.5f * u, l.x + 5.5f * u, l.y);
+                    cv.drawPath(wv, ip);
                     ink = day ? 0xFF143C96 : 0xFFBEE1FF;
                     break;
                 }
@@ -141,9 +192,16 @@ final class MapNames {
                 cv.drawPath(hd, ip);
                 cv.restore();
             }
+            if (off) {   // yellow arrow at the edge: the place lies further this way
+                Path ar = new Path();
+                float ex = rightPin ? W - 4 * u : 4 * u, dir = rightPin ? -1 : 1;
+                ar.moveTo(ex, l.y); ar.lineTo(ex + dir * 11 * u, l.y - 7 * u); ar.lineTo(ex + dir * 11 * u, l.y + 7 * u); ar.close();
+                ip.setStyle(Paint.Style.FILL); ip.setColor(0xFFFFE070);
+                cv.drawPath(ar, ip);
+            }
             t.setColor(ink);
-            cv.drawText(l.text, left, by, halo);
-            cv.drawText(l.text, left, by, t);
+            cv.drawText(text, left, by, halo);
+            cv.drawText(text, left, by, t);
         }
     }
 
@@ -257,6 +315,7 @@ final class MapNames {
                 l.kind = PASS; l.rank = 0.5; l.text = clip(nm);
             } else if ("waterfall".equals(ww) || "spring".equals(nat) || "hot_spring".equals(nat) || "cave_entrance".equals(nat)) {
                 l.kind = FEAT; l.rank = 1; l.text = clip(nm);
+                l.sub = "cave_entrance".equals(nat) ? 1 : "waterfall".equals(ww) ? 3 : 2;
             } else if ("protected_area".equals(tg.optString("boundary", "")) || "nature_reserve".equals(tg.optString("leisure", ""))) {
                 l.kind = RESERVE; l.rank = 1; l.text = clip(nm);
             } else {
