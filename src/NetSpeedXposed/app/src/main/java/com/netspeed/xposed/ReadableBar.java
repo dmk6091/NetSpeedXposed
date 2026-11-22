@@ -3457,7 +3457,7 @@ final class ReadableBar extends View {
                 textB(c, cells, e + 5, 0, 26, 24, bold, grey());
             }
         });
-        slots.add(new float[]{yL3, x + Math.min(w2 * S3, cw)});
+        slots.add(new float[]{yL3, x + Math.min(w2 + 10, cw)});   // generous: the line's real end is a little past the sum of its parts
         // lines 4-7: radio details of this SIM's serving cell and tower
         if (live) simDetail(c, si, x, cw, y(P2) + 4);
     }
@@ -3612,7 +3612,7 @@ final class ReadableBar extends View {
             float w = 28 + tw(txt[i], 19, bold);
             for (int j = from; j < slots.size(); j++) {
                 float[] sl = slots.get(j);
-                if (xr - sl[1] >= w + 14) {
+                if (xr - sl[1] >= w + 16) {
                     tcIcon(c, i, xr - w, sl[0], col[i]);
                     textB(c, txt[i], xr - w + 28, sl[0], 22, 19, bold, col[i]);
                     from = j + 1;
