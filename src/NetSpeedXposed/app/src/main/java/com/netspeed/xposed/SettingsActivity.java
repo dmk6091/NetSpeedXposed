@@ -2265,7 +2265,7 @@ public class SettingsActivity extends Activity {
         TextView top = new TextView(this);
         top.setTextSize(12);
         top.setTextColor(sub);
-        top.setText(live ? "Blue = what the status bar shows for SIM " + (Integer.parseInt(m.get("slot")) + 1) + ("1".equals(m.get("data")) ? " (the data SIM)" : "") + " right now. A ~ in front means a rough estimate, not exact."
+        top.setText(live ? "Blue = what the status bar shows for SIM " + Integer.parseInt(m.get("slot")) + ("1".equals(m.get("data")) ? " (the data SIM)" : "") + " right now. A ~ in front means a rough estimate, not exact."
                 : "No live values yet. Install this build, restart System UI and wait a minute. The meanings below still apply. A ~ in front of a value means a rough estimate.");
         col.addView(top);
         String rat = g(m, "rat"), nr = g(m, "nr"), dbm = g(m, "dbm"), snr = g(m, "snr"), q = g(m, "q"), tr = g(m, "trend");
