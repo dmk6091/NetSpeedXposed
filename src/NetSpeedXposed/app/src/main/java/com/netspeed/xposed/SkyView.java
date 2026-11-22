@@ -865,8 +865,17 @@ final class SkyView extends View {
 
         // glow, stronger near full
         p.setStyle(Paint.Style.FILL);
+        // like the real thing: a wide soft glow that brightens the sky around the Moon (more at full phase), warmer and
+        // a little bigger when the Moon is low near the horizon; then a tighter bright halo
+        float lowK = Math.max(0f, Math.min(1f, 1f - (float) moonPos.alt / 35f));
+        int tint = lowK > 0.01f ? blendRgb(0xFFDCE6FF, 0xFFFFD0A0, lowK) : 0xFFDCE6FF;
+        float strength = (faint ? 0.35f : 1f) * vis * (0.12f + 0.88f * k * k);
+        float wide = Math.min(Math.max(w, h) * 0.5f, r * (9f + 4f * lowK));
+        p.setShader(new RadialGradient(x, y, wide, new int[]{alpha(tint, 0.20f * strength), alpha(tint, 0.07f * strength), 0},
+                new float[]{0f, 0.4f, 1f}, Shader.TileMode.CLAMP));
+        c.drawCircle(x, y, wide, p);
         float gr = r * 3f;
-        p.setShader(new RadialGradient(x, y, gr, new int[]{alpha(0xFFDCE6FF, (faint ? 0.10f : 0.30f) * vis * (0.2f + k)), 0},
+        p.setShader(new RadialGradient(x, y, gr, new int[]{alpha(tint, (faint ? 0.10f : 0.30f) * vis * (0.2f + k)), 0},
                 null, Shader.TileMode.CLAMP));
         c.drawCircle(x, y, gr, p);
         p.setShader(null);
@@ -1136,6 +1145,22 @@ final class SkyView extends View {
         c.drawText(s, tx, y + lp.getTextSize() * 0.35f, lp);
     }
 
+    private static int blendRgb(int a, int b, float k) {
+        int r = Math.round(((a >> 16) & 255) * (1 - k) + ((b >> 16) & 255) * k), g = Math.round(((a >> 8) & 255) * (1 - k) + ((b >> 8) & 255) * k), bl = Math.round((a & 255) * (1 - k) + (b & 255) * k);
+        return 0xFF000000 | (r << 16) | (g << 8) | bl;
+    }
+
+    /** A small, dim name beside a planet. */
+    private void labelDim(Canvas c, String s, float x, float y, float gap, int w, int col) {
+        lp.setTextSize(7f * dens);
+        lp.setColor(alpha(col, 0.5f));
+        lp.setShadowLayer(dens * 1.0f, 0, 0, 0xAA000000);
+        float tw = lp.measureText(s);
+        float tx = x + gap + 2 * dens;
+        if (tx + tw > w - 2 * dens) tx = x - gap - 2 * dens - tw;
+        c.drawText(s, tx, y + lp.getTextSize() * 0.35f, lp);
+    }
+
     /** Sunlit satellites above the horizon, moved every second from their orbits. */
     private void satPositions(int w, int h) {
         long ms = System.currentTimeMillis();
@@ -1220,46 +1245,32 @@ final class SkyView extends View {
             if (mg > lim) continue;
             float low = Math.max(0.55f, Math.min(1f, stA[i] / 12f));           // dimmer near the horizon
             // gentle twinkle: at one frame a second a big swing would look like blinking
-            float tw = 1f - (0.05f + 0.10f * (1f - low)) * (0.5f + 0.5f * (float) Math.sin(t * (0.7f + (i % 5) * 0.23f) + i * 1.7f));
-            float a = Math.max(0.6f, Math.min(1f, (lim - mg) / 1.5f + 0.5f)) * amt * low * tw;
-            float r = dens * 1.3f * Math.max(0.9f, Math.min(2.4f, 1.6f - 0.3f * mg));
-            if (mg < 1.6f) {
-                p.setShader(new RadialGradient(stX[i], stY[i], r * 3.2f, new int[]{alpha(stC[i], 0.4f * a), 0}, null, Shader.TileMode.CLAMP));
-                c.drawCircle(stX[i], stY[i], r * 3.2f, p);
+            float tw = 1f - (0.03f + 0.07f * (1f - low)) * (0.5f + 0.5f * (float) Math.sin(t * (0.45f + (i % 5) * 0.17f) + i * 1.7f));
+            // real stars are points: size barely changes with brightness, brightness does
+            float a = Math.max(0.3f, Math.min(1f, (lim - mg) / 3.2f + 0.3f)) * amt * low * tw;
+            float r = dens * Math.max(0.55f, Math.min(1.25f, 1.12f - 0.17f * mg));
+            if (mg < 0.4f) {   // only the very brightest: a faint soft glow, no spikes
+                p.setShader(new RadialGradient(stX[i], stY[i], r * 2.6f, new int[]{alpha(stC[i], 0.16f * a), 0}, null, Shader.TileMode.CLAMP));
+                c.drawCircle(stX[i], stY[i], r * 2.6f, p);
                 p.setShader(null);
             }
             p.setColor(alpha(stC[i], a));
             c.drawCircle(stX[i], stY[i], r, p);
-            if (mg < 0.6f) {   // the brightest stars get a small 4-point sparkle
-                p.setStyle(Paint.Style.STROKE);
-                p.setStrokeWidth(Math.max(1f, dens * 0.7f));
-                p.setColor(alpha(stC[i], 0.55f * a));
-                float sl = r * 3.6f;
-                c.drawLine(stX[i] - sl, stY[i], stX[i] + sl, stY[i], p);
-                c.drawLine(stX[i], stY[i] - sl, stX[i], stY[i] + sl, p);
-                p.setStyle(Paint.Style.FILL);
-            }
         }
         // planets: only once the Sun is well down
         if (sunPos == null || sunPos.alt < -4) {
             for (int i = 0; i < 4; i++) {
                 if (!plUp[i]) continue;
                 float mg = SkyObjects.PLANET_MAG[i];
-                float r = dens * 1.25f * Math.max(1.8f, Math.min(2.8f, 1.95f - 0.2f * mg));
+                float r = dens * 1.5f;   // a steady bright point, no ring
                 float a = Math.max(0.85f, amount);
-                p.setShader(new RadialGradient(plX[i], plY[i], r * 3.5f,
-                        new int[]{alpha(SkyObjects.PLANET_COLOR[i], 0.65f * a), 0}, null, Shader.TileMode.CLAMP));
-                c.drawCircle(plX[i], plY[i], r * 3.5f, p);
+                p.setShader(new RadialGradient(plX[i], plY[i], r * 3f,
+                        new int[]{alpha(SkyObjects.PLANET_COLOR[i], 0.28f * a), 0}, null, Shader.TileMode.CLAMP));
+                c.drawCircle(plX[i], plY[i], r * 3f, p);
                 p.setShader(null);
                 p.setColor(alpha(SkyObjects.PLANET_COLOR[i], a));
                 c.drawCircle(plX[i], plY[i], r, p);
-                // a thin ring and a tiny name, so a planet can't be mistaken for a star
-                p.setStyle(Paint.Style.STROKE);
-                p.setStrokeWidth(Math.max(1f, dens * 0.6f));
-                p.setColor(alpha(SkyObjects.PLANET_COLOR[i], 0.4f));
-                c.drawCircle(plX[i], plY[i], r * 2.3f, p);
-                p.setStyle(Paint.Style.FILL);
-                label(c, SkyObjects.PLANETS[i], plX[i], plY[i], r * 2.3f, w, SkyObjects.PLANET_COLOR[i]);
+                labelDim(c, SkyObjects.PLANETS[i], plX[i], plY[i], r * 2f, w, SkyObjects.PLANET_COLOR[i]);
             }
         }
         // satellites: only sunlit ones against a dark sky, like the real thing
