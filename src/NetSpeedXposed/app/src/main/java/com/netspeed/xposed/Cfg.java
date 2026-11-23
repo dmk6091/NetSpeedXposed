@@ -85,6 +85,11 @@ final class Cfg {
     /** Low heat: turns off the always-moving animations and the ping (they redraw the bar many times
      *  a second or keep the modem busy). One-shot effects (switch flash, bell) stay. */
     static final String SKY_MOTION = "sky_motion";     static final int D_SKY_MOTION = 1;   // 0 smooth, 1 slow, 2 still
+    static final String FLASH = "flash_warn";          static final boolean D_FLASH = true;
+    static final String FLASH_W = "flash_w";           static final int D_FLASH_W = 6;
+    static final String FLASH_BAT = "flash_bat";       static final int D_FLASH_BAT = 42;
+    static final String FLASH_CPU = "flash_cpu";       static final int D_FLASH_CPU = 70;
+    static final String FLASH_SEC = "flash_sec";       static final int D_FLASH_SEC = 1;   // 0 = 10 s, 1 = 30 s, 2 = 60 s
     static final String LOW_HEAT = "low_heat";         static final boolean D_LOW_HEAT = true;
     static final String LEARN = "learn_towers";        static final boolean D_LEARN = true;
     /** While moving, one GPS fix a minute for tower learning. */

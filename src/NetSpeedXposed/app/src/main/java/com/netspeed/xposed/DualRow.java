@@ -2759,6 +2759,10 @@ final class DualRow {
             rb.nrShare = NrFallback.nrShare();
             String satF = SkyStrip.frame(Sat.text, Sat.live, System.currentTimeMillis());
             boolean satX = satF != null && !satF.equals(Sat.text);     // one of the extra frames: plain grey text
+            String heatW = HeatFlash.update(ctx, watts, batTemp, cpuTemp, rb.charging, ReadableBar.liveText);
+            try { HeatLog.sample(ctx, watts, batTemp, cpuTemp, rb.charging); } catch (Throwable ignored) { }
+            rb.satWarn = heatW != null;
+            if (heatW != null) { satF = heatW; satX = true; }
             rb.satText = satF;
             rb.satLive = !satX && Sat.live;
             rb.satIssS = satX ? "" : Sat.issText;

@@ -143,6 +143,7 @@ public class SettingsActivity extends Activity {
         try {
             UpdateJob.schedule(this);
             DamJob.schedule(this);
+            HeatSnapJob.schedule(getApplicationContext());
             LocationWatch.schedule(this);
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
                 requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 41);
@@ -422,6 +423,7 @@ public class SettingsActivity extends Activity {
         });
         button(c, "Live diagnostics", false, v -> showSatellites());
         button(c, "Heat and power diagnostics", false, v -> showHeatReport());
+        button(c, "Heat and power history (diagnostics graph)", false, v -> showHeatHistory(3 * 3600_000L));
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
             toggle(c, "Speedometer with the net speed", "Small gauge for download speed (1 K/s to 100 M/s); "
@@ -651,6 +653,11 @@ public class SettingsActivity extends Activity {
         toggle(c, "Dim the screen while throttled", "Also caps the brightness (switches to manual brightness while hot, never raises it) and puts your brightness and auto mode back when cooled. Off by default: it can make the screen hard to read in sun", Cfg.THR_DIM, Cfg.D_THR_DIM);
         slider(c, "Brightness while throttled", "% of max", Cfg.THR_DIM_PCT, Cfg.D_THR_DIM_PCT, 20, 90);
         toggle(c, "Heat warning popup", "A Device Too Hot popup (like the Critical Battery one) when the battery or CPU passes the limits below. Comes back after 10 minutes if still hot, closes itself when cooled. Restart SystemUI to apply", Cfg.HEAT, Cfg.D_HEAT);
+        toggle(c, "Flash a warning on the status bar", "When power draw or heat is high, the top strip flashes a red tag with the cause for the time below, then stays quiet for 10 minutes unless it gets clearly worse", Cfg.FLASH, Cfg.D_FLASH);
+        slider(c, "Flash when power reaches", "W", Cfg.FLASH_W, Cfg.D_FLASH_W, 3, 15);
+        slider(c, "Flash when battery reaches", "\u00B0C", Cfg.FLASH_BAT, Cfg.D_FLASH_BAT, 36, 50);
+        slider(c, "Flash when CPU reaches", "\u00B0C", Cfg.FLASH_CPU, Cfg.D_FLASH_CPU, 55, 95);
+        choice(c, "Flash for", Cfg.FLASH_SEC, Cfg.D_FLASH_SEC, new String[]{"10 seconds", "30 seconds", "60 seconds"});
         slider(c, "Warn when battery reaches", "\u00B0C", Cfg.HEAT_BAT, Cfg.D_HEAT_BAT, 38, 50);
         slider(c, "Warn when CPU reaches", "\u00B0C", Cfg.HEAT_CPU, Cfg.D_HEAT_CPU, 60, 100);
         slider(c, "Freeze sky at or below battery % (0 = never)", "%", Cfg.SKY_LOW, Cfg.D_SKY_LOW, 0, 50);
@@ -2371,6 +2378,49 @@ public class SettingsActivity extends Activity {
                 })
                 .setNegativeButton("Close", null).show();
     }
+
+    private void showHeatHistory(final long win) {
+        final android.widget.LinearLayout col = new android.widget.LinearLayout(this);
+        col.setOrientation(android.widget.LinearLayout.VERTICAL);
+        col.setPadding(dp(12), dp(8), dp(12), dp(8));
+        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+        String[] names = {"3 h", "12 h", "24 h", "7 days"};
+        final long[] wins = {3 * 3600_000L, 12 * 3600_000L, 24 * 3600_000L, 7 * 86400_000L};
+        for (int i = 0; i < 4; i++) {
+            final int k = i;
+            android.widget.Button b = new android.widget.Button(this);
+            b.setText(names[i]); b.setAllCaps(false); b.setTextSize(12);
+            b.setEnabled(wins[i] != win);
+            b.setOnClickListener(v -> { dismissHistory(); showHeatHistory(wins[k]); });
+            row.addView(b, new android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        col.addView(row);
+        final HeatGraph g = new HeatGraph(this);
+        col.addView(g);
+        final TextView sum = new TextView(this);
+        sum.setTextSize(12); sum.setTextColor(fg); sum.setText("Reading…"); sum.setPadding(0, dp(8), 0, 0);
+        col.addView(sum);
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(col);
+        histDlg = new AlertDialog.Builder(this).setTitle("Heat and power history").setView(sv).setNegativeButton("Close", null).show();
+        new Thread(() -> {
+            try { HeatLog.snapshot(getApplicationContext()); } catch (Throwable ignored) { }
+            final HeatLog.Data dd = HeatLog.build(getApplicationContext(), win);
+            StringBuilder sb = new StringBuilder();
+            double tot = Math.max(1, dd.totalMah);
+            sb.append(String.format(java.util.Locale.US, "Used in this period: %.0f mAh\n\nBY CAUSE\n", dd.totalMah));
+            for (int k = 0; k < 6; k++) sb.append(String.format(java.util.Locale.US, "  %-18s %5.0f mAh  (%.0f%%)\n", HeatLog.CAT[k], dd.catMah[k], dd.catMah[k] / tot * 100));
+            sb.append("\nBY APP (including system ones)\n");
+            java.util.List<java.util.Map.Entry<String, Double>> es = new java.util.ArrayList<>(dd.apps.entrySet());
+            es.sort((a, b2) -> Double.compare(b2.getValue(), a.getValue()));
+            for (int i = 0; i < Math.min(12, es.size()); i++) sb.append(String.format(java.util.Locale.US, "  %5.0f mAh  (%.0f%%)  %s\n", es.get(i).getValue(), es.get(i).getValue() / tot * 100, es.get(i).getKey()));
+            if (es.isEmpty()) sb.append("  nothing yet: readings are taken every 15 minutes\n");
+            runOnUiThread(() -> { g.setData(dd); sum.setText(sb.toString()); sum.setTypeface(android.graphics.Typeface.MONOSPACE); });
+        }).start();
+    }
+
+    private AlertDialog histDlg;
+    private void dismissHistory() { try { if (histDlg != null) histDlg.dismiss(); } catch (Throwable ignored) { } }
 
     private void showHeatReport() {
         Toast.makeText(this, "Measuring for about 10 seconds…", Toast.LENGTH_SHORT).show();

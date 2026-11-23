@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 final class HeatReport {
     private HeatReport() {}
 
-    private static String sh(String cmd) {
+    static String sh(String cmd) {
         try {
             Process p = new ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start();
             ByteArrayOutputStream bo = new ByteArrayOutputStream();
@@ -29,7 +29,7 @@ final class HeatReport {
         } catch (Throwable t) { return ""; }
     }
 
-    private static double num(String s, double def) { try { return Double.parseDouble(s.trim()); } catch (Throwable t) { return def; } }
+    static double num(String s, double def) { try { return Double.parseDouble(s.trim()); } catch (Throwable t) { return def; } }
 
     /** pid -> {name, ticks}, from one read of every process stat file. */
     private static HashMap<Integer, Object[]> procTicks() {
@@ -197,7 +197,7 @@ final class HeatReport {
         return s.toString();
     }
 
-    private static double grab(String sect, String key) {
+    static double grab(String sect, String key) {
         Matcher m = Pattern.compile("(?m)^    " + key + ": ([0-9.]+)").matcher(sect);
         return m.find() ? num(m.group(1), 0) : 0;
     }

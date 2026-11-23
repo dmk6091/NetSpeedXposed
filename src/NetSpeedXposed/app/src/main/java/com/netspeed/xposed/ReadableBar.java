@@ -125,6 +125,8 @@ final class ReadableBar extends View {
     long used4g = 0, limit4g = 1, used5g = 0;   // today's 4G data and the fallback limit
     int nrShare = -1;               // % of today on 5G, -1 unknown
     String satText = "";
+    /** The heat / power warning is using the top strip: it flashes red and amber. */
+    volatile boolean satWarn;
     /** Where the satellite strip may carry on after the camera hole (x range), 0 when it can't. */
     private float stripC0 = 0, stripC1 = 0;
     boolean satLive;
@@ -460,6 +462,7 @@ final class ReadableBar extends View {
         } catch (Throwable ignored) { layer = -1; }
         try {
             draw2(c);
+            if (satWarn) postInvalidateDelayed(500);
         } catch (Throwable t) {
             // never take System UI down over a drawing slip
         }
@@ -2288,7 +2291,7 @@ final class ReadableBar extends View {
                         maxX = Math.min(maxX, camL);
                         String[] sol0 = solarNow();
                         if (sol0 != null && !solUp && !simUp) maxX -= tw(sol0[0], size, bold) + 8 + tw(sol0[1], size, semi) + 14;
-                        int scol = satLive ? teal() : grey();
+                        int scol = satWarn ? ((System.currentTimeMillis() / 500) % 2 == 0 ? 0xFFFF4A3A : 0xFFFFC94A) : satLive ? teal() : grey();
                         String st = sat;
                         // too long: shorten the satellite's name first, keeping "ISS ..." and the city / country after it
                         String nmS = satNameS, cityS = satCityS;
@@ -5430,7 +5433,8 @@ final class ReadableBar extends View {
                 sat.add(cp(sg("🛰 " + satIssS, satLive ? P_ISS : P_GREY)));
                 String nm2 = (satNameS == null ? "" : satNameS) + (satCityS == null ? "" : satCityS);
                 if (!nm2.isEmpty()) sat.add(cp(sg(nm2, satLive ? P_CSS : P_GREY)));
-            } else sat.add(cp(sg("🛰 " + st, satLive ? P_ISS : P_GREY)));
+            } else if (satWarn) sat.add(cp(sg(st, (System.currentTimeMillis() / 500) % 2 == 0 ? P_RED : P_AMB)));
+            else sat.add(cp(sg("🛰 " + st, satLive ? P_ISS : P_GREY)));
         }
         capsRow(c, x0, yS, h1, 16.5f, sLim - nW - 10, sat);
         capsRow(c, sLim - nW, yS, h1, 16.5f, sLim + 1, nr);
