@@ -66,6 +66,7 @@ public class DayNight extends JobService {
             android.location.Location.distanceBetween(p[0], p[1], HOME_LAT, HOME_LON, d);
             boolean pic = d[0] < HOME_KM * 1000f;
             String kind = pic ? "pic" : "live";
+            boolean sky = mode.equals("night") && sp.getInt("lockSky", 0) == 0;
             boolean moved = false;
             if (!pic && sp.contains("dnLat")) {
                 float[] m = new float[1];
@@ -73,12 +74,15 @@ public class DayNight extends JobService {
                 moved = m[0] > REDRAW_KM * 1000f;
             }
             if (!force && mode.equals(sp.getString("dnMode", "")) && kind.equals(sp.getString("dnKind", "")) && !moved
-                    && (pic || sp.contains("dnLat"))) return "already " + mode + " " + kind;
+                    && (pic || sp.contains("dnLat"))) {
+                if (sky && System.currentTimeMillis() - sp.getLong("skyAt", 0) > 25 * 60_000L) return SkyScene.applyLock(c, p[0], p[1]);
+                return "already " + mode + " " + kind;
+            }
             WallpaperManager wm = WallpaperManager.getInstance(c);
             String msg;
             if (pic) {
                 boolean h = set(c, wm, "home_" + mode, WallpaperManager.FLAG_SYSTEM);
-                boolean l = set(c, wm, "lock_" + mode, WallpaperManager.FLAG_LOCK);
+                boolean l = sky || set(c, wm, "lock_" + mode, WallpaperManager.FLAG_LOCK);
                 if (!h && !l) return "no " + mode + " pictures found";
                 msg = mode + " wallpapers set (Sahyadri pictures)";
             } else {
@@ -86,11 +90,14 @@ public class DayNight extends JobService {
                 Bitmap home = TerrainMaker.draw(c, p[0], p[1], day, 10, WallpaperMaker.sp(c).getBoolean("card", false), null);
                 wm.setBitmap(home, null, true, WallpaperManager.FLAG_SYSTEM);
                 home.recycle();
-                Bitmap lock = TerrainMaker.draw(c, p[0], p[1], day, 9, false, null);
-                wm.setBitmap(lock, null, true, WallpaperManager.FLAG_LOCK);
-                lock.recycle();
+                if (!sky) {
+                    Bitmap lock = TerrainMaker.draw(c, p[0], p[1], day, 9, false, null);
+                    wm.setBitmap(lock, null, true, WallpaperManager.FLAG_LOCK);
+                    lock.recycle();
+                }
                 msg = mode + " live terrain wallpapers set";
             }
+            if (sky) msg += "; " + SkyScene.applyLock(c, p[0], p[1]);
             sp.edit().putString("dnMode", mode).putString("dnKind", kind).putFloat("dnLat", (float) p[0]).putFloat("dnLon", (float) p[1])
                     .putLong("dnAt", System.currentTimeMillis()).apply();
             return msg;

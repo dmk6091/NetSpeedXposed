@@ -2042,6 +2042,7 @@ public class SettingsActivity extends Activity {
         wpChoice(opts, wp, "Map size", "zoom", 1, WallpaperMaker.ZOOM_NAMES);
         wpChoice(opts, wp, "Map style", "style", 0, WallpaperMaker.STYLES);
         wpChoice(opts, wp, "Put it on", "target", 0, WallpaperMaker.TARGETS);
+        wpChoice(opts, wp, "Lock screen at night", "lockSky", 0, new String[]{"Night sky: boy on the hill, real stars, Moon, planets", "Same map as the home screen"});
         wpChoice(opts, wp, "Names on the map", "names", 0, new String[]{"Show peaks, dams, lakes, wetlands, faults", "Hide"});
         wpChoice(opts, wp, "Faults", "faults", 0, new String[]{"Show the fault lines", "Hide"});
         wpChoice(opts, wp, "Nearest coast, fault, forest, wetland", "coast", 0, new String[]{"Show lines with km and direction", "Hide"});
