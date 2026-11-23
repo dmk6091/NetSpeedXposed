@@ -3103,7 +3103,7 @@ final class ReadableBar extends View {
         final float x = colX[di] + 8, cw = colW[di] - 16;
         final boolean showData = dataTodayW(d) > 0 && Cfg.b(Cfg.SH_DATA, Cfg.D_SH_DATA);
         final int q = qUp(d, cw) ? -1 : quality(d);
-        final boolean hIn = heightInRow(d);
+        final boolean hIn = geoOn(d);
         if (!showData && q < 0 && !hIn) return;
         final float cy = foldRowY(d, cw);
         final boolean mo = monthly();
@@ -3120,7 +3120,7 @@ final class ReadableBar extends View {
         float wd = showData ? bw0 + 5 + tw(v4, 20, bold) + tw(" · ", 17, semi) + tw(v5, 20, bold) : 0;
         float wl = showData ? tw("4G ", 15, semi) + tw("5G ", 15, semi) : 0;
         final boolean lab = Cfg.b(Cfg.DATA_LABELS, Cfg.D_DATA_LABELS) && wd + wl + wq <= cw * 1.05f;
-        final float w = wd + (lab ? wl : 0) + wq + (hIn ? (showData || q >= 0 ? 12 : 0) + heightW(d) + (geoOn(d) ? 12 + geoW(d) : 0) : 0);
+        final float w = wd + (lab ? wl : 0) + wq + (hIn ? (showData || q >= 0 ? 12 : 0) + geoW(d) : 0);
         fit(c, x, cy, w, cw, () -> {
             float e = 0;
             if (showData) {
@@ -3150,7 +3150,7 @@ final class ReadableBar extends View {
                 } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
                 e = textB(c, qv, e, 0, 20, 20, bold, qc);
             }
-            if (hIn) { float e2 = heightItem(c, d, e + (q >= 0 ? 12 : 0)); if (geoOn(d)) geoItem(c, d, e2 + 12); }
+            if (hIn) geoItem(c, d, e + (q >= 0 ? 12 : 0));
         });
     }
 
@@ -3238,14 +3238,14 @@ final class ReadableBar extends View {
         if (d.data) return;
         final float x = colX[i] + 8, cw = colW[i] - 16;
         final int q = qUp(d, cw) ? -1 : quality(d);
-        final boolean hIn = heightInRow(d);
+        final boolean hIn = geoOn(d);
         if (q < 0 && !hIn) return;
         final float cy = foldRowY(d, cw);
         final String qv = q + "%";
         final int qc = q >= 70 ? green() : q >= 45 ? yellow() : q >= 25 ? orange() : red();
         final boolean qbox = Cfg.b(Cfg.Q_BOX, Cfg.D_Q_BOX);
         final int dim = fade(grey(), 0.85f);
-        float w = (q >= 0 ? (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold) : 0) + (hIn ? (q >= 0 ? 12 : 0) + heightW(d) + (geoOn(d) ? 12 + geoW(d) : 0) : 0);
+        float w = (q >= 0 ? (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold) : 0) + (hIn ? (q >= 0 ? 12 : 0) + geoW(d) : 0);
         fit(c, x, cy, w, cw, () -> {
             float e = 0;
             if (q >= 0) {
@@ -3261,7 +3261,7 @@ final class ReadableBar extends View {
                 } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
                 e = textB(c, qv, e, 0, 20, 20, bold, qc);
             }
-            if (hIn) { float e2 = heightItem(c, d, e + (q >= 0 ? 12 : 0)); if (geoOn(d)) geoItem(c, d, e2 + 12); }
+            if (hIn) geoItem(c, d, e + (q >= 0 ? 12 : 0));
         });
     }
 
@@ -3710,14 +3710,16 @@ final class ReadableBar extends View {
         boolean chip;   // drawn as dark text on a filled, coloured rounded tag
         boolean extra;  // extra info after a line: drawn with its own room, never widens the box or squeezes the main text
         DSeg(String t, float sz, Typeface f, int col) { this.t = t; this.sz = sz; this.f = f; this.col = col; }
+        SimInfo mtn;    // set: draws the boxed mountain with the tower ground height of this SIM
         DSeg chip() { chip = true; return this; }
         DSeg extra() { extra = true; return this; }
     }
 
-    private float dsW(DSeg sg) { return tw(sg.t, sg.sz, sg.f) + (sg.chip ? 11 : 0); }
+    private float dsW(DSeg sg) { if (sg.mtn != null) return heightW(sg.mtn); return tw(sg.t, sg.sz, sg.f) + (sg.chip ? 11 : 0); }
 
     /** One detail segment at x (inside a fit() block, line centre = 0); returns its end x. */
     private float dsDraw(Canvas c, DSeg sg, float x) {
+        if (sg.mtn != null) return heightItem(c, sg.mtn, x);
         if (!sg.chip) return textB(c, sg.t, x, 0, 22, sg.sz, sg.f, sg.col);
         float w = tw(sg.t, sg.sz, sg.f) + 10;
         gp.setStyle(Paint.Style.FILL);
@@ -3793,6 +3795,12 @@ final class ReadableBar extends View {
                 tl.add(new DSeg(ex, 18, bold, fade(0xFFC8D4E4, roughAll ? 0.9f : 1f)).extra());
                 if (real && !roughAll) tl.add(new DSeg(" mast " + si.mastM + "m", 15, bold, 0xFF78C8FF).chip().extra());
             }
+        }
+        if (tower && fold && heightInRow(si)) {   // tower ground height (boxed mountain) sits after the arrow / clearance on the line above
+            DSeg ms = new DSeg("", 20, bold, g).extra();
+            ms.mtn = si;
+            if (!d.isEmpty()) d.add(new DSeg("  ", 17, bold, g).extra());
+            d.add(ms);
         }
         if (!tl.isEmpty()) L.add(tl);
         return L;
