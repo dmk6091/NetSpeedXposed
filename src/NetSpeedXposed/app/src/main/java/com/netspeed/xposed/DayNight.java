@@ -120,6 +120,14 @@ public class DayNight extends JobService {
             new Thread(() -> {
                 try {
                     long t0 = System.currentTimeMillis();
+                    if (i.getBooleanExtra("sky", false)) {   // test: draw the night sky for a given time (--el ms), save files/sky_prev.jpg
+                        long ms = i.getLongExtra("ms", System.currentTimeMillis());
+                        Bitmap sb = (Bitmap) SkyScene.draw(1080, 2280, lat, lon, ms, 180f)[0];
+                        try (java.io.FileOutputStream fo = new java.io.FileOutputStream(new File(ctx.getFilesDir(), "sky_prev.jpg"))) { sb.compress(Bitmap.CompressFormat.JPEG, 88, fo); }
+                        sb.recycle();
+                        android.util.Log.e("FieldAtlasWp", "sky preview ok");
+                        return;
+                    }
                     TerrainMaker.Info info = new TerrainMaker.Info();
                     Bitmap b = TerrainMaker.draw(ctx, lat, lon, day, z, card, info);
                     try (java.io.FileOutputStream fo = new java.io.FileOutputStream(new File(ctx.getFilesDir(), "live_prev.jpg"))) {
