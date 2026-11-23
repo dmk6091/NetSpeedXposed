@@ -219,7 +219,7 @@ final class WallpaperMaker {
             WallpaperManager wm = WallpaperManager.getInstance(c);
             int tg = sp.getInt("target", 0);
             int flags = tg == 1 ? WallpaperManager.FLAG_SYSTEM : tg == 2 ? WallpaperManager.FLAG_LOCK : (WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK);
-            boolean skyLock = sp.getInt("lockSky", 0) == 0 && !DayNight.isDay(lat, lon) && (flags & WallpaperManager.FLAG_LOCK) != 0;
+            boolean skyLock = sp.getInt("lockSky", 0) == 0 && (flags & WallpaperManager.FLAG_LOCK) != 0;
             if (skyLock) flags &= ~WallpaperManager.FLAG_LOCK;
             if (flags != 0) wm.setBitmap(b, null, true, flags);
             b.recycle();

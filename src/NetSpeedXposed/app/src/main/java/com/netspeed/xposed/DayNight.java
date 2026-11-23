@@ -66,7 +66,7 @@ public class DayNight extends JobService {
             android.location.Location.distanceBetween(p[0], p[1], HOME_LAT, HOME_LON, d);
             boolean pic = d[0] < HOME_KM * 1000f;
             String kind = pic ? "pic" : "live";
-            boolean sky = mode.equals("night") && sp.getInt("lockSky", 0) == 0;
+            boolean sky = sp.getInt("lockSky", 0) == 0;
             boolean moved = false;
             if (!pic && sp.contains("dnLat")) {
                 float[] m = new float[1];
@@ -75,7 +75,7 @@ public class DayNight extends JobService {
             }
             if (!force && mode.equals(sp.getString("dnMode", "")) && kind.equals(sp.getString("dnKind", "")) && !moved
                     && (pic || sp.contains("dnLat"))) {
-                if (sky && System.currentTimeMillis() - sp.getLong("skyAt", 0) > 25 * 60_000L) return SkyScene.applyLock(c, p[0], p[1]);
+                if (sky && System.currentTimeMillis() - sp.getLong("skyAt", 0) > 10 * 60_000L) return SkyScene.applyLock(c, p[0], p[1]);
                 return "already " + mode + " " + kind;
             }
             WallpaperManager wm = WallpaperManager.getInstance(c);

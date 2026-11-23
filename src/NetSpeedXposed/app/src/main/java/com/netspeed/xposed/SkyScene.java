@@ -26,9 +26,10 @@ final class SkyScene {
     private SkyScene() {}
 
     private static final float VW = 1080f, VH = 2280f;
-    private static final float HORIZON = 1450f;      // y of the far ridge line
-    private static final float SPAN = 150f;          // degrees of sky across the screen
-    private static final float TOP_ALT = 78f;        // altitude at the top of the screen
+    private static final float HORIZON = 1800f;      // y of the horizon
+    private static final float SPAN = 160f;          // degrees of sky across the screen (facing south, east on the left)
+    private static final float TOP_ALT = 88f;        // altitude at the top of the screen
+    private static final float AZ0 = 180f;
 
     private static float ky() { return (HORIZON - 60f) / TOP_ALT; }
 
@@ -41,13 +42,12 @@ final class SkyScene {
                 w = r.width(); h = r.height();
             } catch (Throwable ignored) { }
             SharedPreferences sp = WallpaperMaker.sp(c);
-            float az0 = sp.getFloat("skyAz", 180f);
-            Object[] res = draw(w, h, lat, lon, System.currentTimeMillis(), az0);
+            Object[] res = draw(w, h, lat, lon, System.currentTimeMillis(), AZ0);
             Bitmap b = (Bitmap) res[0];
-            sp.edit().putFloat("skyAz", (Float) res[1]).putLong("skyAt", System.currentTimeMillis()).apply();
+            sp.edit().putLong("skyAt", System.currentTimeMillis()).apply();
             WallpaperManager.getInstance(c).setBitmap(b, null, true, WallpaperManager.FLAG_LOCK);
             b.recycle();
-            return "night sky set on the lock screen";
+            return "live sky set on the lock screen";
         } catch (Throwable t) { return "sky failed: " + t; }
     }
 
@@ -73,20 +73,22 @@ final class SkyScene {
             double[] rd = SkyObjects.planetRaDec(i, ms);
             pl[i] = SkyObjects.altAz(rd[0], rd[1], lst, lat);
         }
-        float best = prevAz, bestScore = score(prevAz, st, pl, moon), here = bestScore;
-        for (int a = 0; a < 360; a += 10) {
-            float sc = score(a, st, pl, moon);
-            if (sc > bestScore) { bestScore = sc; best = a; }
-        }
-        final float az0 = bestScore > here * 1.35f ? best : prevAz;
+        final float az0 = AZ0;
 
-        // ---- sky colour
-        float t = dark;
-        int top = blend(0xFF223A63, 0xFF03050F, t), mid = blend(0xFF5A5C86, 0xFF0A1028, t), low = blend(0xFFE0905A, 0xFF1A2146, t);
+        // ---- sky colour from the Sun's height
+        float[] sc = skyColours(sun.alt);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setShader(new LinearGradient(0, 0, 0, HORIZON + 40, new int[]{top, mid, low}, new float[]{0f, 0.6f, 1f}, Shader.TileMode.CLAMP));
+        p.setShader(new LinearGradient(0, 0, 0, HORIZON, new int[]{(int) sc[0], (int) sc[1], (int) sc[2]}, new float[]{0f, 0.62f, 1f}, Shader.TileMode.CLAMP));
         cv.drawRect(0, 0, VW, VH, p);
         p.setShader(null);
+        // glow of the twilight / Sun along the horizon, centred under the Sun
+        if (sun.alt > -14 && sun.alt < 25) {
+            float[] sxy = proj(Math.max(sun.alt, -3), sun.az, az0);
+            float gs = (float) Math.max(0, 1 - Math.abs(sun.alt - 2) / 20.0);
+            Paint hg = new Paint(Paint.ANTI_ALIAS_FLAG);
+            hg.setShader(new RadialGradient(sxy[0], HORIZON, 900, Color.argb((int) (150 * gs), 255, 150, 70), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+            cv.drawRect(0, HORIZON - 900, VW, HORIZON, hg);
+        }
 
         // ---- Milky Way: a very faint band (this is a town sky, so it is only a hint)
         if (dark > 0.3f) {
@@ -113,11 +115,11 @@ final class SkyScene {
         lb.setTextSize(26); lb.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         for (int i = 0; i < ns; i++) {
             double[] aa = st[i];
-            if (aa[0] < 3) continue;
+            if (aa[0] < 0.5) continue;
             double mag = (Double) SkyObjects.STARS[i][3];
             float[] xy = proj(aa[0], aa[1], az0);
             if (xy[0] < 6 || xy[0] > VW - 6 || xy[1] < 6) continue;
-            float vis = dark * (float) Math.min(1, aa[0] / 12.0);       // thinner near the haze at the horizon
+            float vis = dark * (float) Math.min(1, aa[0] / 6.0);        // a little fainter right at the horizon
             if (vis <= 0.02f) continue;
             int col = SkyObjects.color((Character) SkyObjects.STARS[i][4]);
             float r = (float) Math.max(2.0, (4.0 - mag) * 1.5 + 1.0);
@@ -126,7 +128,7 @@ final class SkyScene {
             sp.setShader(null);
             sp.setColor(withAlpha(col, (int) (255 * vis)));
             cv.drawCircle(xy[0], xy[1], r, sp);
-            if (mag < 0.95 && vis > 0.5f) {
+            if (mag < 1.7 && vis > 0.4f) {
                 lb.setColor(withAlpha(0xFFBCD0FF, (int) (190 * vis)));
                 cv.drawText((String) SkyObjects.STARS[i][0], xy[0] + r + 12, xy[1] + 8, lb);
             }
@@ -134,10 +136,10 @@ final class SkyScene {
 
         // ---- planets
         for (int i = 0; i < 4; i++) {
-            if (pl[i][0] < 3) continue;
+            if (pl[i][0] < 0.5) continue;
             float[] xy = proj(pl[i][0], pl[i][1], az0);
             if (xy[0] < 20 || xy[0] > VW - 20 || xy[1] < 20) continue;
-            float vis = Math.max(dark, 0f) * (float) Math.min(1, pl[i][0] / 10.0);
+            float vis = Math.max(dark, 0f) * (float) Math.min(1, pl[i][0] / 5.0);
             if (vis <= 0.05f) continue;
             float r = Math.max(3.5f, (float) (2.2 - SkyObjects.PLANET_MAG[i]) * 2.4f + 2f);
             sp.setShader(new RadialGradient(xy[0], xy[1], r * 4f, withAlpha(SkyObjects.PLANET_COLOR[i], (int) (120 * vis)), Color.TRANSPARENT, Shader.TileMode.CLAMP));
@@ -149,32 +151,25 @@ final class SkyScene {
             cv.drawText(SkyObjects.PLANETS[i], xy[0] + r + 12, xy[1] + 8, lb);
         }
 
-        // ---- Moon (drawn about 3x its true size so the phase can be seen)
-        if (moon.alt > -1) {
-            float[] xy = proj(Math.max(moon.alt, 0.5), moon.az, az0);
-            if (xy[0] > 40 && xy[0] < VW - 40 && xy[1] > 40) drawMoon(cv, xy[0], xy[1], 34f, moon, dark);
+        // ---- Sun
+        if (sun.alt > -2) {
+            float[] xy = proj(Math.max(sun.alt, -1.5), sun.az, az0);
+            drawSun(cv, xy[0], xy[1], (float) sun.alt);
+        }
+        // ---- Moon (drawn about 3x its true size so the phase can be seen), with its glow
+        if (moon.alt > -1.5) {
+            float[] xy = proj(Math.max(moon.alt, -1.0), moon.az, az0);
+            float dim = sun.alt > -6 ? (float) Math.max(0.25, 0.9 + sun.alt / 30.0) * 0.0f + (sun.alt > 3 ? 0.55f : 0.8f) : 1f;
+            if (xy[0] > 30 && xy[0] < VW - 30 && xy[1] > 30) drawMoon(cv, xy[0], xy[1], 34f, moon, dark, dim, (float) moon.alt);
         }
 
-        // ---- ridge, valley with town lights, hillside, boy
-        drawLand(cv, ms, lat, lon);
+        drawLand(cv, sun.alt);
 
         Bitmap out = bm;
         return new Object[]{out, az0};
     }
 
     // ------------------------------------------------------------------ helpers
-
-    private static float score(float az0, double[][] st, double[][] pl, Astro.Moon moon) {
-        float s = 0;
-        for (int i = 0; i < st.length; i++) {
-            if (st[i][0] < 8) continue;
-            if (Math.abs(angDiff(st[i][1], az0)) < SPAN / 2 - 6) s += Math.max(0.2f, 3.6f - (float) (double) (Double) SkyObjects.STARS[i][3]);
-        }
-        for (int i = 0; i < pl.length; i++)
-            if (pl[i][0] > 8 && Math.abs(angDiff(pl[i][1], az0)) < SPAN / 2 - 8) s += 3f;
-        if (moon.alt > 5 && Math.abs(angDiff(moon.az, az0)) < SPAN / 2 - 10) s += 6f;
-        return s;
-    }
 
     private static double angDiff(double a, double b) { double d = (a - b) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return d; }
 
@@ -203,10 +198,17 @@ final class SkyScene {
 
     private static int withAlpha(int c, int a) { return Color.argb(Math.max(0, Math.min(255, a)), Color.red(c), Color.green(c), Color.blue(c)); }
 
-    private static void drawMoon(Canvas cv, float x, float y, float r, Astro.Moon m, float dark) {
+    private static void drawMoon(Canvas cv, float x, float y, float r, Astro.Moon m, float dark, float dim, float alt) {
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setShader(new RadialGradient(x, y, r * 3.6f, Color.argb((int) (90 * Math.max(0.35f, m.illum) ), 220, 225, 245), Color.TRANSPARENT, Shader.TileMode.CLAMP));
-        cv.drawCircle(x, y, r * 3.6f, p);
+        float lum = (float) Math.pow(m.illum, 1.4) * dark * dim;
+        float warm = alt < 12 ? (12 - Math.max(alt, 0)) / 12f : 0f;          // low Moon looks yellower
+        int gr = Color.rgb(225 + (int) (30 * warm), 228 - (int) (30 * warm), 245 - (int) (75 * warm));
+        p.setShader(new RadialGradient(x, y, r * 9f, withAlpha(gr, (int) (46 * lum)), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+        cv.drawCircle(x, y, r * 9f, p);
+        p.setShader(new RadialGradient(x, y, r * 4f, withAlpha(gr, (int) (110 * lum)), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+        cv.drawCircle(x, y, r * 4f, p);
+        p.setShader(new RadialGradient(x, y, r * 1.7f, withAlpha(gr, (int) (190 * lum)), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+        cv.drawCircle(x, y, r * 1.7f, p);
         p.setShader(null);
         cv.save();
         cv.translate(x, y);
@@ -221,70 +223,67 @@ final class SkyScene {
         float rx = Math.max(0.5f, Math.abs(k) * r);
         if (k > 0) lit.arcTo(new RectF(-rx, -r, rx, r), 90, -180); else lit.arcTo(new RectF(-rx, -r, rx, r), 90, 180);
         lit.close();
-        p.setColor(Color.rgb(240, 238, 222));
+        p.setColor(Color.argb((int) (255 * Math.max(0.5f, dim)), 244 , 240 - (int) (22 * (alt < 12 ? (12 - Math.max(alt, 0)) / 12f : 0f)), 222 - (int) (60 * (alt < 12 ? (12 - Math.max(alt, 0)) / 12f : 0f))));
         cv.drawPath(lit, p);
         cv.restore();
     }
 
-    private static void drawLand(Canvas cv, long ms, double lat, double lon) {
+    /** Sky colours {top, middle, horizon} for the Sun's altitude: night, twilight, sunrise, morning, day. */
+    private static float[] skyColours(double alt) {
+        double[] k = {-18, -12, -6, 0, 6, 20, 50};
+        int[][] c = {{0xFF03050F, 0xFF0A1028, 0xFF1A2146}, {0xFF0A1230, 0xFF1B2450, 0xFF3A3A6A}, {0xFF1B2B5A, 0xFF4A4F86, 0xFFD0805A},
+                {0xFF3B5A94, 0xFFB88AA0, 0xFFFFB070}, {0xFF4C80C8, 0xFF8FB4E0, 0xFFFFD2A0}, {0xFF3A78D0, 0xFF7FB0E8, 0xFFC8E0F8}, {0xFF2C6AC8, 0xFF6FA6E6, 0xFFBCDCF8}};
+        float[] out = new float[3];
+        if (alt <= k[0]) { for (int i = 0; i < 3; i++) out[i] = c[0][i]; return out; }
+        if (alt >= k[k.length - 1]) { for (int i = 0; i < 3; i++) out[i] = c[k.length - 1][i]; return out; }
+        for (int j = 0; j < k.length - 1; j++) {
+            if (alt <= k[j + 1]) {
+                float t = (float) ((alt - k[j]) / (k[j + 1] - k[j]));
+                for (int i = 0; i < 3; i++) out[i] = blend(c[j][i], c[j + 1][i], t);
+                return out;
+            }
+        }
+        return out;
+    }
+
+    private static void drawSun(Canvas cv, float x, float y, float alt) {
+        float low = alt < 15 ? (15 - Math.max(alt, 0)) / 15f : 0f;              // redder and bigger near the horizon
+        int core = Color.rgb(255, 250 - (int) (45 * low), 225 - (int) (110 * low));
+        int glow = Color.rgb(255, 215 - (int) (65 * low), 140 - (int) (80 * low));
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        // far ridge
-        Path ridge = new Path();
-        ridge.moveTo(0, VH);
-        for (int x = 0; x <= VW; x += 20) ridge.lineTo(x, HORIZON - (float) (70 * Math.sin(x / 260.0) + 30 * Math.sin(x / 70.0)) + 40);
-        ridge.lineTo(VW, VH); ridge.close();
-        p.setColor(0xFF0A0E1C);
-        cv.drawPath(ridge, p);
-        // valley floor
-        float vy = 1700f;
-        Path valley = new Path();
-        valley.moveTo(0, vy - 40); valley.lineTo(VW, vy); valley.lineTo(VW, VH); valley.lineTo(0, VH); valley.close();
-        p.setColor(0xFF080A14);
-        cv.drawPath(valley, p);
-        // glow of the town
-        Calendar cal = Calendar.getInstance();
-        int hr = cal.get(Calendar.HOUR_OF_DAY);
-        float lit = hr >= 18 || hr < 23 ? 1f : hr < 5 ? 0.55f : 0.8f;     // fewer windows late at night
-        Paint g = new Paint(Paint.ANTI_ALIAS_FLAG);
-        g.setShader(new RadialGradient(VW / 2, vy + 120, 520, Color.argb((int) (95 * lit), 255, 160, 60), Color.TRANSPARENT, Shader.TileMode.CLAMP));
-        cv.drawCircle(VW / 2, vy + 120, 520, g);
-        Random rnd = new Random(7);
-        for (int i = 0; i < 300; i++) {
-            float yy = vy + (float) Math.pow(rnd.nextFloat(), 1.4) * 230f;
-            float xx = (float) (VW * 0.5 + (rnd.nextFloat() - 0.5) * (260 + (yy - vy) * 3.2));
-            boolean on = rnd.nextFloat() < lit;
-            int col = rnd.nextBoolean() ? 0xFFFFD27A : rnd.nextBoolean() ? 0xFFFFE6AA : 0xFFFFBE64;
-            if (!on) continue;
-            p.setColor(col);
-            float r = 2.2f + (yy - vy) / 230f * 2.2f;
-            cv.drawCircle(xx, yy, r, p);
-        }
-        // hillside in front
-        Path fg = new Path();
-        fg.moveTo(0, VH); fg.lineTo(0, 1960f);
-        for (int x = 0; x <= VW; x += 20) fg.lineTo(x, 1960f - x * 0.22f + (float) (10 * Math.sin(x / 40.0)));
-        fg.lineTo(VW, VH); fg.close();
-        p.setColor(0xFF05070A);
-        cv.drawPath(fg, p);
-        // the boy, lying on the slope with his head uphill, looking up
-        float bx = 300f, by = 1960f - 300f * 0.22f - 6f;
-        p.setColor(0xFF020305);
-        cv.drawCircle(bx + 80, by - 31, 21, p);                                   // head
-        Path body = new Path();
-        body.moveTo(bx - 90, by - 8); body.lineTo(bx + 62, by - 34); body.lineTo(bx + 62, by - 10); body.lineTo(bx - 90, by + 4); body.close();
-        cv.drawPath(body, p);
-        Path legs = new Path();
-        legs.moveTo(bx - 90, by - 8); legs.lineTo(bx - 130, by - 20); legs.lineTo(bx - 132, by - 6); legs.lineTo(bx - 90, by + 4); legs.close();
-        cv.drawPath(legs, p);
-        Paint arm = new Paint(Paint.ANTI_ALIAS_FLAG);
-        arm.setColor(0xFF020305); arm.setStrokeWidth(14); arm.setStrokeCap(Paint.Cap.ROUND);
-        cv.drawLine(bx + 10, by - 30, bx + 50, by - 66, arm);                      // arm folded behind the head
-        // grass blades
-        Random gr = new Random(3);
-        arm.setStrokeWidth(3);
-        for (int i = 0; i < 200; i++) {
-            float x = gr.nextFloat() * VW, y = 1995f - x * 0.22f + gr.nextFloat() * 90f;
-            cv.drawLine(x, y, x + gr.nextInt(13) - 6, y - 14 - gr.nextInt(26), arm);
-        }
+        float big = 520 + 260 * low;
+        p.setShader(new RadialGradient(x, y, big, withAlpha(glow, 80), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+        cv.drawCircle(x, y, big, p);
+        p.setShader(new RadialGradient(x, y, 190, withAlpha(glow, 150), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+        cv.drawCircle(x, y, 190, p);
+        p.setShader(null);
+        p.setColor(core);
+        cv.drawCircle(x, y, 40 + 8 * low, p);
+    }
+
+    /** One mountain with a fainter ridge behind it. */
+    private static void drawLand(Canvas cv, double sunAlt) {
+        float day = (float) Math.max(0, Math.min(1, (sunAlt + 8) / 14.0));
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        // far ridge, hazy
+        Path far = new Path();
+        far.moveTo(0, VH);
+        for (int x = 0; x <= VW; x += 20) far.lineTo(x, HORIZON - 38 - (float) (22 * Math.sin(x / 150.0) + 12 * Math.sin(x / 47.0)));
+        far.lineTo(VW, VH); far.close();
+        p.setColor(blend(0xFF0B1022, 0xFF6F7C9E, day));
+        cv.drawPath(far, p);
+        // the mountain: a broad peak to the right of centre with a rugged edge
+        Path m = new Path();
+        m.moveTo(-20, VH);
+        m.lineTo(-20, HORIZON + 10);
+        float[][] pts = {{0, 1790}, {120, 1760}, {230, 1730}, {330, 1700}, {420, 1650}, {500, 1600}, {580, 1545}, {640, 1500}, {690, 1470}, {720, 1480}, {760, 1500},
+                {800, 1540}, {850, 1575}, {910, 1620}, {960, 1650}, {1020, 1700}, {1080, 1730}, {1100, 1760}};
+        for (float[] q : pts) m.lineTo(q[0], q[1] + (float) (8 * Math.sin(q[0] / 13.0)));
+        m.lineTo(VW + 20, HORIZON + 10); m.lineTo(VW + 20, VH); m.close();
+        p.setColor(blend(0xFF05070C, 0xFF2B3550, day));
+        cv.drawPath(m, p);
+        // ground
+        p.setColor(blend(0xFF030407, 0xFF1A2236, day));
+        cv.drawRect(0, HORIZON + 8, VW, VH, p);
     }
 }
