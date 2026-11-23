@@ -4066,7 +4066,7 @@ final class DualRow {
         volatile float wxPres = Float.NaN, wxPresTrend = Float.NaN;   // hPa at sea level, change over the last 3 h
         volatile float wxElev = Float.NaN;
         volatile int wxCloud = -1;
-        volatile float wxFeels = Float.NaN, wxWind = Float.NaN, wxUv = Float.NaN, wxMax = Float.NaN, wxMin = Float.NaN;
+        volatile float wxGust = Float.NaN, wxFeels = Float.NaN, wxWind = Float.NaN, wxUv = Float.NaN, wxMax = Float.NaN, wxMin = Float.NaN;
         volatile int wxHum = -1, wxRain = -1, wxAqi = -1, wxWindDir = -1;
         long wxFetchedAt = 0, wxTriedAt = 0;
         private int lastRq = -1;
@@ -4395,6 +4395,7 @@ final class DualRow {
                 }
                 wxHum = cur.has("relative_humidity_2m") ? (int) Math.round(cur.optDouble("relative_humidity_2m")) : -1;
                 wxWind = (float) cur.optDouble("wind_speed_10m", Double.NaN);
+                wxGust = (float) cur.optDouble("wind_gusts_10m", Double.NaN);
                 wxWindDir = cur.has("wind_direction_10m") ? (int) Math.round(cur.optDouble("wind_direction_10m")) : -1;
                 wxUv = (float) cur.optDouble("uv_index", Double.NaN);
                 wxVis = (float) cur.optDouble("visibility", Double.NaN);          // metres
@@ -4451,6 +4452,21 @@ final class DualRow {
                 wxFetchedAt = now;
                 try { android.provider.Settings.Global.putString(ctx.getContentResolver(), "netspeed_wx_now", wxCloud + "|" + wxAqi + "|" + wxUv + "|" + omTemp); } catch (Throwable ignored) { }
                 try { fetchTide(wxLatLon[0], wxLatLon[1], now); } catch (Throwable ignored) { }
+                try {   // the lock screen picture (made in the app) reads these too: feels, wind, gust, rain, UV by hour, next tide
+                    StringBuilder uvs = new StringBuilder();
+                    float[] us = uvSeries;
+                    if (us != null) for (int i = 0; i < us.length; i++) uvs.append(i > 0 ? "," : "").append(String.format(Locale.US, "%.1f", us[i]));
+                    String tA = "", tB = "";
+                    try {
+                        Tide.Now tn = Tide.now(now);
+                        if (tn != null && Tide.seaKm(wxLatLon[0], wxLatLon[1]) < 150) {
+                            tA = (tn.nextHigh ? "High " : "Low ") + new java.text.SimpleDateFormat("HH:mm", Locale.US).format(new java.util.Date(tn.nextAt));
+                            tB = (tn.place == null ? "" : tn.place + " · ") + String.format(Locale.US, "%.1f m", tn.nextHeight);
+                        }
+                    } catch (Throwable ignored) { }
+                    android.provider.Settings.Global.putString(ctx.getContentResolver(), "netspeed_wx_more",
+                            wxFeels + "|" + wxWind + "|" + wxWindDir + "|" + wxGust + "|" + wxRain + "|" + uvs + "|" + tA + "|" + tB + "|" + wxUv);
+                } catch (Throwable ignored) { }
                 try { fetchWetland(wxLatLon[0], wxLatLon[1], now); } catch (Throwable ignored) { }
                 try { fetchDam(wxLatLon[0], wxLatLon[1], now); } catch (Throwable ignored) { }
                 try { refreshWeatherIcon(); } catch (Throwable ignored) { }

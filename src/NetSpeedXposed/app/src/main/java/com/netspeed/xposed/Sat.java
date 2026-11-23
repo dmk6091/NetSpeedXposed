@@ -58,6 +58,36 @@ final class Sat {
         compute(now, lat, lon);
     }
 
+    /**
+     * For the lock screen picture (runs in this app, not System UI): the space stations (ISS and the Chinese station) that are above
+     * the horizon at time ms. Each: {id, elevation, azimuth, trail elevation x3, trail azimuth x3} (trail = 4, 2, 0 minutes earlier).
+     */
+    static List<double[]> stationsNow(android.content.Context c, double lat, double lon, long ms) {
+        List<double[]> out = new ArrayList<>();
+        try {
+            if (cacheDir == null) cacheDir = c.getCacheDir();
+            if (tles.isEmpty()) { loadCache(); if (tles.isEmpty() && System.currentTimeMillis() - triedAt > 60_000L) { triedAt = System.currentTimeMillis(); fetch(); } }
+            double[] obs = ecef(lat, lon, 0.55);
+            for (Tle t : tles) {
+                boolean css = t.id == 48274 || (t.name != null && (t.name.contains("TIANHE") || t.name.startsWith("CSS")));
+                if (t.id != 25544 && !css) continue;
+                double[] g = propagate(t, ms);
+                if (g == null) continue;
+                double el = elevation(obs, lat, lon, g);
+                if (el < 0) continue;
+                double[] r = new double[9];
+                r[0] = t.id; r[1] = el; r[2] = azimuth(obs, lat, lon, g);
+                for (int k = 0; k < 3; k++) {
+                    double[] g2 = propagate(t, ms - (4 - 2 * k) * 60_000L);
+                    r[3 + k] = g2 == null ? -90 : elevation(obs, lat, lon, g2);
+                    r[6 + k] = g2 == null ? 0 : azimuth(obs, lat, lon, g2);
+                }
+                out.add(r);
+            }
+        } catch (Throwable ignored) { }
+        return out;
+    }
+
     static void compute(long now, double lat, double lon) {
         List<Tle> list = tles;
         java.text.SimpleDateFormat hm = new java.text.SimpleDateFormat("HH:mm:ss", Locale.US);

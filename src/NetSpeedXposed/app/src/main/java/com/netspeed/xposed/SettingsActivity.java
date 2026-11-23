@@ -424,6 +424,7 @@ public class SettingsActivity extends Activity {
         button(c, "Live diagnostics", false, v -> showSatellites());
         button(c, "Heat and power diagnostics", false, v -> showHeatReport());
         button(c, "Heat and power history (diagnostics graph)", false, v -> showHeatHistory(3 * 3600_000L));
+        button(c, "UV guide and sunscreen timer", false, v -> showUvGuide());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
             toggle(c, "Speedometer with the net speed", "Small gauge for download speed (1 K/s to 100 M/s); "
@@ -2417,6 +2418,89 @@ public class SettingsActivity extends Activity {
             if (es.isEmpty()) sb.append("  nothing yet: readings are taken every 15 minutes\n");
             runOnUiThread(() -> { g.setData(dd); sum.setText(sb.toString()); sum.setTypeface(android.graphics.Typeface.MONOSPACE); });
         }).start();
+    }
+
+    private static final float[] UV_MED = {200, 250, 300, 450, 600, 900};   // J/m2 of sunburn-causing UV for skin types I to VI (typical)
+
+    private void showUvGuide() {
+        final android.widget.LinearLayout col = new android.widget.LinearLayout(this);
+        col.setOrientation(android.widget.LinearLayout.VERTICAL);
+        col.setPadding(dp(14), dp(8), dp(14), dp(8));
+        String more = "";
+        try { more = android.provider.Settings.Global.getString(getContentResolver(), "netspeed_wx_more"); } catch (Throwable ignored) { }
+        String[] mo = (more == null ? "" : more).split("\\|", -1);
+        float[] uvh = new float[24];
+        boolean haveSeries = false;
+        try {
+            String[] u = mo[5].split(",");
+            if (u.length >= 24) { for (int i = 0; i < 24; i++) uvh[i] = Float.parseFloat(u[i]); haveSeries = true; }
+        } catch (Throwable ignored) { }
+        float uvNow = Float.NaN;
+        try { uvNow = Float.parseFloat(mo[8]); } catch (Throwable ignored) { }
+        final int skin = Math.max(1, Math.min(6, sp.getInt("uv_skin", 5)));
+        int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        float med = UV_MED[skin - 1];
+
+        TextView head = text("UV right now", 13, sub);
+        col.addView(head);
+        String lvl = Float.isNaN(uvNow) ? "unknown" : uvNow < 3 ? "LOW" : uvNow < 6 ? "MODERATE" : uvNow < 8 ? "HIGH" : uvNow < 11 ? "VERY HIGH" : "EXTREME";
+        TextView big = text(Float.isNaN(uvNow) ? "No reading yet (needs the status bar's weather)" : String.format(java.util.Locale.US, "%.0f  %s", uvNow, lvl), Float.isNaN(uvNow) ? 14 : 30, Float.isNaN(uvNow) ? fg : UvBars.colour(uvNow));
+        col.addView(big);
+        if (!Float.isNaN(uvNow) && uvNow >= 0.5f) {
+            int burn = (int) Math.round(med / (1.5 * uvNow) / 5.0) * 5;
+            int tan = Math.max(5, (int) Math.round(burn * 0.4 / 5.0) * 5);
+            col.addView(text("Unprotected skin (type " + new String[]{"I", "II", "III", "IV", "V", "VI"}[skin - 1] + "): starts to tan in about " + tan + " min and can burn in about " + burn + " min.", 13, fg));
+        }
+        if (haveSeries) {
+            float peak = 0; int ph = 0;
+            for (int h = 6; h < 19; h++) if (uvh[h] > peak) { peak = uvh[h]; ph = h; }
+            col.addView(text(String.format(java.util.Locale.US, "Today's peak: %.1f at %d:00. Hours with UV under 3 (safe): %s", peak, ph, safeHours(uvh)), 13, sub));
+            UvBars bars = new UvBars(this);
+            bars.set(uvh, hour);
+            col.addView(bars);
+            double dose = 0;
+            for (int h = 0; h <= hour && h < 24; h++) dose += uvh[h] * 90.0 * (h == hour ? (java.util.Calendar.getInstance().get(java.util.Calendar.MINUTE) / 60.0) : 1.0);
+            col.addView(text(String.format(java.util.Locale.US, "Sun so far today, if you were outside the whole time with nothing on: %.0f%% of what burns your skin type. Shade, a cap and sunscreen cut this a lot.", dose / med * 100), 12, sub));
+        }
+        col.addView(text("Your skin type (sets the tan and burn times)", 13, sub));
+        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+        final String[] rn = {"I", "II", "III", "IV", "V", "VI"};
+        for (int i = 0; i < 6; i++) {
+            final int k = i + 1;
+            android.widget.Button b = new android.widget.Button(this);
+            b.setText(rn[i]); b.setAllCaps(false); b.setEnabled(k != skin);
+            b.setOnClickListener(v -> { sp.edit().putInt("uv_skin", k).apply(); if (uvDlg != null) uvDlg.dismiss(); showUvGuide(); });
+            row.addView(b, new android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        col.addView(row);
+        col.addView(text("Type V is brown skin that tans easily and rarely burns. The lock screen picture uses this too.", 12, sub));
+        final TextView sun = text("", 14, fg);
+        long at = sp.getLong("uv_applied", 0);
+        sun.setText(at == 0 ? "Sunscreen: not logged. Tap the button when you put it on, and I show when to redo it."
+                : System.currentTimeMillis() - at < 2 * 3600_000L ? "Sunscreen on for " + ((System.currentTimeMillis() - at) / 60000) + " min. Redo in " + (120 - (System.currentTimeMillis() - at) / 60000) + " min."
+                : "Applied " + ((System.currentTimeMillis() - at) / 60000) + " min ago. Time to put more on.");
+        col.addView(sun);
+        android.widget.Button ap = new android.widget.Button(this);
+        ap.setText("I put sunscreen on just now"); ap.setAllCaps(false);
+        ap.setOnClickListener(v -> { sp.edit().putLong("uv_applied", System.currentTimeMillis()).apply(); sun.setText("Logged. Redo in 2 h, or sooner after heavy sweat."); });
+        col.addView(ap);
+        col.addView(text("WHAT TO DO IN THE FIELD", 13, accent));
+        String[] tips = {"SPF 50+ on face, ears, neck and hands: those four get missed", "Cap with a neck flap, UV sunglasses, long sleeves", "Work in shade between 11:00 and 15:00 when you can",
+                "Clouds do not stop UV: up to 80% still gets through", "Concrete, water and metal reflect more UV onto you", "Redo sunscreen every 2 h and after sweating a lot",
+                "UVB burns the surface, UVA goes deeper and ages and darkens skin", "A tan is the skin's injury response, not protection"};
+        for (String t : tips) col.addView(text("• " + t, 13, fg));
+        col.addView(text("Times are standard estimates for each skin type, not medical advice.", 11, sub));
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(col);
+        uvDlg = new AlertDialog.Builder(this).setTitle("UV guide").setView(sv).setNegativeButton("Close", null).show();
+    }
+
+    private AlertDialog uvDlg;
+
+    private static String safeHours(float[] uvh) {
+        StringBuilder sb = new StringBuilder();
+        for (int h = 6; h < 20; h++) if (uvh[h] < 3) { if (sb.length() > 0) sb.append(", "); sb.append(h); }
+        return sb.length() == 0 ? "none" : sb.toString();
     }
 
     private AlertDialog histDlg;

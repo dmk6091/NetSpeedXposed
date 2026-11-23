@@ -26,7 +26,7 @@ final class SkyScene {
     private SkyScene() {}
 
     private static final float VW = 1080f, VH = 2280f;
-    private static final float HORIZON = 1480f;      // y of the horizon
+    private static final float HORIZON = 1350f;      // y of the horizon
     private static final float SPAN = 160f;          // degrees of sky across the screen (facing south, east on the left)
     private static final float TOP_ALT = 88f;        // altitude at the top of the screen
     private static final float AZ0 = 180f;
@@ -35,6 +35,12 @@ final class SkyScene {
     static volatile String wxNow = "";
     /** The nearest named peak for the current picture (from OpenStreetMap, any height); null = use the built-in list. */
     static volatile Object[] peakNow = null;
+    /** More weather for the chips: feels|wind|windDir|gust|rain|uv by hour|tide next|tide place|uv, written by the status bar. */
+    static volatile String wxMore = "";
+    static volatile PlaceInfo.Info placeNow = null;
+    static volatile java.util.List<double[]> stationsNow = new java.util.ArrayList<>();
+    static volatile int skinType = 5;
+    private static double curSunAlt = -90, curSunAz = 180;
 
     private static float ky() { return (HORIZON - 60f) / TOP_ALT; }
 
@@ -49,6 +55,10 @@ final class SkyScene {
             SharedPreferences sp = WallpaperMaker.sp(c);
             try { String v = android.provider.Settings.Global.getString(c.getContentResolver(), "netspeed_wx_now"); wxNow = v == null ? "" : v; } catch (Throwable ignored) { wxNow = ""; }
             try { peakNow = nearbyPeak(c, lat, lon); } catch (Throwable t) { peakNow = null; }
+            try { String v = android.provider.Settings.Global.getString(c.getContentResolver(), "netspeed_wx_more"); wxMore = v == null ? "" : v; } catch (Throwable ignored) { wxMore = ""; }
+            try { placeNow = PlaceInfo.lookup(c, sp, lat, lon); } catch (Throwable t) { placeNow = null; }
+            try { stationsNow = Sat.stationsNow(c, lat, lon, System.currentTimeMillis()); } catch (Throwable t) { stationsNow = new java.util.ArrayList<>(); }
+            try { skinType = Math.max(1, Math.min(6, SettingsProvider.prefs(c).getInt("uv_skin", 5))); } catch (Throwable ignored) { }
             Object[] res = draw(w, h, lat, lon, System.currentTimeMillis(), AZ0);
             Bitmap b = (Bitmap) res[0];
             sp.edit().putLong("skyAt", System.currentTimeMillis()).apply();
@@ -67,6 +77,7 @@ final class SkyScene {
         Astro.Moon moon = Astro.moon(ms, lat, lon);
         double lst = SkyObjects.lst(ms, lon);
         float dark = (float) Math.max(0, Math.min(1, (-sun.alt - 2) / 14.0));   // 0 at dusk, 1 once fully dark
+        curSunAlt = sun.alt; curSunAz = sun.az;
 
         // ---- what is in the sky, to choose which way to look
         int ns = SkyObjects.STARS.length;
@@ -139,7 +150,7 @@ final class SkyScene {
             sp.setShader(null);
             sp.setColor(withAlpha(col, (int) (255 * vis)));
             cv.drawCircle(xy[0], xy[1], r, sp);
-            if (mag < 1.7 && vis > 0.4f) {
+            if (mag < 1.7 && vis > 0.4f && aa[0] >= 28) {
                 lb.setColor(withAlpha(0xFFBCD0FF, (int) (190 * vis)));
                 cv.drawText((String) SkyObjects.STARS[i][0], xy[0] + r + 12, xy[1] + 8, lb);
             }
@@ -150,7 +161,7 @@ final class SkyScene {
             if (pl[i][0] < 0.5) continue;
             float[] xy = proj(pl[i][0], pl[i][1], az0);
             if (xy[0] < 20 || xy[0] > VW - 20 || xy[1] < 20) continue;
-            float vis = Math.max(dark, 0f) * (float) Math.min(1, pl[i][0] / 5.0);
+            float vis = planetVis(i, pl[i][0], dark, sun.alt, wx);
             if (vis <= 0.05f) continue;
             float r = Math.max(3.5f, (float) (2.2 - SkyObjects.PLANET_MAG[i]) * 2.4f + 2f);
             sp.setShader(new RadialGradient(xy[0], xy[1], r * 4f, withAlpha(SkyObjects.PLANET_COLOR[i], (int) (120 * vis)), Color.TRANSPARENT, Shader.TileMode.CLAMP));
@@ -158,10 +169,10 @@ final class SkyScene {
             sp.setShader(null);
             sp.setColor(withAlpha(SkyObjects.PLANET_COLOR[i], (int) (255 * vis)));
             cv.drawCircle(xy[0], xy[1], r, sp);
-            lb.setColor(withAlpha(0xFFFFFFFF, (int) (220 * vis)));
-            cv.drawText(SkyObjects.PLANETS[i], xy[0] + r + 12, xy[1] + 8, lb);
+            if (pl[i][0] >= 28) { lb.setColor(withAlpha(0xFFFFFFFF, (int) (220 * vis))); cv.drawText(SkyObjects.PLANETS[i], xy[0] + r + 12, xy[1] + 8, lb); }
         }
 
+        if (sun.alt > -0.8) drawSunPath(cv, lat, lon, ms, az0);
         // ---- Sun
         if (sun.alt > -2) {
             float[] xy = proj(Math.max(sun.alt, -1.5), sun.az, az0);
@@ -174,6 +185,7 @@ final class SkyScene {
             if (xy[0] > 30 && xy[0] < VW - 30 && xy[1] > 30) drawMoon(cv, xy[0], xy[1], 34f, moon, dark, dim, (float) moon.alt);
         }
 
+        drawHighlights(cv, st, pl, dark, sun.alt, wx, az0);
         drawClouds(cv, wx, sun.alt, ms);
         drawLand(cv, sun.alt, lat, lon, ms, sun, moon, lst, wx);
 
@@ -475,6 +487,15 @@ final class SkyScene {
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setColor(blend(0xFF05070C, 0xFF2B3550, day));
         cv.drawPath(m, p);
+        if (curSunAlt > 0) {          // the side facing the Sun is lit
+            int side = angDiff(curSunAz, az) > 0 ? 1 : -1;
+            float k = (float) Math.min(1, curSunAlt / 20.0);
+            cv.save(); cv.clipPath(m);
+            Paint lp = new Paint(Paint.ANTI_ALIAS_FLAG);
+            lp.setShader(new LinearGradient(x0, 0, x0 + side * 420 * scale, 0, Color.argb((int) (95 * k), 255, 225, 170), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+            cv.drawRect(side > 0 ? x0 : x0 - 460 * scale, top - 40, side > 0 ? x0 + 460 * scale : x0, base, lp);
+            cv.restore();
+        }
         // pencil edge and a few hatch strokes, like a sketch
         Paint ed = new Paint(Paint.ANTI_ALIAS_FLAG);
         ed.setStyle(Paint.Style.STROKE); ed.setStrokeWidth(2.6f); ed.setColor(blend(0xFFB8C6E8, 0xFFE4EAF8, day));
@@ -566,72 +587,231 @@ final class SkyScene {
         return "Next meteor shower: " + name + " in " + bestDays + " days";
     }
 
+    // ------------------------------------------------------------------ chips, highlights, sun path
+
+    private static float planetVis(int i, double alt, float dark, double sunAlt, int[] wx) {
+        if (alt < 0.5) return 0f;
+        float night = dark * (float) Math.min(1, alt / 5.0);
+        float day = (sunAlt > -8 && SkyObjects.PLANET_MAG[i] < -1.5f && alt > 8) ? 0.85f * (1f - 0.8f * cloudFrac(wx)) : 0f;
+        return Math.max(night, day);
+    }
+
+    private static void shadowText(Canvas cv, String t, float x, float y, Paint tp, Paint sd) {
+        sd.setTextAlign(tp.getTextAlign()); sd.setTextSize(tp.getTextSize()); sd.setTypeface(tp.getTypeface());
+        cv.drawText(t, x, y, sd); cv.drawText(t, x, y, tp);
+    }
+
+    private static void drawSunPath(Canvas cv, double lat, double lon, long ms, float az0) {
+        final double la = lat, lo = lon;
+        Calendar mid = Calendar.getInstance(); mid.setTimeInMillis(ms);
+        mid.set(Calendar.HOUR_OF_DAY, 0); mid.set(Calendar.MINUTE, 0); mid.set(Calendar.SECOND, 0); mid.set(Calendar.MILLISECOND, 0);
+        long t0 = mid.getTimeInMillis();
+        Paint dp = new Paint(Paint.ANTI_ALIAS_FLAG); dp.setColor(Color.argb(165, 255, 255, 255));
+        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG), sd = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tp.setTextSize(24); tp.setColor(Color.WHITE); sd.setStyle(Paint.Style.STROKE); sd.setStrokeWidth(5); sd.setColor(0x88000000);
+        float[] first = null, last = null, noonXY = null; long noonT = 0; double maxAlt = -90;
+        for (long t = t0; t < t0 + 86400000L; t += 600_000L) {
+            Astro.Pos q = Astro.sun(t, la, lo);
+            if (q.alt < -0.5) continue;
+            float[] xy = proj(q.alt, q.az, az0);
+            if (xy[0] < 12 || xy[0] > VW - 12 || xy[1] < 12) continue;
+            cv.drawCircle(xy[0], xy[1], 3.2f, dp);
+            if (first == null) first = xy;
+            last = xy;
+            if (q.alt > maxAlt) { maxAlt = q.alt; noonT = t; noonXY = xy; }
+        }
+        Alt sunF = t -> Astro.sun(t, la, lo).alt;
+        long rise = cross(sunF, t0, 5 * 60_000L, 288, -0.83, true), set = cross(sunF, t0, 5 * 60_000L, 288, -0.83, false);
+        tp.setTextAlign(Paint.Align.CENTER);
+        if (noonXY != null) shadowText(cv, "Noon " + hm(noonT), noonXY[0], noonXY[1] - 62, tp, sd);
+        tp.setTextAlign(Paint.Align.LEFT);
+        if (first != null && rise != 0) shadowText(cv, "Rise " + hm(rise), Math.max(16, first[0] - 6), first[1] + 40, tp, sd);
+        tp.setTextAlign(Paint.Align.RIGHT);
+        if (last != null && set != 0) shadowText(cv, "Set " + hm(set), Math.min(VW - 16, last[0] + 6), last[1] + 40, tp, sd);
+    }
+
+    private static final class Hl { float x, y; String name, sub; int col; double order; java.util.ArrayList<float[]> trail; }
+
+    private static void drawHighlights(Canvas cv, double[][] st, double[][] pl, float dark, double sunAlt, int[] wx, float az0) {
+        java.util.ArrayList<Hl> cs = new java.util.ArrayList<>();
+        if (dark > 0.5f) {
+            for (int i = 0; i < st.length; i++) {
+                double mag = (Double) SkyObjects.STARS[i][3];
+                if (mag > 2.3 || st[i][0] < 1 || st[i][0] > 30) continue;
+                float[] xy = proj(st[i][0], st[i][1], az0);
+                if (xy[0] < 50 || xy[0] > VW - 50 || xy[1] < 40) continue;
+                Hl h = new Hl(); h.x = xy[0]; h.y = xy[1]; h.name = (String) SkyObjects.STARS[i][0]; h.col = 0xFFFFFFFF; h.order = mag;
+                h.sub = "star · " + Math.round(st[i][0]) + "° " + compass(st[i][1]);
+                cs.add(h);
+            }
+        }
+        for (int i = 0; i < 4; i++) {
+            if (pl[i][0] > 30 || planetVis(i, pl[i][0], dark, sunAlt, wx) < 0.3f) continue;
+            float[] xy = proj(pl[i][0], pl[i][1], az0);
+            if (xy[0] < 50 || xy[0] > VW - 50 || xy[1] < 40) continue;
+            Hl h = new Hl(); h.x = xy[0]; h.y = xy[1]; h.name = SkyObjects.PLANETS[i]; h.col = 0xFFFFC85A; h.order = SkyObjects.PLANET_MAG[i] - 1;
+            h.sub = "planet · " + Math.round(pl[i][0]) + "° " + compass(pl[i][1]);
+            cs.add(h);
+        }
+        for (double[] r : stationsNow) {
+            if (r[1] < 0.5) continue;
+            float[] xy = proj(r[1], r[2], az0);
+            if (xy[0] < 50 || xy[0] > VW - 50 || xy[1] < 40) continue;
+            Hl h = new Hl(); h.x = xy[0]; h.y = xy[1]; h.name = r[0] == 25544 ? "ISS" : "Tiangong"; h.col = 0xFF5ADCF0; h.order = -20;
+            h.sub = Math.round(r[1]) + "° " + compass(r[2]) + " · up now";
+            h.trail = new java.util.ArrayList<>();
+            for (int k = 0; k < 3; k++) if (r[3 + k] > -2) h.trail.add(proj(Math.max(r[3 + k], 0), r[6 + k], az0));
+            cs.add(h);
+        }
+        cs.sort((a, b) -> Double.compare(a.order, b.order));
+        java.util.ArrayList<RectF> used = new java.util.ArrayList<>();
+        Paint g = new Paint(Paint.ANTI_ALIAS_FLAG), ring = new Paint(Paint.ANTI_ALIAS_FLAG), tp = new Paint(Paint.ANTI_ALIAS_FLAG), sd = new Paint(Paint.ANTI_ALIAS_FLAG), tl = new Paint(Paint.ANTI_ALIAS_FLAG);
+        ring.setStyle(Paint.Style.STROKE); ring.setStrokeWidth(3f);
+        sd.setStyle(Paint.Style.STROKE); sd.setStrokeWidth(5); sd.setColor(0x99000000);
+        tl.setStyle(Paint.Style.STROKE); tl.setStrokeWidth(2.4f);
+        int n = 0;
+        for (Hl h : cs) {
+            if (n >= 6) break;
+            boolean left = h.x > VW - 360;
+            RectF box = new RectF(left ? h.x - 320 : h.x + 30, h.y - 40, left ? h.x - 30 : h.x + 320, h.y + 40);
+            boolean clash = false;
+            for (RectF u : used) if (RectF.intersects(u, box)) { clash = true; break; }
+            if (clash) continue;
+            used.add(box); n++;
+            g.setShader(new RadialGradient(h.x, h.y, 52, withAlpha(h.col, 110), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+            cv.drawCircle(h.x, h.y, 52, g); g.setShader(null);
+            ring.setColor(h.col); cv.drawCircle(h.x, h.y, 27, ring);
+            if (h.trail != null && !h.trail.isEmpty()) {
+                tl.setColor(withAlpha(h.col, 190));
+                float px = h.trail.get(0)[0], py = h.trail.get(0)[1];
+                for (int k = 1; k < h.trail.size(); k++) { cv.drawLine(px, py, h.trail.get(k)[0], h.trail.get(k)[1], tl); px = h.trail.get(k)[0]; py = h.trail.get(k)[1]; }
+                cv.drawLine(px, py, h.x, h.y, tl);
+            }
+            tp.setTextAlign(left ? Paint.Align.RIGHT : Paint.Align.LEFT);
+            float tx = left ? h.x - 38 : h.x + 38;
+            tp.setTextSize(30); tp.setTypeface(Typeface.create("sans-serif", Typeface.BOLD)); tp.setColor(Color.WHITE);
+            shadowText(cv, h.name, tx, h.y - 4, tp, sd);
+            tp.setTextSize(22); tp.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL)); tp.setColor(h.col);
+            shadowText(cv, h.sub, tx, h.y + 26, tp, sd);
+        }
+    }
+
+    private static String compass(double az) {
+        return RegionNames.dir8(Math.cos(Math.toRadians(az)), Math.sin(Math.toRadians(az)));
+    }
+
+    private static final class Chip { final String a, b; final int col; Chip(String a, String b, int col) { this.a = a; this.b = b; this.col = col; } }
+
+    private static float f(String[] a, int i) {
+        try { return i < a.length ? Float.parseFloat(a[i].trim()) : Float.NaN; } catch (Throwable t) { return Float.NaN; }
+    }
+
+    private static String inDur(long now, long t) { long m = Math.max(0, (t - now) / 60000); return m >= 60 ? (m / 60) + "h " + (m % 60) + "m" : m + " min"; }
+
+    private static String windArrow(float from) {
+        String[] a = {"↑", "↗", "→", "↘", "↓", "↙", "←", "↖"};
+        return a[(int) Math.round((((from + 180) % 360 + 360) % 360) / 45.0) % 8];
+    }
+
+    private static void fit(Paint p, String s, float maxW, float min) {
+        while (p.measureText(s) > maxW && p.getTextSize() > min) p.setTextSize(p.getTextSize() - 1);
+    }
+
+    private static void drawChip(Canvas cv, float x, float y, float w, float h, String a, String b, int col) {
+        Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bg.setColor(Color.argb(125, 8, 14, 30)); cv.drawRoundRect(new RectF(x, y, x + w, y + h), 24, 24, bg);
+        bg.setStyle(Paint.Style.STROKE); bg.setStrokeWidth(1.6f); bg.setColor(Color.argb(80, 255, 255, 255)); cv.drawRoundRect(new RectF(x, y, x + w, y + h), 24, 24, bg);
+        Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG); dot.setColor(col);
+        boolean two = b != null && !b.isEmpty();
+        cv.drawCircle(x + 30, y + h / 2f, 11, dot);
+        Paint t = new Paint(Paint.ANTI_ALIAS_FLAG);
+        t.setColor(Color.WHITE); t.setTypeface(Typeface.create("sans-serif", Typeface.BOLD)); t.setTextSize(24);
+        fit(t, a, w - 72, 14);
+        cv.drawText(a, x + 56, two ? y + h * 0.42f : y + h / 2f + 8, t);
+        if (two) {
+            t.setColor(Color.rgb(212, 222, 244)); t.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL)); t.setTextSize(20);
+            fit(t, b, w - 72, 13);
+            cv.drawText(b, x + 56, y + h * 0.80f, t);
+        }
+    }
+
     private static void drawInfo(Canvas cv, float day, double lat, double lon, long ms, Astro.Pos sun, Astro.Moon moon, double lst, int[] wx) {
-        java.util.ArrayList<String> rows = new java.util.ArrayList<>();
         final double la = lat, lo = lon;
         Alt sunF = t -> Astro.sun(t, la, lo).alt;
         Alt moonF = t -> Astro.moon(t, la, lo).alt;
         Calendar mid = Calendar.getInstance(); mid.setTimeInMillis(ms);
         mid.set(Calendar.HOUR_OF_DAY, 0); mid.set(Calendar.MINUTE, 0); mid.set(Calendar.SECOND, 0); mid.set(Calendar.MILLISECOND, 0);
         long t0 = mid.getTimeInMillis(), step5 = 5 * 60_000L;
-        String dirS = RegionNames.dir8(Math.cos(Math.toRadians(sun.az)), Math.sin(Math.toRadians(sun.az)));
         boolean isDay = sun.alt > -0.83;
-        long rise = cross(sunF, t0, step5, 288, -0.83, true), set = cross(sunF, t0, step5, 288, -0.83, false);
-        String w3 = "";
-        if (wx[0] >= 0) w3 += "Cloud " + wx[0] + "%";
-        if (wx[2] >= 0 && isDay) w3 += (w3.isEmpty() ? "" : " · ") + "UV " + String.format(java.util.Locale.US, "%.0f", wx[2] / 10f);
-        if (wx[1] >= 0) w3 += (w3.isEmpty() ? "" : " · ") + "AQI " + wx[1] + " (" + airWord(wx[1]) + ")";
-        if (wx[3] > -90) w3 += (w3.isEmpty() ? "" : " · ") + wx[3] + "°";
+        String[] mo = wxMore.split("\\|", -1);
+        float feels = f(mo, 0), wind = f(mo, 1), wdir = f(mo, 2), gust = f(mo, 3), rain = f(mo, 4);
+        String tideA = mo.length > 6 ? mo[6] : "", tideB = mo.length > 7 ? mo[7] : "";
+        float uv = wx[2] >= 0 ? wx[2] / 10f : Float.NaN;
+
+        java.util.ArrayList<Chip> ch = new java.util.ArrayList<>();
+        // sun
         if (isDay) {
+            long set = cross(sunF, ms, step5, 288, -0.83, false);
             long noon = 0; double mx = -90;
             for (long t = t0; t < t0 + 86400000L; t += step5) { double a = sunF.at(t); if (a > mx) { mx = a; noon = t; } }
             long gold = cross(sunF, noon, step5, 150, 6.0, false);
-            long yRise = cross(sunF, t0 - 86400000L, step5, 288, -0.83, true), ySet = cross(sunF, t0 - 86400000L, step5, 288, -0.83, false);
-            int diff = (int) Math.round(((set - rise) - (ySet - yRise)) / 60000.0);
-            rows.add(String.format(java.util.Locale.US, "Sun %.0f° up · %s (%.0f°) · noon %s", sun.alt, dirS, sun.az, hm(noon)));
-            rows.add("Rise " + hm(rise) + " · set " + hm(set) + " · golden hour " + hm(gold));
-            rows.add("Day " + dayLen(rise, set) + (rise == 0 || set == 0 ? "" : " (" + (diff >= 0 ? "+" : "−") + Math.abs(diff) + " min)"));
-            if (!w3.isEmpty()) rows.add(w3);
-            long mr = cross(moonF, ms - 12 * 3600_000L, 10 * 60_000L, 144, -0.3, true), ms2 = cross(moonF, ms - 12 * 3600_000L, 10 * 60_000L, 144, -0.3, false);
-            rows.add(String.format(java.util.Locale.US, "Moon %.0f%% · rises %s · sets %s", moon.illum * 100, hm(mr), hm(ms2)));
+            ch.add(new Chip(set == 0 ? "Sun is up" : "Sunset in " + inDur(ms, set), gold == 0 ? "" : "golden hour " + hm(gold), 0xFFFFAA46));
         } else {
-            long from = ms - 12 * 3600_000L;
-            long mr = cross(moonF, from, 10 * 60_000L, 144, -0.3, true), mset = cross(moonF, from, 10 * 60_000L, 144, -0.3, false);
-            rows.add(String.format(java.util.Locale.US, "Moon %s %.0f%% · rises %s · sets %s", phaseName(moon.phase, moon.waxing), moon.illum * 100, hm(mr), hm(mset)));
-            StringBuilder pl = new StringBuilder();
-            for (int i = 0; i < 4; i++) {
-                final int pi = i;
-                Alt pf = t -> { double[] rd = SkyObjects.planetRaDec(pi, t); return SkyObjects.altAz(rd[0], rd[1], SkyObjects.lst(t, lo), la)[0]; };
-                double nowAlt = pf.at(ms);
-                long pr = cross(pf, from, 10 * 60_000L, 144, 0, true), ps = cross(pf, from, 10 * 60_000L, 144, 0, false);
-                if (nowAlt > 0 || (pr != 0 && pr > ms - 3600_000L)) {
-                    if (pl.length() > 0) pl.append(" · ");
-                    pl.append(SkyObjects.PLANETS[i]).append(nowAlt > 0 ? " sets " + hm(ps) : " rises " + hm(pr));
-                }
-            }
-            if (pl.length() > 0) rows.add(pl.toString());
-            long fromN = ms - 8 * 3600_000L;
-            String dk;
-            if (sun.alt <= -18) dk = "Fully dark until " + hm(cross(sunF, ms, step5, 200, -18, true));
-            else dk = "Fully dark from " + hm(cross(sunF, ms, step5, 288, -18, false));
-            String sky = wx[0] < 0 ? "" : wx[0] < 25 ? " · stars clear" : wx[0] < 70 ? " · stars partly hidden" : " · stars hidden";
-            rows.add(dk + (wx[0] >= 0 ? " · clouds " + wx[0] + "%" : "") + sky);
-            rows.add(shower(ms));
-            if (!w3.isEmpty() && wx[1] >= 0) rows.add(w3);
+            long rise = cross(sunF, ms, step5, 288, -0.83, true);
+            ch.add(new Chip(rise == 0 ? "Sun is down" : "Sunrise in " + inDur(ms, rise), rise == 0 ? "" : "rise " + hm(rise), 0xFFFFAA46));
         }
-        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG), sd = new Paint(Paint.ANTI_ALIAS_FLAG);
-        tp.setTextSize(29); tp.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
-        tp.setColor(0xFFE8EEFF);
-        sd.set(tp); sd.setStyle(Paint.Style.STROKE); sd.setStrokeWidth(5); sd.setColor(0x99000000);
-        // centred, inside the safe margins, above the system charging text near the bottom
-        tp.setTextAlign(Paint.Align.CENTER); sd.setTextAlign(Paint.Align.CENTER);
-        float y = HORIZON + 130f;
-        for (String r : rows) {
-            float w = tp.measureText(r), k = w > 820f ? 820f / w : 1f;
-            cv.save(); cv.scale(k, 1f, VW / 2f, y);
-            cv.drawText(r, VW / 2f, y, sd); cv.drawText(r, VW / 2f, y, tp);
-            cv.restore();
-            y += 44;
+        // moon, with its distance in AU
+        long from = ms - 12 * 3600_000L;
+        long mr = cross(moonF, from, 10 * 60_000L, 144, -0.3, true), mset = cross(moonF, from, 10 * 60_000L, 144, -0.3, false);
+        boolean moonUp = moon.alt > -0.3;
+        ch.add(new Chip(String.format(java.util.Locale.US, "Moon %.4f AU", moon.distKm / 149597870.7),
+                String.format(java.util.Locale.US, "%.0f%% %s · %s", moon.illum * 100, moon.waxing ? "waxing" : "waning", moonUp ? "sets " + hm(mset) : "rises " + hm(mr)), 0xFFEBE6C8));
+        // rain
+        if (!Float.isNaN(rain) && rain >= 0)
+            ch.add(rain < 20 ? new Chip("No rain for 3 h", wx[0] >= 0 ? "clouds " + wx[0] + "%" : "", 0xFF6EAAFF)
+                    : new Chip("Rain chance " + Math.round(rain) + "%", "next 3 h" + (wx[0] >= 0 ? " · clouds " + wx[0] + "%" : ""), 0xFF6EAAFF));
+        boolean windChip = !Float.isNaN(feels) && !Float.isNaN(wind);
+        Chip windC = windChip ? new Chip(String.format(java.util.Locale.US, "Feels %.0f° · wind %.0f km/h %s", feels, wind, Float.isNaN(wdir) ? "" : windArrow(wdir)),
+                Float.isNaN(gust) ? "" : String.format(java.util.Locale.US, "gust %.0f km/h", gust), 0xFFFF825A) : null;
+        Chip airC = wx[1] >= 0 ? new Chip("AQI " + wx[1], airWord(wx[1]), wx[1] <= 50 ? 0xFF78D282 : wx[1] <= 100 ? 0xFF96D25A : wx[1] <= 150 ? 0xFFFFA03C : 0xFFFF5A46) : null;
+        if (isDay) {
+            if (sun.alt > 3) ch.add(new Chip(String.format(java.util.Locale.US, "Shadow %s your height", 1 / Math.tan(Math.toRadians(sun.alt)) > 9 ? "very long vs" : String.format(java.util.Locale.US, "%.1f×", 1 / Math.tan(Math.toRadians(sun.alt)))),
+                    String.format(java.util.Locale.US, "sun %.0f° up", sun.alt), 0xFFBEAA82));
+            if (windC != null) ch.add(windC);
+            if (airC != null) ch.add(airC);
+        } else {
+            String sky = wx[0] < 0 ? null : wx[0] < 25 ? "Stars clear" : wx[0] < 70 ? "Stars partly hidden" : "Stars hidden";
+            String dk = sun.alt <= -18 ? "dark until " + hm(cross(sunF, ms, step5, 200, -18, true)) : "fully dark from " + hm(cross(sunF, ms, step5, 288, -18, false));
+            if (sky != null) ch.add(new Chip(sky, dk, 0xFFAA96FF));
+            if (airC != null) ch.add(airC);
+            if (!tideA.isEmpty()) ch.add(new Chip("Tide " + tideA, tideB, 0xFF50C8DC)); else if (windC != null) ch.add(windC);
         }
+
+        // layout, built upwards from the bottom so nothing runs under the system's charging line
+        float placeY = 1776f, chipH = 76f, row = 84f;
+        PlaceInfo.Info pi = placeNow;
+        boolean hasPlace = pi != null && !pi.where().isEmpty();
+        float bottom = hasPlace ? placeY : placeY + chipH;
+        boolean hasUv = isDay && !Float.isNaN(uv) && uv >= 1f;
+        float uvY = (hasPlace ? placeY : placeY + chipH) - row - 8;
+        float endY = (hasUv ? uvY : bottom) - 8;
+        int rows = (ch.size() + 1) / 2;
+        float y0 = endY - rows * row;
+        for (int i = 0; i < ch.size(); i++) {
+            Chip c = ch.get(i);
+            drawChip(cv, 48 + (i % 2) * 500, y0 + (i / 2) * row, 484, chipH, c.a, c.b, c.col);
+        }
+        if (hasUv) {
+            int lv = uv < 3 ? 0 : uv < 6 ? 1 : uv < 8 ? 2 : uv < 11 ? 3 : 4;
+            String[] nm = {"LOW", "MODERATE", "HIGH", "VERY HIGH", "EXTREME"};
+            int[] cl = {0xFF78D282, 0xFFF0D246, 0xFFFF9632, 0xFFEB3C32, 0xFFAA3CC8};
+            String[] adv = {"No protection needed for a short time outside", "SPF 30 if out over 30 min · a cap helps",
+                    "SPF 30+, cap, sunglasses · shade 11 to 3", "SPF 50, cap + neck cover, redo every 2 h · shade 11 to 3", "Avoid midday sun · SPF 50+, cover up"};
+            float[] med = {200, 250, 300, 450, 600, 900};
+            int burn = (int) Math.round(med[skinType - 1] / (1.5 * Math.max(0.5, uv)) / 5.0) * 5, tan = Math.max(5, (int) Math.round(burn * 0.4 / 5.0) * 5);
+            String a = lv == 0 ? String.format(java.util.Locale.US, "UV %.0f · LOW", uv) : String.format(java.util.Locale.US, "UV %.0f · %s · tans in ~%d min", uv, nm[lv], tan);
+            drawChip(cv, 48, uvY, 984, chipH + 8, a, adv[lv], cl[lv]);
+        }
+        if (hasPlace) drawChip(cv, 48, placeY, 984, chipH, pi.where(), pi.ground(), 0xFF78B45A);
     }
 }
