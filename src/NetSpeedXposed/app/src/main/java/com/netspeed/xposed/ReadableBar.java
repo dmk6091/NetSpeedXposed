@@ -3744,7 +3744,7 @@ final class ReadableBar extends View {
         }
         if (si.los >= 0) {
             boolean clr = si.los <= 2;
-            tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 22, true, clr ? (est ? 0xFFB4E6D2 : 0xFF96F0C8) : orange()));
+            tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 22, bold, clr ? (est ? 0xFFB4E6D2 : 0xFF96F0C8) : orange()));
         }
         // geometry to the antenna: angle up, radio horizon, how clear the path is; small and faint, in its own room after the line
         if (tower && fold) {
