@@ -711,7 +711,10 @@ final class SkyView extends View {
 
         // light on power: rain / snow / cloud motion at 10 frames a second; a still night sky (stars, planets,
         // satellites) once a second; nothing moving -> every 5 s
-        long next = lowBatt() ? 30000 : !ScreenState.on() ? 3000 : wxMoving ? 100 : moving ? 1000 : 5000;
+        int sm = Cfg.i(Cfg.SKY_MOTION, Cfg.D_SKY_MOTION);
+        if (sm == 0 && Cfg.b(Cfg.LOW_HEAT, Cfg.D_LOW_HEAT)) sm = 1;                // low heat mode never runs the sky at full speed
+        long wxMs = sm == 0 ? 100 : sm == 1 ? 500 : 5000;                           // smooth 10/s, slow 2/s, still
+        long next = lowBatt() ? 30000 : !ScreenState.on() ? 3000 : !isShown() ? 5000 : wxMoving ? wxMs : moving ? (sm == 2 ? 5000 : 1000) : 5000;
         postInvalidateDelayed(next);
     }
 

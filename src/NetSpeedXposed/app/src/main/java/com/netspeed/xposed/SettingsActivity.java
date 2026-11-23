@@ -421,6 +421,7 @@ public class SettingsActivity extends Activity {
             }).start();
         });
         button(c, "Live diagnostics", false, v -> showSatellites());
+        button(c, "Heat and power diagnostics", false, v -> showHeatReport());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
             toggle(c, "Speedometer with the net speed", "Small gauge for download speed (1 K/s to 100 M/s); "
@@ -443,6 +444,7 @@ public class SettingsActivity extends Activity {
         toggle(c, "Low heat mode", "Turns off the always-moving animations (heat pulse, shine, moving "
                 + "arrows, charging flow) and the ping dot, so the status bar isn't redrawn many times a "
                 + "second. Recommended", Cfg.LOW_HEAT, Cfg.D_LOW_HEAT);
+        choice(c, "Sky motion", Cfg.SKY_MOTION, Cfg.D_SKY_MOTION, new String[]{"Smooth: clouds and rain move 10 times a second (uses the most power)", "Slow: 2 times a second (recommended)", "Still: the sky holds still and changes every 5 seconds"});
         toggle(c, "Animation: heat warning", "Warm or hot temperatures pulse orange / red (cool ones stay calm)",
                 Cfg.ANIM_HEAT, Cfg.D_ANIM_HEAT);
         if (OLD_LAYOUTS) {
@@ -2368,6 +2370,25 @@ public class SettingsActivity extends Activity {
                     for (java.util.Map<String, String> x : sims) if (!x.get("slot").equals(cur.get("slot"))) { showSimGuide(Integer.parseInt(x.get("slot"))); return; }
                 })
                 .setNegativeButton("Close", null).show();
+    }
+
+    private void showHeatReport() {
+        Toast.makeText(this, "Measuring for about 10 seconds…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            String live = "";
+            try { live = String.valueOf(android.provider.Settings.Global.getString(getContentResolver(), "netspeed_info")); } catch (Throwable ignored) { }
+            final String rep = HeatReport.build(getApplicationContext(), live);
+            runOnUiThread(() -> {
+                TextView tv = new TextView(this);
+                tv.setText(rep); tv.setTextSize(12); tv.setTextColor(fg); tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+                tv.setPadding(dp(16), dp(8), dp(16), dp(8)); tv.setTextIsSelectable(true);
+                android.widget.ScrollView sv = new android.widget.ScrollView(this); sv.addView(tv);
+                new AlertDialog.Builder(this).setTitle("Heat and power").setView(sv)
+                        .setPositiveButton("Measure again", (d, w) -> showHeatReport())
+                        .setNeutralButton("Copy", (d, w) -> { ((android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(android.content.ClipData.newPlainText("heat", rep)); Toast.makeText(this, "Copied", Toast.LENGTH_SHORT).show(); })
+                        .setNegativeButton("Close", null).show();
+            });
+        }).start();
     }
 
     /** The topic list; tap one to see only its diagnostics. */
