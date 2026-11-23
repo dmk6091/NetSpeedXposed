@@ -120,6 +120,7 @@ public class DayNight extends JobService {
             new Thread(() -> {
                 try {
                     long t0 = System.currentTimeMillis();
+                    if (i.getBooleanExtra("applysky", false)) { android.util.Log.e("FieldAtlasWp", SkyScene.applyLock(ctx, lat, lon)); return; }
                     if (i.getBooleanExtra("sky", false)) {   // test: draw the night sky for a given time (--el ms), save files/sky_prev.jpg
                         long ms = i.getLongExtra("ms", System.currentTimeMillis());
                         Bitmap sb = (Bitmap) SkyScene.draw(1080, 2280, lat, lon, ms, 180f)[0];
