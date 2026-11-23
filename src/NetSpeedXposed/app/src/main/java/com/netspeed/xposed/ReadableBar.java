@@ -3497,6 +3497,7 @@ final class ReadableBar extends View {
     private float periodBoxW() { return tw(monthly() ? "M" : "D", 15, bold) + 10 + 4; }
 
     private float dataTodayW(SimInfo si) {
+        if (true) return 0;   // data-used counters removed from the bar: they over-counted on this phone
         if (!si.data || !si.inService) return 0;
         return periodBoxW() + tw("4G ", 15, semi) + tw(dataTodayText(si, true), 20, bold)
                 + tw(" · ", 17, semi) + tw("5G ", 15, semi) + tw(dataTodayText(si, false), 20, bold);
@@ -5773,7 +5774,7 @@ final class ReadableBar extends View {
         }
         // data used today (data SIM)
         float dy = t + 140;
-        if (si.data && live) {
+        if (false && si.data && live) {
             boolean mo = monthly();
             float ex = cap(c, ix, dy, 20, 13.5f, cp(sg(mo ? "M" : "D", mo ? 0xFFB388FF : 0xFF4DD0E1, INK)));
             float f4 = (float) used4g / Math.max(1, limit4g);

@@ -364,7 +364,6 @@ public class SettingsActivity extends Activity {
         toggle(c, "Next alarm", "Time of the next alarm", Cfg.SH_ALARM, Cfg.D_SH_ALARM);
         toggle(c, "Notification count", "Bell with the number of notifications", Cfg.SH_NOTIF, Cfg.D_SH_NOTIF);
         toggle(c, "Bluetooth device battery", "Battery % of the connected Bluetooth device", Cfg.SH_BTBAT, Cfg.D_SH_BTBAT);
-        toggle(c, "Data used today", "Data used today (or this month) under each SIM box", Cfg.SH_DATA, Cfg.D_SH_DATA);
         toggle(c, "Own row 2 icons", "Bell with the notification count (silent ones in brackets), Bluetooth "
                 + "devices (W watch / H headphones / P phone + battery + codec), vibrate / silent / DND, next alarm, "
                 + "Wi-Fi router (generation, band, dBm, link speed, activity) and a small tray for the rest. "
