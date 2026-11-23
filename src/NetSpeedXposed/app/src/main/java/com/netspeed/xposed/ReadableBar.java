@@ -3744,7 +3744,7 @@ final class ReadableBar extends View {
         }
         if (si.los >= 0) {
             boolean clr = si.los <= 2;
-            tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 20, bold, est ? g : clr ? green() : orange()));
+            tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 22, true, clr ? (est ? 0xFFB4E6D2 : 0xFF96F0C8) : orange()));
         }
         // geometry to the antenna: angle up, radio horizon, how clear the path is; small and faint, in its own room after the line
         if (tower && fold) {
@@ -3763,7 +3763,7 @@ final class ReadableBar extends View {
                 final String t0 = roughAll ? "~" : "";
                 String ex = t0 + "\u2220" + (ang >= 0 ? "+" : "\u2212") + Math.abs(ang) + "\u00b0 \u00b7 " + t0 + TowerElev.HORIZON_KM + " km"
                         + (si.clearPct >= 0 ? " \u00b7 " + t0 + si.clearPct + "%" : "");
-                tl.add(new DSeg(ex, 17, bold, fade(grey(), roughAll ? 0.9f : 1f)).extra());
+                tl.add(new DSeg(ex, 18, bold, fade(0xFFC8D4E4, roughAll ? 0.9f : 1f)).extra());
             }
         }
         if (!tl.isEmpty()) L.add(tl);
