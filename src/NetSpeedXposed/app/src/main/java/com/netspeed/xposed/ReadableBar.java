@@ -76,6 +76,8 @@ final class ReadableBar extends View {
         String site;                          // site-sector id, null unknown
         String towerH;                        // tower ground height vs you: "+14 m", null unknown
         int angle = Integer.MIN_VALUE;        // degrees up (+) / down (-) to the antenna, MIN_VALUE unknown
+        int mastM = -1;                       // real mast height from OpenStreetMap, -1 unknown (30 m assumed)
+        int horizonKm = -1;                   // radio horizon with the real mast, -1 use the assumed one
         int clearPct = -1;                    // Fresnel clearance %, -1 unknown
         boolean newCell;                      // moved to a different tower in the last 2 minutes: small blue "N" box on the signal line
         boolean towerEst;                     // tower position only a rough guess: tower line drawn grey with a ~
@@ -3755,15 +3757,17 @@ final class ReadableBar extends View {
                 if (dm >= 30) {
                     double dh = 0;
                     try { if (si.towerH != null) dh = Integer.parseInt(si.towerH.replace(" m", "").replace("\u2212", "-").replace("+", "")); } catch (Throwable ignored) { }
-                    ang = (int) Math.round(Math.toDegrees(Math.atan2(28.5 + dh, dm)));
+                    ang = (int) Math.round(Math.toDegrees(Math.atan2((si.mastM > 0 ? si.mastM - 1.5 : 28.5) + dh, dm)));
                     roughAll = true;
                 }
             }
             if (ang != Integer.MIN_VALUE) {
-                final String t0 = roughAll ? "~" : "";
-                String ex = t0 + "\u2220" + (ang >= 0 ? "+" : "\u2212") + Math.abs(ang) + "\u00b0 \u00b7 " + t0 + TowerElev.HORIZON_KM + " km"
+                final boolean real = si.mastM > 0 && si.horizonKm > 0;
+                final String t0 = roughAll || !real ? "~" : "";
+                String ex = t0 + "\u2220" + (ang >= 0 ? "+" : "\u2212") + Math.abs(ang) + "\u00b0 \u00b7 " + t0 + (real ? si.horizonKm : TowerElev.HORIZON_KM) + " km"
                         + (si.clearPct >= 0 ? " \u00b7 " + t0 + si.clearPct + "%" : "");
                 tl.add(new DSeg(ex, 18, bold, fade(0xFFC8D4E4, roughAll ? 0.9f : 1f)).extra());
+                if (real && !roughAll) tl.add(new DSeg(" mast " + si.mastM + "m", 15, bold, 0xFF78C8FF).chip().extra());
             }
         }
         if (!tl.isEmpty()) L.add(tl);

@@ -23,6 +23,11 @@ final class TowerElev {
     /** Radio horizon in km between your phone and an antenna on the assumed mast (4/3-earth). */
     static final int HORIZON_KM = (int) Math.round((Math.sqrt(2 * 8.5e6 * 30) + Math.sqrt(2 * 8.5e6 * 1.5)) / 1000.0);
     private static final double YOU_H = 1.5, MAST_H = 30, REFF = 8.5e6;   // assumed antenna heights, 4/3-earth radius
+    /** SIM slot -> real mast height (m) listed in OpenStreetMap for the serving tower; absent = unknown, the 30 m guess is used. */
+    static final Map<Integer, Integer> MAST = new ConcurrentHashMap<>();
+    /** SIM slot -> radio horizon (km) using the real mast height; absent = use HORIZON_KM. */
+    static final Map<Integer, Integer> HKM = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> OSM_H = new ConcurrentHashMap<>();   // tower position -> OSM height, 0 = none listed
     private static String lastKey = "";
     private static long lastAt, tried;
     /** Last outcome, shown in Live diagnostics. */
@@ -56,8 +61,34 @@ final class TowerElev {
             lastKey = key.toString();
             lastAt = now;
             why = "ok " + DELTA;
+            for (TowerMap.Pt t : ts) {
+                MAST.remove(t.slot); HKM.remove(t.slot);
+                if (t.rough) continue;
+                int h = osmHeight(t.lat, t.lon);
+                if (h > 0) { MAST.put(t.slot, h); HKM.put(t.slot, (int) Math.round((Math.sqrt(2 * REFF * h) + Math.sqrt(2 * REFF * YOU_H)) / 1000.0)); }
+            }
             try { los(ts, sn.meLat, sn.meLon, me, a); } catch (Throwable t) { why += " (los failed: " + t + ")"; }
         } catch (Throwable t) { why = "failed: " + t; }
+    }
+
+    /** Height (m) of a communication mast within 60 m of the point, from OpenStreetMap; 0 when none lists one or the lookup failed. */
+    private static int osmHeight(double lat, double lon) {
+        String k = String.format(Locale.US, "%.4f,%.4f", lat, lon);
+        Integer c = OSM_H.get(k);
+        if (c != null) return c;
+        try {
+            String at = String.format(Locale.US, "(around:60,%.6f,%.6f)", lat, lon);
+            String q = "[out:json][timeout:20];(node" + at + "[\"height\"][\"man_made\"~\"mast|tower\"];node" + at + "[\"height\"][\"tower:type\"=\"communication\"];way" + at + "[\"height\"][\"man_made\"~\"mast|tower\"];);out tags;";
+            org.json.JSONArray el = new org.json.JSONObject(Geo.overpass(q, 25_000)).getJSONArray("elements");
+            int best = 0;
+            for (int i = 0; i < el.length(); i++) {
+                String hv = el.getJSONObject(i).getJSONObject("tags").optString("height", "");
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("([0-9]+(?:\\.[0-9]+)?)").matcher(hv);
+                if (m.find()) { int v = (int) Math.round(Double.parseDouble(m.group(1))); if (v >= 5 && v <= 400) best = Math.max(best, v); }
+            }
+            OSM_H.put(k, best);
+            return best;
+        } catch (Throwable e) { return 0; }   // not cached: try again next time
     }
 
     /** Line of sight to each tower: sample 10 ground heights along the straight line and see what rises above it. */
@@ -76,7 +107,7 @@ final class TowerElev {
             TowerMap.Pt t = ts.get(i);
             double dLat = Math.toRadians(t.lat - meLat), dLon = Math.toRadians(t.lon - meLon) * Math.cos(Math.toRadians(meLat));
             double dist = 6371000 * Math.sqrt(dLat * dLat + dLon * dLon);
-            double a0 = meElev + YOU_H, a1 = tw.getDouble(i + 1) + MAST_H, worst = -1e9, tightest = 1e9;
+            double a0 = meElev + YOU_H, a1 = tw.getDouble(i + 1) + (MAST.containsKey(t.slot) ? MAST.get(t.slot) : MAST_H), worst = -1e9, tightest = 1e9;
             double dKm = dist / 1000.0;
             for (int k = 1; k <= N; k++) {
                 double f = k / (N + 1.0);
