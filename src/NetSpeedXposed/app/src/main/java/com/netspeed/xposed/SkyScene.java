@@ -33,6 +33,8 @@ final class SkyScene {
 
     /** "cloud%|aqi|uv|temp" written by the status bar every weather update; empty if unknown. */
     static volatile String wxNow = "";
+    /** The nearest named peak for the current picture (from OpenStreetMap, any height); null = use the built-in list. */
+    static volatile Object[] peakNow = null;
 
     private static float ky() { return (HORIZON - 60f) / TOP_ALT; }
 
@@ -46,6 +48,7 @@ final class SkyScene {
             } catch (Throwable ignored) { }
             SharedPreferences sp = WallpaperMaker.sp(c);
             try { String v = android.provider.Settings.Global.getString(c.getContentResolver(), "netspeed_wx_now"); wxNow = v == null ? "" : v; } catch (Throwable ignored) { wxNow = ""; }
+            try { peakNow = nearbyPeak(c, lat, lon); } catch (Throwable t) { peakNow = null; }
             Object[] res = draw(w, h, lat, lon, System.currentTimeMillis(), AZ0);
             Bitmap b = (Bitmap) res[0];
             sp.edit().putLong("skyAt", System.currentTimeMillis()).apply();
@@ -380,6 +383,60 @@ final class SkyScene {
             {"Mahabaleshwar", "dome", ""},
     };
 
+    /**
+     * The nearest named peak of any height within 20 km, from OpenStreetMap (kept for two weeks, or until you have moved 4 km);
+     * the built-in list of big peaks is the fallback and also competes if it is nearer.
+     */
+    static Object[] nearbyPeak(Context c, double lat, double lon) {
+        SharedPreferences sp = WallpaperMaker.sp(c);
+        Object[] built = nearestPeak(lat, lon);
+        Object[] osm = null;
+        float[] mv = new float[1];
+        boolean have = sp.contains("npLat");
+        if (have) android.location.Location.distanceBetween(sp.getFloat("npLat", 0), sp.getFloat("npLon", 0), lat, lon, mv);
+        boolean fresh = have && mv[0] < 4000f && System.currentTimeMillis() - sp.getLong("npAt", 0) < 14L * 86400_000L;
+        if (fresh) {
+            String nm = sp.getString("npName", "");
+            if (!nm.isEmpty()) osm = peakInfo(nm, sp.getFloat("npLa", 0), sp.getFloat("npLo", 0), sp.getInt("npEle", 0), lat, lon);
+        } else {
+            String js = TerrainMaker.overpass(String.format(java.util.Locale.US, "[out:json][timeout:25];node[\"natural\"=\"peak\"][\"name\"](around:20000,%.5f,%.5f);out 80;", lat, lon));
+            if (js != null) {
+                try {
+                    org.json.JSONArray els = new org.json.JSONObject(js).getJSONArray("elements");
+                    double bd = 1e9; String bn = ""; double bla = 0, blo = 0; int be = 0;
+                    for (int i = 0; i < els.length(); i++) {
+                        org.json.JSONObject e = els.getJSONObject(i), tg = e.optJSONObject("tags");
+                        if (tg == null) continue;
+                        String nm = tg.optString("name:en", ""); if (nm.isEmpty()) nm = tg.optString("name", "");
+                        if (nm.isEmpty()) continue;
+                        double la = e.getDouble("lat"), lo = e.getDouble("lon");
+                        double d = Math.hypot((la - lat) * 110.57, (lo - lon) * 111.32 * Math.cos(Math.toRadians(lat)));
+                        if (d < bd) {
+                            bd = d; bn = nm; bla = la; blo = lo; be = 0;
+                            java.util.regex.Matcher m = java.util.regex.Pattern.compile("^\\s*(\\d+)").matcher(tg.optString("ele", ""));
+                            if (m.find()) be = Integer.parseInt(m.group(1));
+                        }
+                    }
+                    sp.edit().putFloat("npLat", (float) lat).putFloat("npLon", (float) lon).putLong("npAt", System.currentTimeMillis())
+                            .putString("npName", bn).putFloat("npLa", (float) bla).putFloat("npLo", (float) blo).putInt("npEle", be).apply();
+                    if (!bn.isEmpty()) osm = peakInfo(bn, bla, blo, be, lat, lon);
+                } catch (Throwable ignored) { }
+            }
+        }
+        if (osm == null) return built;
+        return (Double) osm[2] <= (Double) built[2] ? osm : built;
+    }
+
+    private static Object[] peakInfo(String name, double la, double lo, int ele, double lat, double lon) {
+        double n = (la - lat) * 110.57, e = (lo - lon) * 111.32 * Math.cos(Math.toRadians(lat));
+        double d = Math.hypot(n, e), b = (Math.toDegrees(Math.atan2(e, n)) + 360) % 360;
+        String shape = "dome", note = "";
+        for (String[] nn : NOTES) if (nn[0].equalsIgnoreCase(name)) { shape = nn[1]; note = nn[2]; }
+        String lc = name.toLowerCase(java.util.Locale.ROOT);
+        if (note.isEmpty() && (lc.contains("gad") || lc.contains("garh") || lc.contains("fort"))) shape = "flat";
+        return new Object[]{name, ele, d, b, shape, note};
+    }
+
     /** {name, height, distance km, bearing deg, shape, note} of the nearest peak in the built-in list. */
     static Object[] nearestPeak(double lat, double lon) {
         Object[] best = null; double bd = 1e9, bb = 0;
@@ -399,7 +456,7 @@ final class SkyScene {
     private static final float[][] DOME = {{-420, 330}, {-330, 280}, {-240, 200}, {-150, 110}, {-70, 40}, {-20, 8}, {20, 0}, {80, 18}, {160, 70}, {250, 150}, {340, 230}, {430, 330}};
 
     private static void drawPeak(Canvas cv, float day, double lat, double lon) {
-        Object[] pk = nearestPeak(lat, lon);
+        Object[] pk = peakNow != null ? peakNow : nearestPeak(lat, lon);
         String shape = (String) pk[4];
         float[][] sh = shape.equals("pyramid") ? PYRAMID : shape.equals("flat") ? FLAT : DOME;
         double az = (Double) pk[3];
@@ -439,7 +496,7 @@ final class SkyScene {
         cv.drawPath(flag, fl);
         String dir = RegionNames.dir8(Math.cos(Math.toRadians(az)), Math.sin(Math.toRadians(az)));
         String l1 = (String) pk[0];
-        String l2 = pk[1] + " m above sea level";
+        String l2 = ((Integer) pk[1]) > 0 ? pk[1] + " m above sea level" : "height not listed";
         String l3 = String.format(java.util.Locale.US, "%.0f km away · %s (%.0f°)", (Double) pk[2], dir, az);
         String l4 = (String) pk[5];
         Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG), sh2 = new Paint(Paint.ANTI_ALIAS_FLAG);
