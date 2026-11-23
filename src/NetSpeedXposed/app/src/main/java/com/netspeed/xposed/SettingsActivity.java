@@ -36,23 +36,25 @@ public class SettingsActivity extends Activity {
     private int fg, sub, card, accent;
 
     // ---- pages: a home screen of tiles, then one page per topic
-    private static final String[] CAT_NAME = {"Layout", "Network", "Weather & sky", "Earth frames", "Disasters", "Device", "System"};
-    private static final String[] CAT_ICON = {"📐", "📡", "⛅", "🌍", "🌋", "🔋", "⚙️"};
+    private static final String[] CAT_NAME = {"Layout", "Network", "Weather & sky", "Earth frames", "Disasters", "Device", "System", "Guides"};
+    private static final String[] CAT_ICON = {"📐", "📡", "⛅", "🌍", "🌋", "🔋", "⚙️", "📖"};
     private static final String[] CAT_SUB = {"size, rows, looks, animations", "SIMs, bands, towers, 5G", "forecast, sky, tides, globe",
-            "river, soil, land, power, quakes", "quakes, cyclones, alerts", "battery, CPU, speed, heat", "updates, launcher, restart"};
+            "river, soil, land, power, quakes", "quakes, cyclones, alerts", "battery, CPU, speed, heat", "updates, launcher, restart", "UV, heat, SIM boxes, place, sky"};
     private static final int[][] CAT_COL = {{0xFF173A5C, 0xFF102A44}, {0xFF1A4A40, 0xFF112E2E}, {0xFF4A3A1A, 0xFF2E2412},
-            {0xFF1F4A2A, 0xFF132E1B}, {0xFF4A2222, 0xFF2E1616}, {0xFF3A2A55, 0xFF241A38}, {0xFF233648, 0xFF162330}};
+            {0xFF1F4A2A, 0xFF132E1B}, {0xFF4A2222, 0xFF2E1616}, {0xFF3A2A55, 0xFF241A38}, {0xFF233648, 0xFF162330}, {0xFF4A3A22, 0xFF2E2416}};
     /** The older Readable / two-row layouts are no longer offered: with the 4-row bar off the status bar stays stock. */
     private static final boolean OLD_LAYOUTS = false;
     private LinearLayout home;
-    private final LinearLayout[] pages = new LinearLayout[7];
-    private final LinearLayout[] pcard = new LinearLayout[7];
+    private final LinearLayout[] pages = new LinearLayout[8];
+    private final LinearLayout[] pcard = new LinearLayout[8];
     private int curPage = -1, lastCat = 0, secCat = 0;
     private ScrollView scrollRef;
 
     /** Which page a setting belongs on, from its title; -1 = the same page as the one before it. */
     private static int classify(String raw) {
         String t = raw.toLowerCase(java.util.Locale.ROOT);
+        if (t.equals("sim box guide") || t.equals("uv guide and sunscreen timer") || t.equals("heat and power diagnostics") || t.startsWith("heat and power history")
+                || t.equals("place guide: soil and plants") || t.equals("sky guide: what is up now")) return 7;
         if (t.contains("satellite strip")) return 2;
         if (t.contains("fault line")) return 3;
         if (t.contains("reservoir")) return 2;
@@ -196,7 +198,7 @@ public class SettingsActivity extends Activity {
                 () -> searchDialog(scroll),
                 () -> { showPage(6); if (updStatus != null && updStatus.getParent() instanceof View) scroll.post(() -> jumpTo(scroll, (View) updStatus.getParent())); },
                 this::showSatellites,
-                () -> showPage(7)};
+                () -> showPage(8)};
         for (int i = 0; i < 5; i++) {
             LinearLayout it = new LinearLayout(this);
             it.setOrientation(LinearLayout.VERTICAL);
@@ -251,7 +253,7 @@ public class SettingsActivity extends Activity {
         home = new LinearLayout(this);
         home.setOrientation(LinearLayout.VERTICAL);
         list.addView(home);
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 8; i++) {
             pages[i] = new LinearLayout(this);
             pages[i].setOrientation(LinearLayout.VERTICAL);
             pages[i].setVisibility(View.GONE);
@@ -425,6 +427,8 @@ public class SettingsActivity extends Activity {
         button(c, "Heat and power diagnostics", false, v -> showHeatReport());
         button(c, "Heat and power history (diagnostics graph)", false, v -> showHeatHistory(3 * 3600_000L));
         button(c, "UV guide and sunscreen timer", false, v -> showUvGuide());
+        button(c, "Place guide: soil and plants", false, v -> showPlaceGuide());
+        button(c, "Sky guide: what is up now", false, v -> showSkyGuide());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
             toggle(c, "Speedometer with the net speed", "Small gauge for download speed (1 K/s to 100 M/s); "
@@ -728,7 +732,7 @@ public class SettingsActivity extends Activity {
 
     private void buildHome() {
         LinearLayout row = null;
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 8; i++) {
             if (i % 2 == 0) {
                 row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
@@ -763,8 +767,8 @@ public class SettingsActivity extends Activity {
     private void showPage(int p) {
         curPage = p;
         home.setVisibility(p < 0 ? View.VISIBLE : View.GONE);
-        for (int i = 0; i < 7; i++) pages[i].setVisibility(i == p ? View.VISIBLE : View.GONE);
-        if (infoPage != null) { infoPage.setVisibility(p == 7 ? View.VISIBLE : View.GONE); if (p == 7) fillInfo(); }
+        for (int i = 0; i < 8; i++) pages[i].setVisibility(i == p ? View.VISIBLE : View.GONE);
+        if (infoPage != null) { infoPage.setVisibility(p == 8 ? View.VISIBLE : View.GONE); if (p == 8) fillInfo(); }
         if (scrollRef != null) scrollRef.scrollTo(0, 0);
     }
 
@@ -1080,7 +1084,7 @@ public class SettingsActivity extends Activity {
 
     /** Scroll the page to a row and flash it. */
     private void jumpTo(ScrollView scroll, View row) {
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 8; i++) {
             for (View v = row; v != null; v = v.getParent() instanceof View ? (View) v.getParent() : null)
                 if (v == pages[i]) { showPage(i); break; }
         }
@@ -2496,6 +2500,60 @@ public class SettingsActivity extends Activity {
     }
 
     private AlertDialog uvDlg;
+
+    private double[] guideLatLon() {
+        try {
+            android.location.Location l = TowerDb.myLocation(this);
+            if (l != null) return new double[]{l.getLatitude(), l.getLongitude()};
+            double[] lk = TowerDb.lastKnown(this);
+            if (lk != null) return new double[]{lk[0], lk[1]};
+        } catch (Throwable ignored) { }
+        return new double[]{DayNight.HOME_LAT, DayNight.HOME_LON};
+    }
+
+    private void showGuideText(String title, String body) {
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        TextView t = text(body, 14, fg);
+        t.setPadding(dp(18), dp(10), dp(18), dp(10));
+        sv.addView(t);
+        new AlertDialog.Builder(this).setTitle(title).setView(sv).setPositiveButton("Close", null).show();
+    }
+
+    private void showPlaceGuide() {
+        Toast.makeText(this, "Looking up the place…", Toast.LENGTH_SHORT).show();
+        final double[] ll = guideLatLon();
+        new Thread(() -> {
+            PlaceInfo.Info in = PlaceInfo.lookup(getApplicationContext(), sp, ll[0], ll[1]);
+            StringBuilder sb = new StringBuilder();
+            sb.append(in.where().isEmpty() ? "Place name not found (needs data once; then it is saved).\n" : in.where() + "\n");
+            sb.append(String.format(java.util.Locale.US, "(%.4f, %.4f)\n\n", ll[0], ll[1]));
+            sb.append("SOIL\n  ").append(in.soil.isEmpty() ? "no guide entry for this state yet" : in.soil).append("\n\nPLANTS YOU WILL COMMONLY SEE\n  ").append(in.plants.isEmpty() ? "-" : in.plants).append('\n');
+            try {
+                Habitat.Data h = Habitat.cached(getApplicationContext(), ll[0], ll[1]);
+                if (h != null && h.any()) {
+                    if (!h.region().isEmpty()) sb.append("\nREGION\n  ").append(h.region()).append('\n');
+                    java.util.List<String> top = h.top(8);
+                    if (!top.isEmpty()) sb.append("\nPLANTS PEOPLE HAVE LOGGED WITHIN 10 KM (iNaturalist)\n  ").append(android.text.TextUtils.join(", ", top)).append('\n');
+                    String cv = h.coverText(5);
+                    if (!cv.isEmpty()) sb.append("\nLAND AROUND YOU (about 5 km)\n  ").append(cv).append('\n');
+                }
+            } catch (Throwable ignored) { }
+            sb.append("\nThe soil and plant lines come from a built-in guide for each state and zone of India: a general picture, not a lab test of your exact spot.");
+            final String out = sb.toString();
+            runOnUiThread(() -> showGuideText("Place guide", out));
+        }).start();
+    }
+
+    private void showSkyGuide() {
+        Toast.makeText(this, "Working out the sky…", Toast.LENGTH_SHORT).show();
+        final double[] ll = guideLatLon();
+        new Thread(() -> {
+            String body;
+            try { body = SkyScene.guideText(getApplicationContext(), ll[0], ll[1], System.currentTimeMillis()); } catch (Throwable t) { body = "Could not work out the sky: " + t; }
+            final String out = new java.text.SimpleDateFormat("EEE d MMM, HH:mm", java.util.Locale.US).format(new java.util.Date()) + "\n\n" + body;
+            runOnUiThread(() -> showGuideText("Sky guide", out));
+        }).start();
+    }
 
     private static String safeHours(float[] uvh) {
         StringBuilder sb = new StringBuilder();

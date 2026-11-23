@@ -88,6 +88,25 @@ final class Sat {
         return out;
     }
 
+    /** Next pass over 10 degrees of the ISS and the Chinese station, one line each, for the Sky guide. */
+    static List<String> stationPasses(android.content.Context c, double lat, double lon, long now) {
+        List<String> out = new ArrayList<>();
+        try {
+            if (cacheDir == null) cacheDir = c.getCacheDir();
+            if (tles.isEmpty()) { loadCache(); if (tles.isEmpty()) fetch(); }
+            double[] obs = ecef(lat, lon, 0.55);
+            String[] dirs = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+            for (Tle t : tles) {
+                boolean css = t.id == 48274 || (t.name != null && (t.name.contains("TIANHE") || t.name.startsWith("CSS")));
+                if (t.id != 25544 && !css) continue;
+                long[] np = nextPass(t, now, lat, lon, obs);
+                String nm = t.id == 25544 ? "ISS" : "Tiangong (Chinese station)";
+                out.add(np == null ? nm + ": no pass over 10° in the next 24 h" : nm + ": next pass " + new java.text.SimpleDateFormat("HH:mm", Locale.US).format(new java.util.Date(np[0])) + ", rising toward " + dirs[(int) np[1]]);
+            }
+        } catch (Throwable ignored) { }
+        return out;
+    }
+
     static void compute(long now, double lat, double lon) {
         List<Tle> list = tles;
         java.text.SimpleDateFormat hm = new java.text.SimpleDateFormat("HH:mm:ss", Locale.US);

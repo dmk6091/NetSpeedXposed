@@ -601,6 +601,58 @@ final class SkyScene {
         return "Next meteor shower: " + name + " in " + bestDays + " days";
     }
 
+    /** The Sky guide page: what is up right now and what rises or sets next. Worker thread (the station passes may download orbits). */
+    static String guideText(Context c, double lat, double lon, long ms) {
+        final double la = lat, lo = lon;
+        StringBuilder sb = new StringBuilder();
+        Astro.Pos sun = Astro.sun(ms, la, lo);
+        Astro.Moon moon = Astro.moon(ms, la, lo);
+        double lst = SkyObjects.lst(ms, lo);
+        Alt sunF = t -> Astro.sun(t, la, lo).alt, moonF = t -> Astro.moon(t, la, lo).alt;
+        Calendar mid = Calendar.getInstance(); mid.setTimeInMillis(ms);
+        mid.set(Calendar.HOUR_OF_DAY, 0); mid.set(Calendar.MINUTE, 0); mid.set(Calendar.SECOND, 0); mid.set(Calendar.MILLISECOND, 0);
+        long t0 = mid.getTimeInMillis(), s5 = 5 * 60_000L;
+        sb.append("SUN\n");
+        sb.append(String.format(java.util.Locale.US, "  %s, %.0f° %s. Rise %s, set %s.\n", sun.alt > -0.83 ? "up" : "below the horizon", sun.alt, compass(sun.az),
+                hm(cross(sunF, t0, s5, 288, -0.83, true)), hm(cross(sunF, t0, s5, 288, -0.83, false))));
+        sb.append(sun.alt <= -18 ? "  Fully dark now.\n" : sun.alt < -0.83 ? "  Twilight now.\n" : "");
+        long from = ms - 12 * 3600_000L;
+        sb.append("\nMOON\n");
+        sb.append(String.format(java.util.Locale.US, "  %s, %.0f%% lit, %.4f AU (%,.0f km) away.\n  %s %.0f° %s. Rise %s, set %s.\n", phaseName(moon.phase, moon.waxing), moon.illum * 100,
+                moon.distKm / 149597870.7, moon.distKm, moon.alt > -0.3 ? "Up now at" : "Below the horizon at", moon.alt, compass(moon.az),
+                hm(cross(moonF, from, 10 * 60_000L, 144, -0.3, true)), hm(cross(moonF, from, 10 * 60_000L, 144, -0.3, false))));
+        sb.append("\nPLANETS\n");
+        boolean anyP = false;
+        for (int i = 0; i < 4; i++) {
+            final int pi = i;
+            Alt pf = t -> { double[] rd = SkyObjects.planetRaDec(pi, t); return SkyObjects.altAz(rd[0], rd[1], SkyObjects.lst(t, lo), la)[0]; };
+            double[] rd = SkyObjects.planetRaDec(i, ms);
+            double[] aa = SkyObjects.altAz(rd[0], rd[1], lst, la);
+            long r = cross(pf, from, 10 * 60_000L, 144, 0, true), st = cross(pf, from, 10 * 60_000L, 144, 0, false);
+            sb.append(String.format(java.util.Locale.US, "  %s: %s%s. Rise %s, set %s.\n", SkyObjects.PLANETS[i], aa[0] > 0 ? String.format(java.util.Locale.US, "up, %.0f° %s", aa[0], compass(aa[1])) : "below the horizon",
+                    aa[0] > 0 && sun.alt > -6 ? " (hard to see in daylight)" : "", hm(r), hm(st)));
+            anyP = true;
+        }
+        if (!anyP) sb.append("  none listed\n");
+        sb.append("\nBRIGHT STARS above 10°\n");
+        java.util.ArrayList<Object[]> bs = new java.util.ArrayList<>();
+        for (Object[] s : SkyObjects.STARS) {
+            double[] aa = SkyObjects.altAz((Double) s[1] * 15.0, (Double) s[2], lst, la);
+            if (aa[0] > 10 && (Double) s[3] < 1.6) bs.add(new Object[]{s[0], (Double) s[3], aa[0], aa[1]});
+        }
+        bs.sort((a, b) -> Double.compare((Double) a[1], (Double) b[1]));
+        if (bs.isEmpty()) sb.append("  none above 10° right now\n");
+        for (int i = 0; i < Math.min(8, bs.size()); i++) sb.append(String.format(java.util.Locale.US, "  %s: %.0f° %s (brightness %.1f)\n", bs.get(i)[0], (Double) bs.get(i)[2], compass((Double) bs.get(i)[3]), (Double) bs.get(i)[1]));
+        if (sun.alt > -6) sb.append("  (the sky is still too bright to see most of them)\n");
+        sb.append("\nSPACE STATIONS\n");
+        java.util.List<double[]> up = Sat.stationsNow(c, la, lo, ms);
+        for (double[] r : up) sb.append(String.format(java.util.Locale.US, "  %s is above your horizon now: %.0f° %s.\n", r[0] == 25544 ? "ISS" : "Tiangong", r[1], compass(r[2])));
+        for (String s : Sat.stationPasses(c, la, lo, ms)) sb.append("  ").append(s).append('\n');
+        if (up.isEmpty() && Sat.stationPasses(c, la, lo, ms).isEmpty()) sb.append("  orbit data not downloaded yet; open this again with data on\n");
+        sb.append("\nOnly passes while the sky is dark and the station is sunlit can be seen with the eye. Times are your phone's clock.\n");
+        return sb.toString();
+    }
+
     // ------------------------------------------------------------------ chips, highlights, sun path
 
     private static float planetVis(int i, double alt, float dark, double sunAlt, int[] wx) {
