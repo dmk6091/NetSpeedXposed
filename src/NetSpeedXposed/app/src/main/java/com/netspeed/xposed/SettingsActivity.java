@@ -2334,10 +2334,9 @@ public class SettingsActivity extends Activity {
             {"mast 45m", "Blue tag: the tower's real mast height, found in OpenStreetMap. Only some towers have it.", g(m, "mast") == null ? (live ? "none listed, 30 m assumed" : null) : g(m, "mast") + " m", "With a real height the ~ goes away on the angle, horizon and F. Without it the app assumes 30 m and keeps the ~."},
             {"B3 \u221284 (with icon)", "Best neighbouring tower: its band and signal. Orange = weaker than your tower, green = stronger, so a switch may come.", g(m, "nbr"), "A neighbour is another tower the phone can hear and may hand over to."},
             {"BOTTOM ROW"},
-            {"D 1.2G  M 0.4G", "Data used on this SIM. D = today, M = this month.", g(m, "today"), ""},
             {"\u2227 \u2196NW 14m", "A line for the shape of the land around you, then the direction and height of the highest ground 300 m away.", g(m, "land") == null ? null : g(m, "land") + (g(m, "shade") == null ? "" : " " + g(m, "shade")), "A line that draws the shape of the ground. \u2227 = Ridge: you stand higher than the land around. \u2571 = Slope: ground rises one way and falls the other. V = Valley: you stand lower than most of the land around. \u2500 = Flat: under 6 m of difference. Green when nothing blocks the path to this tower, orange when ground does. ~ = rough tower position."},
             {"\u25b214m@40%", "The highest ground on the path from you to the tower: how far above you (\u25b2) or below you (\u25bc), and how far along the path it is.", g(m, "peak"), "@40% means 40% of the way to the tower. This is the ground itself, not how far it sticks into the signal line, which the LOS line already tells you. Colour follows the line-of-sight check."},
-            {"\u25B2 +6m", "Tower's ground compared with yours. Not the mast height, a phone cannot know that.", h, "Green = tower ground higher than yours, orange = lower, grey = rough."},
+            {"Mountain box +6m", "Tower's ground compared with yours. Not the mast height, a phone cannot know that.", h, "Green = tower ground higher than yours, orange = lower, grey = rough. It sits after the arrow and F on the line above; if a neighbour tower takes the end of that line, it moves to the landform line at the bottom of the box."},
         };
         for (String[] r : rows) {
             if (r.length == 1) {
