@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 final class HeatLog {
     private HeatLog() {}
 
-    private static final String SUI_FILE = "/data/user/0/com.android.systemui/files/fa_heat.csv";
+    private static final String SUI_FILE = "/data/user_de/0/com.android.systemui/files/fa_heat.csv";
     private static long lastSample;
 
     /** System UI side. */
@@ -105,7 +105,7 @@ final class HeatLog {
         Data out = new Data();
         out.from = now - windowMs; out.to = now;
         try {
-            for (String ln : HeatReport.sh("cat " + SUI_FILE + " 2>/dev/null").split("\n")) {
+            for (String ln : HeatReport.sh("cat " + SUI_FILE + " /data/user/0/com.android.systemui/files/fa_heat.csv 2>/dev/null").split("\n")) {
                 String[] p = ln.split(",", -1);
                 if (p.length < 5) continue;
                 long ts = (long) d(p[0]);
