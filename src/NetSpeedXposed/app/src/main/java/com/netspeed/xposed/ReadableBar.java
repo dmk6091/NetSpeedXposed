@@ -3295,6 +3295,7 @@ final class ReadableBar extends View {
             if (si.los >= 0) k.append(";los=").append(si.los);
             if (si.angle != Integer.MIN_VALUE) k.append(";angle=").append(si.angle);
             if (si.clearPct >= 0) k.append(";clear=").append(si.clearPct);
+            if (TowerElev.LAND != null) k.append(";land=").append(TowerElev.LAND).append(";shade=").append(TowerElev.SHADE_M > 0 ? TowerElev.SHADE_DIR + " " + TowerElev.SHADE_M + "m" : "");
             if (si.mastM > 0) k.append(";mast=").append(si.mastM);
             if (si.horizonKm > 0) k.append(";hz=").append(si.horizonKm);
             if (si.towerH != null) k.append(";h=").append(si.towerH);
