@@ -26,7 +26,7 @@ final class SkyScene {
     private SkyScene() {}
 
     private static final float VW = 1080f, VH = 2280f;
-    private static final float HORIZON = 1800f;      // y of the horizon
+    private static final float HORIZON = 1480f;      // y of the horizon
     private static final float SPAN = 160f;          // degrees of sky across the screen (facing south, east on the left)
     private static final float TOP_ALT = 88f;        // altitude at the top of the screen
     private static final float AZ0 = 180f;
@@ -620,10 +620,18 @@ final class SkyScene {
             if (!w3.isEmpty() && wx[1] >= 0) rows.add(w3);
         }
         Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG), sd = new Paint(Paint.ANTI_ALIAS_FLAG);
-        tp.setTextSize(31); tp.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        tp.setTextSize(29); tp.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         tp.setColor(0xFFE8EEFF);
         sd.set(tp); sd.setStyle(Paint.Style.STROKE); sd.setStrokeWidth(5); sd.setColor(0x99000000);
-        float y = 1900f;
-        for (String r : rows) { cv.drawText(r, 48, y, sd); cv.drawText(r, 48, y, tp); y += 50; }
+        // centred, inside the safe margins, above the system charging text near the bottom
+        tp.setTextAlign(Paint.Align.CENTER); sd.setTextAlign(Paint.Align.CENTER);
+        float y = HORIZON + 130f;
+        for (String r : rows) {
+            float w = tp.measureText(r), k = w > 820f ? 820f / w : 1f;
+            cv.save(); cv.scale(k, 1f, VW / 2f, y);
+            cv.drawText(r, VW / 2f, y, sd); cv.drawText(r, VW / 2f, y, tp);
+            cv.restore();
+            y += 44;
+        }
     }
 }
