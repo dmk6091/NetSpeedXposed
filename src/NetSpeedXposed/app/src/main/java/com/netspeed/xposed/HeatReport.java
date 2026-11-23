@@ -143,7 +143,7 @@ final class HeatReport {
             if (!seen.add(um.group(1))) continue;
             String id = um.group(1);
             String uid = id.startsWith("u0a") ? String.valueOf(10000 + Integer.parseInt(id.substring(3))) : id;
-            String pkg = uidPkg.containsKey(uid) ? uidPkg.get(uid) : "uid " + id;
+            String pkg = uid.equals("1000") ? "Android system (shared by many system apps)" : uid.equals("0") ? "root processes" : uidPkg.containsKey(uid) ? uidPkg.get(uid) : "uid " + id;
             apps.add(new Object[]{num(um.group(2), 0), pkg, um.group(5) == null ? "" : um.group(5), um.group(10) == null ? "" : um.group(10)});
         }
         apps.sort((x, y) -> Double.compare((Double) y[0], (Double) x[0]));
