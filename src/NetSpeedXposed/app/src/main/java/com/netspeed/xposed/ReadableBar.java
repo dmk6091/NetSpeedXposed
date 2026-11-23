@@ -3764,8 +3764,13 @@ final class ReadableBar extends View {
             if (ang != Integer.MIN_VALUE) {
                 final boolean real = si.mastM > 0 && si.horizonKm > 0;
                 final String t0 = roughAll || !real ? "~" : "";
-                String ex = t0 + "\u2220" + (ang >= 0 ? "+" : "\u2212") + Math.abs(ang) + "\u00b0 \u00b7 " + t0 + (real ? si.horizonKm : TowerElev.HORIZON_KM) + " km"
-                        + (si.clearPct >= 0 ? " \u00b7 " + t0 + si.clearPct + "%" : "");
+                String ex = t0 + "\u2220" + (ang >= 0 ? "+" : "\u2212") + Math.abs(ang) + "\u00b0 \u00b7 " + t0 + (real ? si.horizonKm : TowerElev.HORIZON_KM) + " km";
+                if (si.clearPct >= 0) {   // path clearance: "F ~100%" up on the arrow line, coloured by how clear the path is
+                    int pc = si.clearPct >= 80 ? (roughAll ? 0xFFB4E6D2 : 0xFF96F0C8) : si.clearPct >= 50 ? yellow() : orange();
+                    if (!d.isEmpty()) d.add(new DSeg("  ", 17, bold, pc).extra());
+                    d.add(new DSeg("F", 15, bold, pc).chip().extra());
+                    d.add(new DSeg(" " + t0 + si.clearPct + "%", 19, bold, fade(pc, roughAll ? 0.9f : 1f)).extra());
+                }
                 tl.add(new DSeg(ex, 18, bold, fade(0xFFC8D4E4, roughAll ? 0.9f : 1f)).extra());
                 if (real && !roughAll) tl.add(new DSeg(" mast " + si.mastM + "m", 15, bold, 0xFF78C8FF).chip().extra());
             }
