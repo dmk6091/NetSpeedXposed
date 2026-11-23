@@ -3,6 +3,7 @@ package com.netspeed.xposed;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
@@ -77,6 +78,8 @@ final class ReadableBar extends View {
         String towerH;                        // tower ground height vs you: "+14 m", null unknown
         int angle = Integer.MIN_VALUE;        // degrees up (+) / down (-) to the antenna, MIN_VALUE unknown
         int mastM = -1;                       // real mast height from OpenStreetMap, -1 unknown (30 m assumed)
+        int peakM = Integer.MIN_VALUE;        // highest ground on the path to the tower, m above (+) / below (-) you
+        int peakAt = -1;                      // where along the path that is, % of the way
         int horizonKm = -1;                   // radio horizon with the real mast, -1 use the assumed one
         int clearPct = -1;                    // Fresnel clearance %, -1 unknown
         boolean newCell;                      // moved to a different tower in the last 2 minutes: small blue "N" box on the signal line
@@ -3188,16 +3191,75 @@ final class ReadableBar extends View {
 
     private boolean geoOn(SimInfo d) { return heightInRow(d) && TowerElev.LAND != null; }
 
-    private String geoWord(SimInfo d) { return (d.towerEst ? "~" : "") + TowerElev.LAND; }
+    private String geoWord(SimInfo d) { return d.towerEst ? "~" : ""; }
 
     private String geoShade() { return TowerElev.SHADE_M > 0 ? " " + TowerElev.SHADE_DIR + " " + TowerElev.SHADE_M + "m" : ""; }
 
-    private float geoW(SimInfo d) { return tw(geoWord(d), 20, bold) + tw(geoShade(), 18, semi); }
+    /** "\u25b214m@40%": the highest ground on the path to this tower, how far above (or \u25bc below) you, and how far along. */
+    private String peakText(SimInfo d) {
+        if (d.peakM == Integer.MIN_VALUE || d.peakAt < 0) return "";
+        return " " + (d.towerEst ? "~" : "") + (d.peakM >= 0 ? "\u25b2" : "\u25bc") + Math.abs(d.peakM) + "m@" + d.peakAt + "%";
+    }
+
+    private static final float GEO_W = 34;
+
+    private float geoW(SimInfo d) { return tw(geoWord(d), 18, bold) + GEO_W + tw(geoShade(), 18, semi) + tw(peakText(d), 18, semi); }
+
+    /** A small picture of the landform: peak (Ridge), hillside (Slope), two hills with a stream (Valley), open ground (Flat). */
+    private float geoIcon(Canvas c, String kind, float x, int tone) {
+        final int dark = Color.rgb((int) (Color.red(tone) * 0.55f), (int) (Color.green(tone) * 0.55f), (int) (Color.blue(tone) * 0.55f));
+        final float yo = -12;   // icon is 24 high, centred on the line
+        c.save();
+        rf.set(x, yo, x + GEO_W, yo + 24);
+        path.reset();
+        path.addRoundRect(rf, 5, 5, Path.Direction.CW);
+        c.clipPath(path);
+        gp.setStyle(Paint.Style.FILL);
+        gp.setColor(0xFF3C4B5F);
+        c.drawRect(rf, gp);
+        if ("Ridge".equals(kind)) {
+            poly(c, x, yo, dark, 0, 24, 8, 11, 14, 17, 19, 3, 26, 16, 30, 12, 34, 24);
+            poly(c, x, yo, tone, 19, 3, 26, 16, 19, 13, 15, 17, 14, 17);
+            poly(c, x, yo, 0xFFF0F5FA, 19, 3, 22, 8, 19, 7, 17, 9);
+        } else if ("Slope".equals(kind)) {
+            gp.setColor(0xFFFFD778);
+            c.drawCircle(x + 24.5f, yo + 3, 3, gp);
+            poly(c, x, yo, dark, 0, 22, 0, 16, 34, 3, 34, 24, 0, 24);
+            poly(c, x, yo, tone, 0, 16, 34, 3, 34, 6, 0, 19);
+        } else if ("Valley".equals(kind)) {
+            poly(c, x, yo, dark, 0, 3, 10, 9, 17, 20, 24, 9, 34, 3, 34, 24, 0, 24);
+            poly(c, x, yo, tone, 0, 3, 10, 9, 17, 20, 17, 24, 0, 24);
+            poly(c, x, yo, 0xFF6EBEEB, 15, 24, 17, 20, 19, 24);
+        } else {
+            gp.setColor(0xFFFFD778);
+            c.drawCircle(x + 25.5f, yo + 7.5f, 3.5f, gp);
+            gp.setColor(dark);
+            c.drawRect(x, yo + 15, x + GEO_W, yo + 24, gp);
+            gp.setColor(tone);
+            c.drawRect(x, yo + 15, x + GEO_W, yo + 17, gp);
+        }
+        c.restore();
+        return x + GEO_W;
+    }
+
+    private void poly(Canvas c, float x, float y, int col, float... p) {
+        path.reset();
+        path.moveTo(x + p[0], y + p[1]);
+        for (int i = 2; i + 1 < p.length; i += 2) path.lineTo(x + p[i], y + p[i + 1]);
+        path.close();
+        gp.setStyle(Paint.Style.FILL);
+        gp.setColor(col);
+        c.drawPath(path, gp);
+    }
 
     private void geoItem(Canvas c, SimInfo d, float e) {
         final int gc = d.los > 2 ? orange() : d.towerEst ? fade(green(), 0.8f) : green();
-        e = textB(c, geoWord(d), e, 0, 20, 20, bold, gc);
-        if (TowerElev.SHADE_M > 0) textB(c, geoShade(), e, 0, 20, 18, semi, fade(0xFFC8D4E4, d.towerEst ? 0.85f : 1f));
+        if (d.towerEst) e = textB(c, "~", e, 0, 18, 18, bold, gc);
+        e = geoIcon(c, TowerElev.LAND, e, gc);
+        final int wc = fade(0xFFC8D4E4, d.towerEst ? 0.85f : 1f);
+        if (TowerElev.SHADE_M > 0) e = textB(c, geoShade(), e, 0, 20, 18, semi, wc);
+        String pk = peakText(d);
+        if (!pk.isEmpty()) textB(c, pk, e, 0, 20, 18, semi, gc);
     }
 
     private float heightItem(Canvas c, SimInfo d, float e) {
@@ -3299,6 +3361,7 @@ final class ReadableBar extends View {
             if (si.angle != Integer.MIN_VALUE) k.append(";angle=").append(si.angle);
             if (si.clearPct >= 0) k.append(";clear=").append(si.clearPct);
             if (TowerElev.LAND != null) k.append(";land=").append(TowerElev.LAND).append(";shade=").append(TowerElev.SHADE_M > 0 ? TowerElev.SHADE_DIR + " " + TowerElev.SHADE_M + "m" : "");
+            if (si.peakM != Integer.MIN_VALUE && si.peakAt >= 0) k.append(";peak=").append(si.peakM >= 0 ? "\u25b2" : "\u25bc").append(Math.abs(si.peakM)).append("m@").append(si.peakAt).append("%");
             if (si.mastM > 0) k.append(";mast=").append(si.mastM);
             if (si.horizonKm > 0) k.append(";hz=").append(si.horizonKm);
             if (si.towerH != null) k.append(";h=").append(si.towerH);

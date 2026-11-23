@@ -2829,6 +2829,9 @@ final class DualRow {
                 Integer mh = TowerElev.MAST.get(s.slot), hk = TowerElev.HKM.get(s.slot);
                 si.mastM = mh == null ? -1 : mh;
                 si.horizonKm = hk == null ? -1 : hk;
+                Integer pk = TowerElev.PEAK.get(s.slot), pa = TowerElev.PEAK_AT.get(s.slot);
+                si.peakM = pk == null ? Integer.MIN_VALUE : pk;
+                si.peakAt = pa == null ? -1 : pa;
                 String d = Cfg.b(Cfg.SHOW_DIST, Cfg.D_SHOW_DIST) ? distString(s) : "?";
                 si.dist = "?".equals(d) ? null : d;
                 si.voice = Voice.label(s.sub, s.band);

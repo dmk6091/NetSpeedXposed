@@ -20,6 +20,10 @@ final class TowerElev {
     static final Map<Integer, Integer> ANGLE = new ConcurrentHashMap<>();
     /** SIM slot -> % of the first Fresnel zone (about 2.5 GHz) that stays clear of the ground along the path, capped at 100. */
     static final Map<Integer, Integer> CLEAR = new ConcurrentHashMap<>();
+    /** SIM slot -> highest ground on the path to the tower, metres above (+) or below (-) your ground. */
+    static final Map<Integer, Integer> PEAK = new ConcurrentHashMap<>();
+    /** SIM slot -> where along the path (% of the way to the tower) that highest ground is. */
+    static final Map<Integer, Integer> PEAK_AT = new ConcurrentHashMap<>();
     /** Radio horizon in km between your phone and an antenna on the assumed mast (4/3-earth). */
     static final int HORIZON_KM = (int) Math.round((Math.sqrt(2 * 8.5e6 * 30) + Math.sqrt(2 * 8.5e6 * 1.5)) / 1000.0);
     private static final double YOU_H = 1.5, MAST_H = 30, REFF = 8.5e6;   // assumed antenna heights, 4/3-earth radius
@@ -146,6 +150,10 @@ final class TowerElev {
                 double r1 = 17.3 * Math.sqrt(Math.max(1e-6, dKm * f * dKm * (1 - f) / (2.5 * Math.max(dKm, 1e-3))));   // first Fresnel radius (m) at 2.5 GHz
                 tightest = Math.min(tightest, (-over) / Math.max(r1, 0.5));
             }
+            double hi = -1e9; int hiK = 1;
+            for (int k = 1; k <= N; k++) { double gh = a.getDouble(i * N + k - 1); if (gh > hi) { hi = gh; hiK = k; } }
+            PEAK.put(t.slot, (int) Math.round(hi - meElev));
+            PEAK_AT.put(t.slot, (int) Math.round(100.0 * hiK / (N + 1.0)));
             LOS.put(t.slot, (int) Math.round(Math.max(0, worst)));
             if (dist >= 30) {
                 ANGLE.put(t.slot, (int) Math.round(Math.toDegrees(Math.atan2(a1 - a0, dist))));
