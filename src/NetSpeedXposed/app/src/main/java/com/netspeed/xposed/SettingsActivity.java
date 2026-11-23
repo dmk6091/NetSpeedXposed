@@ -404,6 +404,22 @@ public class SettingsActivity extends Activity {
         slider(c, "Earthquakes shown from", "mag", Cfg.QUAKE_MIN, Cfg.D_QUAKE_MIN, 10, 70);
         slider(c, "Earthquakes within", "km100", Cfg.QUAKE_KM, Cfg.D_QUAKE_KM, 1, 200);
         button(c, "SIM box guide", false, v -> showSimGuide(-1));
+        button(c, "Save status bar picture (layout test)", false, v -> {
+            Toast.makeText(this, "Taking the picture…", Toast.LENGTH_SHORT).show();
+            new Thread(() -> {
+                final StatusShot.Result r = StatusShot.take(getApplicationContext());
+                runOnUiThread(() -> {
+                    android.app.AlertDialog.Builder bd = new android.app.AlertDialog.Builder(this).setMessage(r.msg).setPositiveButton("OK", null);
+                    if (r.uri != null) bd.setNeutralButton("Share", (d, w) -> {
+                        android.content.Intent it = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                        it.setType("image/png"); it.putExtra(android.content.Intent.EXTRA_STREAM, r.uri);
+                        it.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(android.content.Intent.createChooser(it, "Share status bar picture"));
+                    });
+                    bd.show();
+                });
+            }).start();
+        });
         button(c, "Live diagnostics", false, v -> showSatellites());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
@@ -625,7 +641,7 @@ public class SettingsActivity extends Activity {
         if (OLD_LAYOUTS) {
             toggle(c, "Hide net speed when idle", "After 10 s below 1 KB/s", Cfg.HIDE_IDLE, Cfg.D_HIDE_IDLE);
         }
-        toggle(c, "Heat throttle (root)", "When hot: caps every CPU cluster and the GPU to the speeds below, drops the screen to 60 Hz and clears background apps. Releases when cooled and restores your refresh rate. Needs root for NetSpeed. Restart SystemUI to apply", Cfg.THR, Cfg.D_THR);
+        toggle(c, "Heat throttle (root)", "When hot: caps every CPU cluster and the GPU to the speeds below, drops the screen to 60 Hz and clears background apps. Releases when cooled and restores your refresh rate. Stands down (does nothing) while another app such as Rider Cool already caps the CPU at or below these speeds, and only gives back the limits it set itself. Needs root for NetSpeed. Restart SystemUI to apply", Cfg.THR, Cfg.D_THR);
         slider(c, "Throttle when battery reaches", "\u00B0C", Cfg.THR_BAT, Cfg.D_THR_BAT, 36, 50);
         slider(c, "Throttle when CPU reaches", "\u00B0C", Cfg.THR_CPU, Cfg.D_THR_CPU, 55, 95);
         slider(c, "GPU speed while throttled", "% of max", Cfg.THR_GPU, Cfg.D_THR_GPU, 30, 90);

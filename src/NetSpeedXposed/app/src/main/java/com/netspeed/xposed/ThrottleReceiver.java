@@ -13,11 +13,21 @@ import android.content.Intent;
 public final class ThrottleReceiver extends BroadcastReceiver {
     private static final String ON =
             "S=/data/local/tmp/throttle.state; PCT=%PCT%; GPCT=%GPCT%; G=/sys/class/kgsl/kgsl-3d0/devfreq\n"
-            + "if [ ! -f $S ]; then { echo \"peak $(settings get system peak_refresh_rate)\"; echo \"min $(settings get system min_refresh_rate)\"; echo \"gpu $(cat $G/max_freq)\"; } > $S; fi\n"
+            // another app (Rider Cool etc.) already caps a CPU cluster at or below what we would: stand down, touch nothing
+            + "if [ ! -f $S ]; then\n"
+            + "  for p in /sys/devices/system/cpu/cpufreq/policy*; do\n"
+            + "    max=$(cat $p/cpuinfo_max_freq); cur=$(cat $p/scaling_max_freq); lim=$((max*PCT/100)); best=0\n"
+            + "    for f in $(cat $p/scaling_available_frequencies); do [ $f -le $lim ] && [ $f -gt $best ] && best=$f; done\n"
+            + "    if [ $cur -lt $max ] && [ $best -gt 0 ] && [ $cur -le $best ]; then\n"
+            + "      settings put global netspeed_throttled 0; settings put global netspeed_standdown $(date +%s); exit 0\n"
+            + "    fi\n"
+            + "  done\n"
+            + "fi\n"
+            + "if [ ! -f $S ]; then rm -f $S.cpu; { echo \"peak $(settings get system peak_refresh_rate)\"; echo \"min $(settings get system min_refresh_rate)\"; echo \"gpu $(cat $G/max_freq)\"; } > $S; fi\n"
             + "for p in /sys/devices/system/cpu/cpufreq/policy*; do\n"
             + "  max=$(cat $p/cpuinfo_max_freq); lim=$((max*PCT/100)); best=0\n"
             + "  for f in $(cat $p/scaling_available_frequencies); do [ $f -le $lim ] && [ $f -gt $best ] && best=$f; done\n"
-            + "  [ $best -gt 0 ] && echo $best > $p/scaling_max_freq\n"
+            + "  [ $best -gt 0 ] && echo $best > $p/scaling_max_freq && echo \"$p $best\" >> $S.cpu\n"
             + "done\n"
             + "gmax=$(grep '^gpu ' $S | cut -d' ' -f2); glim=$((gmax/100*GPCT)); gb=0\n"
             + "for f in $(cat $G/available_frequencies); do [ $f -le $glim ] && [ $f -gt $gb ] && gb=$f; done\n"
@@ -35,7 +45,13 @@ public final class ThrottleReceiver extends BroadcastReceiver {
             + "am kill-all\n";
     private static final String OFF =
             "S=/data/local/tmp/throttle.state\n"
-            + "for p in /sys/devices/system/cpu/cpufreq/policy*; do cat $p/cpuinfo_max_freq > $p/scaling_max_freq; done\n"
+            // give back only the caps we set (another cooler app's caps stay)
+            + "C=$S.cpu\n"
+            + "if [ -f $C ]; then\n"
+            + "  while read p v; do [ \"$(cat $p/scaling_max_freq)\" = \"$v\" ] && cat $p/cpuinfo_max_freq > $p/scaling_max_freq; done < $C; rm -f $C\n"
+            + "elif [ -f $S ]; then\n"
+            + "  for p in /sys/devices/system/cpu/cpufreq/policy*; do cat $p/cpuinfo_max_freq > $p/scaling_max_freq; done\n"
+            + "fi\n"
             + "if [ -f $S ]; then\n"
             + "  while read k v; do\n"
             + "    if [ $k = gpu ]; then echo $v > /sys/class/kgsl/kgsl-3d0/devfreq/max_freq; continue; fi\n"

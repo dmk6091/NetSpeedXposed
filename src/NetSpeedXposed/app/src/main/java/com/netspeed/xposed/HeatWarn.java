@@ -28,6 +28,7 @@ final class HeatWarn {
 
     /** Cap the CPU (and drop to 60 Hz) when hot, release when cooled. The NetSpeed app does the root work. */
     private static boolean inited, brightChecked, dimOffSent;
+    private static long lastOnSent = -120_000L;
 
     private static void throttle(Context ctx, float bat, float cpu) {
         try {
@@ -38,6 +39,10 @@ final class HeatWarn {
                     throttled = android.provider.Settings.Global.getInt(ctx.getContentResolver(), "netspeed_throttled", 0) == 1;
                 } catch (Throwable ignored) { }
             }
+            // the root script clears this flag when it stands down because another app already caps the CPU
+            try {
+                throttled = android.provider.Settings.Global.getInt(ctx.getContentResolver(), "netspeed_throttled", 0) == 1;
+            } catch (Throwable ignored) { }
             // never leave the screen on manual brightness: put the saved brightness / auto mode back
             //  - once after every System UI start while not throttled (a missed restore from earlier)
             //  - when the dim option is switched off while throttled
@@ -52,7 +57,11 @@ final class HeatWarn {
             float tb = Cfg.i(Cfg.THR_BAT, Cfg.D_THR_BAT), tc = Cfg.i(Cfg.THR_CPU, Cfg.D_THR_CPU);
             boolean hot = (!Float.isNaN(bat) && bat >= tb) || (!Float.isNaN(cpu) && cpu >= tc);
             boolean cool = (Float.isNaN(bat) || bat < tb - 3) && (Float.isNaN(cpu) || cpu < tc - 8);
-            if (!throttled && hot) send(ctx, true, Cfg.i(Cfg.THR_PCT, Cfg.D_THR_PCT));
+            if (!throttled && hot) {
+                // at most once a minute: when another app already caps the CPU the script stands down and we must not retry every second
+                long nowMs = SystemClock.elapsedRealtime();
+                if (nowMs - lastOnSent > 60_000L) { lastOnSent = nowMs; send(ctx, true, Cfg.i(Cfg.THR_PCT, Cfg.D_THR_PCT)); }
+            }
             else if (throttled && cool) send(ctx, false, 100);
         } catch (Throwable ignored) { }
     }
