@@ -31,7 +31,7 @@ final class RegionNames {
         return new String[]{"N", "NE", "E", "SE", "S", "SW", "W", "NW"}[di];
     }
 
-    private static final Object[][] PEAKS = {
+    static final Object[][] PEAKS = {
             {"Kalsubai", 19.601, 73.711, 1646}, {"Harishchandragad", 19.384, 73.774, 1424}, {"Bhimashankar", 19.072, 73.535, 1034},
             {"Salher", 20.742, 73.964, 1567}, {"Brahmagiri", 19.930, 73.530, 1295}, {"Torna", 18.275, 73.623, 1403}, {"Raigad", 18.236, 73.445, 820},
             {"Sinhagad", 18.366, 73.756, 1312}, {"Rajgad", 18.246, 73.683, 1376}, {"Mahabaleshwar", 17.924, 73.657, 1438},

@@ -31,6 +31,9 @@ final class SkyScene {
     private static final float TOP_ALT = 88f;        // altitude at the top of the screen
     private static final float AZ0 = 180f;
 
+    /** "cloud%|aqi|uv|temp" written by the status bar every weather update; empty if unknown. */
+    static volatile String wxNow = "";
+
     private static float ky() { return (HORIZON - 60f) / TOP_ALT; }
 
     /** Draws and sets the night picture on the lock screen. Returns a short message. */
@@ -42,6 +45,7 @@ final class SkyScene {
                 w = r.width(); h = r.height();
             } catch (Throwable ignored) { }
             SharedPreferences sp = WallpaperMaker.sp(c);
+            try { String v = android.provider.Settings.Global.getString(c.getContentResolver(), "netspeed_wx_now"); wxNow = v == null ? "" : v; } catch (Throwable ignored) { wxNow = ""; }
             Object[] res = draw(w, h, lat, lon, System.currentTimeMillis(), AZ0);
             Bitmap b = (Bitmap) res[0];
             sp.edit().putLong("skyAt", System.currentTimeMillis()).apply();
@@ -76,6 +80,7 @@ final class SkyScene {
         final float az0 = AZ0;
 
         // ---- sky colour from the Sun's height
+        int[] wx = parseWx();
         float[] sc = skyColours(sun.alt);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setShader(new LinearGradient(0, 0, 0, HORIZON, new int[]{(int) sc[0], (int) sc[1], (int) sc[2]}, new float[]{0f, 0.62f, 1f}, Shader.TileMode.CLAMP));
@@ -109,6 +114,9 @@ final class SkyScene {
             }
         }
 
+        // ---- constellation lines (faint), with the name where both ends are up
+        if (dark > 0.2f) drawConstellations(cv, st, az0, dark);
+
         // ---- stars
         Paint sp = new Paint(Paint.ANTI_ALIAS_FLAG);
         Paint lb = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -119,7 +127,7 @@ final class SkyScene {
             double mag = (Double) SkyObjects.STARS[i][3];
             float[] xy = proj(aa[0], aa[1], az0);
             if (xy[0] < 6 || xy[0] > VW - 6 || xy[1] < 6) continue;
-            float vis = dark * (float) Math.min(1, aa[0] / 6.0);        // a little fainter right at the horizon
+            float vis = dark * (1f - 0.65f * cloudFrac(wx)) * (float) Math.min(1, aa[0] / 6.0);        // a little fainter right at the horizon
             if (vis <= 0.02f) continue;
             int col = SkyObjects.color((Character) SkyObjects.STARS[i][4]);
             float r = (float) Math.max(2.0, (4.0 - mag) * 1.5 + 1.0);
@@ -163,7 +171,8 @@ final class SkyScene {
             if (xy[0] > 30 && xy[0] < VW - 30 && xy[1] > 30) drawMoon(cv, xy[0], xy[1], 34f, moon, dark, dim, (float) moon.alt);
         }
 
-        drawLand(cv, sun.alt);
+        drawClouds(cv, wx, sun.alt, ms);
+        drawLand(cv, sun.alt, lat, lon, ms, sun, moon, lst, wx);
 
         Bitmap out = bm;
         return new Object[]{out, az0};
@@ -262,7 +271,7 @@ final class SkyScene {
     }
 
     /** One mountain with a fainter ridge behind it. */
-    private static void drawLand(Canvas cv, double sunAlt) {
+    private static void drawLand(Canvas cv, double sunAlt, double lat, double lon, long ms, Astro.Pos sun, Astro.Moon moon, double lst, int[] wx) {
         float day = (float) Math.max(0, Math.min(1, (sunAlt + 8) / 14.0));
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         // far ridge, hazy
@@ -272,18 +281,292 @@ final class SkyScene {
         far.lineTo(VW, VH); far.close();
         p.setColor(blend(0xFF0B1022, 0xFF6F7C9E, day));
         cv.drawPath(far, p);
-        // the mountain: a broad peak to the right of centre with a rugged edge
-        Path m = new Path();
-        m.moveTo(-20, VH);
-        m.lineTo(-20, HORIZON + 10);
-        float[][] pts = {{0, 1790}, {120, 1760}, {230, 1730}, {330, 1700}, {420, 1650}, {500, 1600}, {580, 1545}, {640, 1500}, {690, 1470}, {720, 1480}, {760, 1500},
-                {800, 1540}, {850, 1575}, {910, 1620}, {960, 1650}, {1020, 1700}, {1080, 1730}, {1100, 1760}};
-        for (float[] q : pts) m.lineTo(q[0], q[1] + (float) (8 * Math.sin(q[0] / 13.0)));
-        m.lineTo(VW + 20, HORIZON + 10); m.lineTo(VW + 20, VH); m.close();
-        p.setColor(blend(0xFF05070C, 0xFF2B3550, day));
-        cv.drawPath(m, p);
         // ground
         p.setColor(blend(0xFF030407, 0xFF1A2236, day));
         cv.drawRect(0, HORIZON + 8, VW, VH, p);
+        drawPeak(cv, day, lat, lon);
+        drawInfo(cv, day, lat, lon, ms, sun, moon, lst, wx);
+    }
+
+    // ------------------------------------------------------------------ weather
+
+    /** {cloud %, aqi, uv x10, temp} with -1 = unknown. */
+    private static int[] parseWx() {
+        int[] r = {-1, -1, -1, -99};
+        try {
+            String[] a = wxNow.split("\\|");
+            if (a.length > 0) r[0] = Integer.parseInt(a[0].trim());
+            if (a.length > 1) r[1] = Integer.parseInt(a[1].trim());
+            if (a.length > 2 && !a[2].trim().equalsIgnoreCase("NaN")) r[2] = Math.round(Float.parseFloat(a[2].trim()) * 10);
+            if (a.length > 3 && !a[3].trim().equals("null")) r[3] = Math.round(Float.parseFloat(a[3].trim()));
+        } catch (Throwable ignored) { }
+        return r;
+    }
+
+    private static float cloudFrac(int[] wx) { return wx[0] < 0 ? 0f : Math.min(1f, wx[0] / 100f); }
+
+    /** Soft clouds only when there really are some (cloud cover over 10 %), and a haze when the air is poor. */
+    private static void drawClouds(Canvas cv, int[] wx, double sunAlt, long ms) {
+        float cf = cloudFrac(wx);
+        float day = (float) Math.max(0, Math.min(1, (sunAlt + 6) / 12.0));
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        if (cf > 0.1f) {
+            Random r = new Random(ms / (6 * 3600_000L));                      // the pattern holds still for a few hours
+            int n = Math.round(3 + cf * 9);
+            int col = blend(0xFF8C97B8, 0xFFFFFFFF, day);
+            for (int i = 0; i < n; i++) {
+                float cx = r.nextFloat() * VW, cy = 220 + r.nextFloat() * (HORIZON - 520), sz = 90 + r.nextFloat() * 140;
+                int a = (int) (60 + 90 * cf);
+                if (sunAlt < -6) a = (int) (a * 0.5f);
+                for (int k = 0; k < 6; k++) {
+                    float x = cx + (k - 2.5f) * sz * 0.55f, y = cy + (float) Math.sin(k * 1.7 + i) * sz * 0.18f, rr = sz * (0.7f + 0.25f * (float) Math.sin(k * 2.3 + i));
+                    p.setShader(new RadialGradient(x, y, rr, withAlpha(col, a), Color.TRANSPARENT, Shader.TileMode.CLAMP));
+                    cv.drawCircle(x, y, rr, p);
+                }
+            }
+            p.setShader(null);
+        }
+        if (wx[1] > 120) {                                                      // hazy air: a warm grey veil low in the sky
+            float a = Math.min(1f, (wx[1] - 100) / 200f);
+            p.setShader(new LinearGradient(0, HORIZON - 700, 0, HORIZON, Color.TRANSPARENT, Color.argb((int) (120 * a), 200, 180, 150), Shader.TileMode.CLAMP));
+            cv.drawRect(0, HORIZON - 700, VW, HORIZON, p);
+            p.setShader(null);
+        }
+    }
+
+    // ------------------------------------------------------------------ constellations
+
+    private static final String[][] CON = {
+            {"Orion", "Betelgeuse-Alnitak", "Bellatrix-Mintaka", "Alnitak-Alnilam", "Alnilam-Mintaka", "Alnitak-Saiph", "Mintaka-Rigel", "Betelgeuse-Bellatrix"},
+            {"Big Dipper", "Dubhe-Merak", "Merak-Phecda", "Phecda-Alioth", "Alioth-Mizar", "Mizar-Alkaid"},
+            {"Scorpius", "Dschubba-Antares", "Antares-Sargas", "Sargas-Shaula"},
+            {"Cassiopeia", "Caph-Schedar", "Schedar-Navi"},
+    };
+
+    private static int starIndex(String n) {
+        for (int i = 0; i < SkyObjects.STARS.length; i++) if (SkyObjects.STARS[i][0].equals(n)) return i;
+        return -1;
+    }
+
+    private static void drawConstellations(Canvas cv, double[][] st, float az0, float dark) {
+        Paint ln = new Paint(Paint.ANTI_ALIAS_FLAG);
+        ln.setStrokeWidth(2.2f); ln.setColor(Color.argb((int) (95 * dark), 130, 160, 225));
+        Paint tx = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tx.setTextSize(25); tx.setTypeface(Typeface.create("sans-serif", Typeface.ITALIC)); tx.setColor(Color.argb((int) (150 * dark), 150, 180, 240));
+        for (String[] con : CON) {
+            float sx = 0, sy = 0; int cnt = 0;
+            for (int k = 1; k < con.length; k++) {
+                String[] ab = con[k].split("-");
+                int i = starIndex(ab[0]), j = starIndex(ab[1]);
+                if (i < 0 || j < 0 || st[i][0] < 1 || st[j][0] < 1) continue;
+                float[] a = proj(st[i][0], st[i][1], az0), b = proj(st[j][0], st[j][1], az0);
+                if (a[0] < 0 || b[0] < 0 || a[0] > VW || b[0] > VW) continue;
+                cv.drawLine(a[0], a[1], b[0], b[1], ln);
+                sx += a[0] + b[0]; sy += a[1] + b[1]; cnt += 2;
+            }
+            if (cnt >= 4) cv.drawText(con[0], sx / cnt - tx.measureText(con[0]) / 2, sy / cnt + 70, tx);
+        }
+    }
+
+    // ------------------------------------------------------------------ the nearest peak
+
+    private static final String[][] NOTES = {
+            {"Tikona", "pyramid", "Pyramid-shaped hill fort (Vitandgad)"}, {"Sinhagad", "flat", "Flat-topped hill fort"},
+            {"Kalsubai", "dome", "Highest peak in Maharashtra"}, {"Raigad", "flat", "Shivaji's capital fort"},
+            {"Torna", "flat", "Torna fort (Prachandagad)"}, {"Matheran", "flat", "Flat-topped hill station plateau"},
+            {"Bhimashankar", "dome", "Source of the Bhima river"}, {"Brahmagiri", "dome", "Source of the Godavari"},
+            {"Harishchandragad", "flat", "Fort with the Konkankada cliff"}, {"Rajgad", "flat", ""}, {"Lohgad", "flat", ""},
+            {"Rajmachi", "flat", ""}, {"Purandar", "flat", ""}, {"Pratapgad", "flat", ""}, {"Salher", "dome", ""},
+            {"Mahabaleshwar", "dome", ""},
+    };
+
+    /** {name, height, distance km, bearing deg, shape, note} of the nearest peak in the built-in list. */
+    static Object[] nearestPeak(double lat, double lon) {
+        Object[] best = null; double bd = 1e9, bb = 0;
+        for (Object[] pk : RegionNames.PEAKS) {
+            double la = (Double) pk[1], lo = (Double) pk[2];
+            double n = (la - lat) * 110.57, e = (lo - lon) * 111.32 * Math.cos(Math.toRadians(lat));
+            double d = Math.hypot(n, e);
+            if (d < bd) { bd = d; best = pk; bb = (Math.toDegrees(Math.atan2(e, n)) + 360) % 360; }
+        }
+        String shape = "dome", note = "";
+        for (String[] nn : NOTES) if (nn[0].equals(best[0])) { shape = nn[1]; note = nn[2]; }
+        return new Object[]{best[0], best[3], bd, bb, shape, note};
+    }
+
+    private static final float[][] PYRAMID = {{-330, 330}, {-250, 265}, {-170, 185}, {-100, 100}, {-40, 38}, {0, 0}, {14, 6}, {40, 45}, {95, 115}, {160, 185}, {240, 255}, {330, 330}};
+    private static final float[][] FLAT = {{-380, 330}, {-300, 300}, {-230, 230}, {-170, 150}, {-120, 70}, {-90, 22}, {-70, 0}, {60, 0}, {85, 22}, {120, 60}, {180, 140}, {260, 230}, {340, 300}, {400, 330}};
+    private static final float[][] DOME = {{-420, 330}, {-330, 280}, {-240, 200}, {-150, 110}, {-70, 40}, {-20, 8}, {20, 0}, {80, 18}, {160, 70}, {250, 150}, {340, 230}, {430, 330}};
+
+    private static void drawPeak(Canvas cv, float day, double lat, double lon) {
+        Object[] pk = nearestPeak(lat, lon);
+        String shape = (String) pk[4];
+        float[][] sh = shape.equals("pyramid") ? PYRAMID : shape.equals("flat") ? FLAT : DOME;
+        double az = (Double) pk[3];
+        float x0 = (float) (VW / 2 + angDiff(az, AZ0) * (VW / SPAN));
+        float scale = 0.8f + 0.3f * Math.min(1f, ((Integer) pk[1]) / 1400f);
+        float half = 430 * scale;
+        x0 = Math.max(half * 0.7f + 20, Math.min(VW - half * 0.7f - 20, x0));
+        float base = HORIZON + 10;
+        float top = base - 330 * scale;
+        Path m = new Path();
+        m.moveTo(-40, VH); m.lineTo(-40, base);
+        m.lineTo(x0 + (sh[0][0] - 400) * scale, base);
+        for (float[] q : sh) m.lineTo(x0 + q[0] * scale, top + q[1] * scale + (float) (3 * Math.sin(q[0] / 9.0)));
+        m.lineTo(x0 + (sh[sh.length - 1][0] + 400) * scale, base);
+        m.lineTo(VW + 40, base); m.lineTo(VW + 40, VH); m.close();
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setColor(blend(0xFF05070C, 0xFF2B3550, day));
+        cv.drawPath(m, p);
+        // pencil edge and a few hatch strokes, like a sketch
+        Paint ed = new Paint(Paint.ANTI_ALIAS_FLAG);
+        ed.setStyle(Paint.Style.STROKE); ed.setStrokeWidth(2.6f); ed.setColor(blend(0xFFB8C6E8, 0xFFE4EAF8, day));
+        Path e = new Path();
+        for (int i = 0; i < sh.length; i++) { float x = x0 + sh[i][0] * scale, y = top + sh[i][1] * scale; if (i == 0) e.moveTo(x, y); else e.lineTo(x, y); }
+        cv.drawPath(e, ed);
+        ed.setStrokeWidth(1.4f); ed.setAlpha(110);
+        for (int k = 0; k < 9; k++) {
+            float hx = x0 + (-10 + k * 16) * scale, hy = top + (30 + k * 14) * scale;
+            cv.drawLine(hx, hy, hx - 85 * scale, hy + 120 * scale, ed);
+        }
+        // flag on the summit and the label beside it
+        float sx = x0, sy = top;
+        if (shape.equals("flat")) sx = x0 - 5 * scale;
+        Paint fl = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fl.setColor(0xFFFFBE5A); fl.setStrokeWidth(3);
+        cv.drawLine(sx, sy, sx, sy - 44, fl);
+        Path flag = new Path(); flag.moveTo(sx, sy - 44); flag.lineTo(sx + 30, sy - 35); flag.lineTo(sx, sy - 26); flag.close();
+        cv.drawPath(flag, fl);
+        String dir = RegionNames.dir8(Math.cos(Math.toRadians(az)), Math.sin(Math.toRadians(az)));
+        String l1 = (String) pk[0];
+        String l2 = pk[1] + " m above sea level";
+        String l3 = String.format(java.util.Locale.US, "%.0f km away · %s (%.0f°)", (Double) pk[2], dir, az);
+        String l4 = (String) pk[5];
+        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG), sh2 = new Paint(Paint.ANTI_ALIAS_FLAG);
+        boolean left = x0 > VW / 2f;
+        tp.setTextAlign(left ? Paint.Align.RIGHT : Paint.Align.LEFT); sh2.setTextAlign(tp.getTextAlign());
+        float tx = left ? sx - 70 : sx + 70, ty = sy - 20;
+        int c1 = 0xFFFFFFFF, c2 = 0xFFD8E2F8;
+        String[] ls = {l1, l2, l3, l4};
+        float[] sz = {46, 30, 30, 28};
+        for (int i = 0; i < 4; i++) {
+            if (ls[i] == null || ls[i].isEmpty()) continue;
+            tp.setTextSize(sz[i]); tp.setTypeface(i == 0 ? Typeface.create("sans-serif", Typeface.BOLD) : Typeface.create("sans-serif", Typeface.NORMAL));
+            sh2.set(tp); sh2.setColor(0xAA000000); sh2.setStyle(Paint.Style.STROKE); sh2.setStrokeWidth(5);
+            tp.setColor(i == 0 ? c1 : c2);
+            cv.drawText(ls[i], tx, ty, sh2); cv.drawText(ls[i], tx, ty, tp);
+            ty += sz[i] + 10;
+        }
+        ed.setAlpha(150); ed.setStrokeWidth(1.6f);
+        cv.drawLine(sx + (left ? -8 : 8), sy - 8, tx + (left ? 14 : -14), sy - 30, ed);
+    }
+
+    // ------------------------------------------------------------------ times and the info lines
+
+    private interface Alt { double at(long ms); }
+
+    /** First crossing of thr after t0 going up (rising = true) or down, scanning n steps; 0 if none. */
+    private static long cross(Alt f, long t0, long step, int n, double thr, boolean rising) {
+        double prev = f.at(t0);
+        for (int i = 1; i <= n; i++) {
+            long t = t0 + i * step;
+            double a = f.at(t);
+            if (rising ? (prev < thr && a >= thr) : (prev >= thr && a < thr)) return t - step / 2;
+            prev = a;
+        }
+        return 0;
+    }
+
+    private static String hm(long t) { return t == 0 ? "--:--" : new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date(t)); }
+
+    private static String dayLen(long rise, long set) { long m = (set - rise) / 60000L; return (m / 60) + "h " + (m % 60) + "m"; }
+
+    private static String phaseName(double ph, boolean waxing) {
+        if (ph < 0.03 || ph > 0.97) return "new moon";
+        if (ph < 0.22) return "waxing crescent";
+        if (ph < 0.28) return "first quarter";
+        if (ph < 0.47) return "waxing gibbous";
+        if (ph < 0.53) return "full moon";
+        if (ph < 0.72) return "waning gibbous";
+        if (ph < 0.78) return "last quarter";
+        return "waning crescent";
+    }
+
+    private static String airWord(int aqi) { return aqi <= 50 ? "good" : aqi <= 100 ? "fair" : aqi <= 150 ? "poor" : aqi <= 200 ? "hazy" : "very poor"; }
+
+    private static String shower(long ms) {
+        Object[][] sh = {{"Quadrantids", 1, 3}, {"Lyrids", 4, 22}, {"Eta Aquariids", 5, 6}, {"Perseids", 8, 12}, {"Orionids", 10, 21}, {"Leonids", 11, 17}, {"Geminids", 12, 13}, {"Ursids", 12, 22}};
+        Calendar now = Calendar.getInstance(); now.setTimeInMillis(ms);
+        int bestDays = 999; String name = "";
+        for (Object[] s : sh) {
+            Calendar c = Calendar.getInstance(); c.setTimeInMillis(ms);
+            c.set(Calendar.MONTH, (Integer) s[1] - 1); c.set(Calendar.DAY_OF_MONTH, (Integer) s[2]);
+            long d = Math.round((c.getTimeInMillis() - ms) / 86400000.0);
+            if (d < -1) { c.add(Calendar.YEAR, 1); d = Math.round((c.getTimeInMillis() - ms) / 86400000.0); }
+            if (d < bestDays) { bestDays = (int) d; name = (String) s[0]; }
+        }
+        if (bestDays <= 1) return name + " meteor shower peaks tonight";
+        return "Next meteor shower: " + name + " in " + bestDays + " days";
+    }
+
+    private static void drawInfo(Canvas cv, float day, double lat, double lon, long ms, Astro.Pos sun, Astro.Moon moon, double lst, int[] wx) {
+        java.util.ArrayList<String> rows = new java.util.ArrayList<>();
+        final double la = lat, lo = lon;
+        Alt sunF = t -> Astro.sun(t, la, lo).alt;
+        Alt moonF = t -> Astro.moon(t, la, lo).alt;
+        Calendar mid = Calendar.getInstance(); mid.setTimeInMillis(ms);
+        mid.set(Calendar.HOUR_OF_DAY, 0); mid.set(Calendar.MINUTE, 0); mid.set(Calendar.SECOND, 0); mid.set(Calendar.MILLISECOND, 0);
+        long t0 = mid.getTimeInMillis(), step5 = 5 * 60_000L;
+        String dirS = RegionNames.dir8(Math.cos(Math.toRadians(sun.az)), Math.sin(Math.toRadians(sun.az)));
+        boolean isDay = sun.alt > -0.83;
+        long rise = cross(sunF, t0, step5, 288, -0.83, true), set = cross(sunF, t0, step5, 288, -0.83, false);
+        String w3 = "";
+        if (wx[0] >= 0) w3 += "Cloud " + wx[0] + "%";
+        if (wx[2] >= 0 && isDay) w3 += (w3.isEmpty() ? "" : " · ") + "UV " + String.format(java.util.Locale.US, "%.0f", wx[2] / 10f);
+        if (wx[1] >= 0) w3 += (w3.isEmpty() ? "" : " · ") + "AQI " + wx[1] + " (" + airWord(wx[1]) + ")";
+        if (wx[3] > -90) w3 += (w3.isEmpty() ? "" : " · ") + wx[3] + "°";
+        if (isDay) {
+            long noon = 0; double mx = -90;
+            for (long t = t0; t < t0 + 86400000L; t += step5) { double a = sunF.at(t); if (a > mx) { mx = a; noon = t; } }
+            long gold = cross(sunF, noon, step5, 150, 6.0, false);
+            long yRise = cross(sunF, t0 - 86400000L, step5, 288, -0.83, true), ySet = cross(sunF, t0 - 86400000L, step5, 288, -0.83, false);
+            int diff = (int) Math.round(((set - rise) - (ySet - yRise)) / 60000.0);
+            rows.add(String.format(java.util.Locale.US, "Sun %.0f° up · %s (%.0f°) · noon %s", sun.alt, dirS, sun.az, hm(noon)));
+            rows.add("Rise " + hm(rise) + " · set " + hm(set) + " · golden hour " + hm(gold));
+            rows.add("Day " + dayLen(rise, set) + (rise == 0 || set == 0 ? "" : " (" + (diff >= 0 ? "+" : "−") + Math.abs(diff) + " min)"));
+            if (!w3.isEmpty()) rows.add(w3);
+            long mr = cross(moonF, ms - 12 * 3600_000L, 10 * 60_000L, 144, -0.3, true), ms2 = cross(moonF, ms - 12 * 3600_000L, 10 * 60_000L, 144, -0.3, false);
+            rows.add(String.format(java.util.Locale.US, "Moon %.0f%% · rises %s · sets %s", moon.illum * 100, hm(mr), hm(ms2)));
+        } else {
+            long from = ms - 12 * 3600_000L;
+            long mr = cross(moonF, from, 10 * 60_000L, 144, -0.3, true), mset = cross(moonF, from, 10 * 60_000L, 144, -0.3, false);
+            rows.add(String.format(java.util.Locale.US, "Moon %s %.0f%% · rises %s · sets %s", phaseName(moon.phase, moon.waxing), moon.illum * 100, hm(mr), hm(mset)));
+            StringBuilder pl = new StringBuilder();
+            for (int i = 0; i < 4; i++) {
+                final int pi = i;
+                Alt pf = t -> { double[] rd = SkyObjects.planetRaDec(pi, t); return SkyObjects.altAz(rd[0], rd[1], SkyObjects.lst(t, lo), la)[0]; };
+                double nowAlt = pf.at(ms);
+                long pr = cross(pf, from, 10 * 60_000L, 144, 0, true), ps = cross(pf, from, 10 * 60_000L, 144, 0, false);
+                if (nowAlt > 0 || (pr != 0 && pr > ms - 3600_000L)) {
+                    if (pl.length() > 0) pl.append(" · ");
+                    pl.append(SkyObjects.PLANETS[i]).append(nowAlt > 0 ? " sets " + hm(ps) : " rises " + hm(pr));
+                }
+            }
+            if (pl.length() > 0) rows.add(pl.toString());
+            long fromN = ms - 8 * 3600_000L;
+            String dk;
+            if (sun.alt <= -18) dk = "Fully dark until " + hm(cross(sunF, ms, step5, 200, -18, true));
+            else dk = "Fully dark from " + hm(cross(sunF, ms, step5, 288, -18, false));
+            String sky = wx[0] < 0 ? "" : wx[0] < 25 ? " · stars clear" : wx[0] < 70 ? " · stars partly hidden" : " · stars hidden";
+            rows.add(dk + (wx[0] >= 0 ? " · clouds " + wx[0] + "%" : "") + sky);
+            rows.add(shower(ms));
+            if (!w3.isEmpty() && wx[1] >= 0) rows.add(w3);
+        }
+        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG), sd = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tp.setTextSize(31); tp.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        tp.setColor(0xFFE8EEFF);
+        sd.set(tp); sd.setStyle(Paint.Style.STROKE); sd.setStrokeWidth(5); sd.setColor(0x99000000);
+        float y = 1900f;
+        for (String r : rows) { cv.drawText(r, 48, y, sd); cv.drawText(r, 48, y, tp); y += 50; }
     }
 }

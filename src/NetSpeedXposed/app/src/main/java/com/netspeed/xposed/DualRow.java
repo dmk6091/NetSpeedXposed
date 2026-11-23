@@ -4445,6 +4445,7 @@ final class DualRow {
                     logOnce("wxuv", "uv curve not available: " + t);
                 }
                 wxFetchedAt = now;
+                try { android.provider.Settings.Global.putString(ctx.getContentResolver(), "netspeed_wx_now", wxCloud + "|" + wxAqi + "|" + wxUv + "|" + omTemp); } catch (Throwable ignored) { }
                 try { fetchTide(wxLatLon[0], wxLatLon[1], now); } catch (Throwable ignored) { }
                 try { fetchWetland(wxLatLon[0], wxLatLon[1], now); } catch (Throwable ignored) { }
                 try { fetchDam(wxLatLon[0], wxLatLon[1], now); } catch (Throwable ignored) { }
