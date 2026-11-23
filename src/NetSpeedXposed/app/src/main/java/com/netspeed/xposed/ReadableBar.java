@@ -3120,7 +3120,7 @@ final class ReadableBar extends View {
         float wd = showData ? bw0 + 5 + tw(v4, 20, bold) + tw(" · ", 17, semi) + tw(v5, 20, bold) : 0;
         float wl = showData ? tw("4G ", 15, semi) + tw("5G ", 15, semi) : 0;
         final boolean lab = Cfg.b(Cfg.DATA_LABELS, Cfg.D_DATA_LABELS) && wd + wl + wq <= cw * 1.05f;
-        final float w = wd + (lab ? wl : 0) + wq + (hIn ? (showData || q >= 0 ? 12 : 0) + heightW(d) : 0);
+        final float w = wd + (lab ? wl : 0) + wq + (hIn ? (showData || q >= 0 ? 12 : 0) + heightW(d) + (geoOn(d) ? 12 + geoW(d) : 0) : 0);
         fit(c, x, cy, w, cw, () -> {
             float e = 0;
             if (showData) {
@@ -3150,7 +3150,7 @@ final class ReadableBar extends View {
                 } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
                 e = textB(c, qv, e, 0, 20, 20, bold, qc);
             }
-            if (hIn) heightItem(c, d, e + (q >= 0 ? 12 : 0));
+            if (hIn) { float e2 = heightItem(c, d, e + (q >= 0 ? 12 : 0)); if (geoOn(d)) geoItem(c, d, e2 + 12); }
         });
     }
 
@@ -3180,6 +3180,21 @@ final class ReadableBar extends View {
 
     private float heightW(SimInfo d) {
         return 28 + 5 + tw((d.towerEst ? "~" : "") + d.towerH.replace(" m", "m"), 20, bold);
+    }
+
+    /** Landform and terrain shadow beside the height item: "Valley \u2196NW 14m"; colour follows whether the ground blocks the path to this SIM's tower. */
+    private boolean geoOn(SimInfo d) { return heightInRow(d) && TowerElev.LAND != null; }
+
+    private String geoWord(SimInfo d) { return (d.towerEst ? "~" : "") + TowerElev.LAND; }
+
+    private String geoShade() { return TowerElev.SHADE_M > 0 ? " " + TowerElev.SHADE_DIR + " " + TowerElev.SHADE_M + "m" : ""; }
+
+    private float geoW(SimInfo d) { return tw(geoWord(d), 20, bold) + tw(geoShade(), 18, semi); }
+
+    private void geoItem(Canvas c, SimInfo d, float e) {
+        final int gc = d.los > 2 ? orange() : d.towerEst ? fade(green(), 0.8f) : green();
+        e = textB(c, geoWord(d), e, 0, 20, 20, bold, gc);
+        if (TowerElev.SHADE_M > 0) textB(c, geoShade(), e, 0, 20, 18, semi, fade(0xFFC8D4E4, d.towerEst ? 0.85f : 1f));
     }
 
     private float heightItem(Canvas c, SimInfo d, float e) {
@@ -3230,7 +3245,7 @@ final class ReadableBar extends View {
         final int qc = q >= 70 ? green() : q >= 45 ? yellow() : q >= 25 ? orange() : red();
         final boolean qbox = Cfg.b(Cfg.Q_BOX, Cfg.D_Q_BOX);
         final int dim = fade(grey(), 0.85f);
-        float w = (q >= 0 ? (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold) : 0) + (hIn ? (q >= 0 ? 12 : 0) + heightW(d) : 0);
+        float w = (q >= 0 ? (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold) : 0) + (hIn ? (q >= 0 ? 12 : 0) + heightW(d) + (geoOn(d) ? 12 + geoW(d) : 0) : 0);
         fit(c, x, cy, w, cw, () -> {
             float e = 0;
             if (q >= 0) {
@@ -3246,7 +3261,7 @@ final class ReadableBar extends View {
                 } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
                 e = textB(c, qv, e, 0, 20, 20, bold, qc);
             }
-            if (hIn) heightItem(c, d, e + (q >= 0 ? 12 : 0));
+            if (hIn) { float e2 = heightItem(c, d, e + (q >= 0 ? 12 : 0)); if (geoOn(d)) geoItem(c, d, e2 + 12); }
         });
     }
 

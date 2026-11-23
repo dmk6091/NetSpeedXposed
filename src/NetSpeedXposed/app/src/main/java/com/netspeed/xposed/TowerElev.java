@@ -28,6 +28,33 @@ final class TowerElev {
     /** SIM slot -> radio horizon (km) using the real mast height; absent = use HORIZON_KM. */
     static final Map<Integer, Integer> HKM = new ConcurrentHashMap<>();
     private static final Map<String, Integer> OSM_H = new ConcurrentHashMap<>();   // tower position -> OSM height, 0 = none listed
+    /** Landform around you from 8 ground heights 300 m away: "Ridge", "Slope", "Valley" or "Flat"; null until known. */
+    static volatile String LAND;
+    /** Direction word + arrow and height (m) above you of the highest ground 300 m away, e.g. "\u2196NW"; SHADE_M 0 = nothing worth showing. */
+    static volatile String SHADE_DIR = "";
+    static volatile int SHADE_M;
+    private static void landform(double meLat, double meLon, double meElev) {
+        try {
+            final String[] nm = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+            final String[] ar = {"\u2191", "\u2197", "\u2192", "\u2198", "\u2193", "\u2199", "\u2190", "\u2196"};
+            StringBuilder la = new StringBuilder(), lo = new StringBuilder();
+            double dLat = 300 / 111320.0, dLon = 300 / (111320.0 * Math.cos(Math.toRadians(meLat)));
+            for (int k = 0; k < 8; k++) {
+                double th = Math.toRadians(k * 45);
+                if (k > 0) { la.append(','); lo.append(','); }
+                la.append(String.format(Locale.US, "%.5f", meLat + dLat * Math.cos(th)));
+                lo.append(String.format(Locale.US, "%.5f", meLon + dLon * Math.sin(th)));
+            }
+            org.json.JSONArray a = new org.json.JSONObject(Scene.get("https://api.open-meteo.com/v1/elevation?latitude=" + la + "&longitude=" + lo)).getJSONArray("elevation");
+            if (a.length() < 8) return;
+            double mx = -1e9, mn = 1e9, sum = 0; int mi = 0;
+            for (int k = 0; k < 8; k++) { double dm = a.getDouble(k) - meElev; sum += dm; if (dm > mx) { mx = dm; mi = k; } mn = Math.min(mn, dm); }
+            double mean = sum / 8;
+            LAND = (mx - mn) < 6 ? "Flat" : mean <= -6 ? "Valley" : mean >= 6 ? "Ridge" : "Slope";
+            SHADE_M = mx >= 5 ? (int) Math.round(mx) : 0;
+            SHADE_DIR = ar[mi] + nm[mi];
+        } catch (Throwable ignored) { }
+    }
     private static String lastKey = "";
     private static long lastAt, tried;
     /** Last outcome, shown in Live diagnostics. */
@@ -57,6 +84,7 @@ final class TowerElev {
             org.json.JSONArray a = new org.json.JSONObject(Scene.get(url)).getJSONArray("elevation");
             if (a.length() < ts.size() + 1) { why = "elevation reply too short: " + a.length(); return; }
             double me = a.getDouble(0);
+            landform(sn.meLat, sn.meLon, me);
             for (int i = 0; i < ts.size(); i++) DELTA.put(ts.get(i).slot, (int) Math.round(a.getDouble(i + 1) - me));
             lastKey = key.toString();
             lastAt = now;

@@ -2335,6 +2335,7 @@ public class SettingsActivity extends Activity {
             {"B3 \u221284 (with icon)", "Best neighbouring tower: its band and signal. Orange = weaker than your tower, green = stronger, so a switch may come.", g(m, "nbr"), "A neighbour is another tower the phone can hear and may hand over to."},
             {"BOTTOM ROW"},
             {"D 1.2G  M 0.4G", "Data used on this SIM. D = today, M = this month.", g(m, "today"), ""},
+            {"Valley \u2196NW 14m", "The shape of the land around you, then the direction and height of the highest ground 300 m away.", TowerElev.LAND == null ? null : TowerElev.LAND + (TowerElev.SHADE_M > 0 ? " " + TowerElev.SHADE_DIR + " " + TowerElev.SHADE_M + "m" : ""), "Ridge = you stand higher than the land around. Slope = ground rises one way and falls the other. Valley = you stand lower than most of the land around. Flat = under 6 m of difference. The direction shows the highest ground at 300 m and how much it stands above you. Green = nothing blocks the path to this tower, orange = ground does. ~ = rough."},
             {"\u25B2 +6m", "Tower's ground compared with yours. Not the mast height, a phone cannot know that.", h, "Green = tower ground higher than yours, orange = lower, grey = rough."},
         };
         for (String[] r : rows) {
