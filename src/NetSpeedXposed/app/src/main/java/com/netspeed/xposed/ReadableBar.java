@@ -3120,7 +3120,7 @@ final class ReadableBar extends View {
         float wd = showData ? bw0 + 5 + tw(v4, 20, bold) + tw(" · ", 17, semi) + tw(v5, 20, bold) : 0;
         float wl = showData ? tw("4G ", 15, semi) + tw("5G ", 15, semi) : 0;
         final boolean lab = Cfg.b(Cfg.DATA_LABELS, Cfg.D_DATA_LABELS) && wd + wl + wq <= cw * 1.05f;
-        final float w = wd + (lab ? wl : 0) + wq + (hIn ? (showData || q >= 0 ? 12 : 0) + geoW(d) : 0);
+        final float w = wd + (lab ? wl : 0) + wq + (hIn ? (showData || q >= 0 ? 12 : 0) + (mtnUp(d) ? 0 : heightW(d) + 12) + geoW(d) : 0);
         fit(c, x, cy, w, cw, () -> {
             float e = 0;
             if (showData) {
@@ -3150,7 +3150,7 @@ final class ReadableBar extends View {
                 } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
                 e = textB(c, qv, e, 0, 20, 20, bold, qc);
             }
-            if (hIn) geoItem(c, d, e + (q >= 0 ? 12 : 0));
+            if (hIn) { float e2 = e + (q >= 0 ? 12 : 0); if (!mtnUp(d)) e2 = heightItem(c, d, e2) + 12; geoItem(c, d, e2); }
         });
     }
 
@@ -3183,6 +3183,9 @@ final class ReadableBar extends View {
     }
 
     /** Landform and terrain shadow beside the height item: "Valley \u2196NW 14m"; colour follows whether the ground blocks the path to this SIM's tower. */
+    /** The mountain height item rides the arrow line, unless a neighbour tower sits at that line's right end: then it stays in the bottom row. */
+    private boolean mtnUp(SimInfo d) { return heightInRow(d) && !(Cfg.b(Cfg.TC_NB, Cfg.D_TC_NB) && d.nbr != null); }
+
     private boolean geoOn(SimInfo d) { return heightInRow(d) && TowerElev.LAND != null; }
 
     private String geoWord(SimInfo d) { return (d.towerEst ? "~" : "") + TowerElev.LAND; }
@@ -3245,7 +3248,7 @@ final class ReadableBar extends View {
         final int qc = q >= 70 ? green() : q >= 45 ? yellow() : q >= 25 ? orange() : red();
         final boolean qbox = Cfg.b(Cfg.Q_BOX, Cfg.D_Q_BOX);
         final int dim = fade(grey(), 0.85f);
-        float w = (q >= 0 ? (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold) : 0) + (hIn ? (q >= 0 ? 12 : 0) + geoW(d) : 0);
+        float w = (q >= 0 ? (qbox ? 25 : tw("Q", 15, semi) + 4) + tw(qv, 20, bold) : 0) + (hIn ? (q >= 0 ? 12 : 0) + (mtnUp(d) ? 0 : heightW(d) + 12) + geoW(d) : 0);
         fit(c, x, cy, w, cw, () -> {
             float e = 0;
             if (q >= 0) {
@@ -3261,7 +3264,7 @@ final class ReadableBar extends View {
                 } else e = textB(c, "Q", e, 0, 15, 15, semi, dim) + 4;
                 e = textB(c, qv, e, 0, 20, 20, bold, qc);
             }
-            if (hIn) geoItem(c, d, e + (q >= 0 ? 12 : 0));
+            if (hIn) { float e2 = e + (q >= 0 ? 12 : 0); if (!mtnUp(d)) e2 = heightItem(c, d, e2) + 12; geoItem(c, d, e2); }
         });
     }
 
@@ -3796,7 +3799,7 @@ final class ReadableBar extends View {
                 if (real && !roughAll) tl.add(new DSeg(" mast " + si.mastM + "m", 15, bold, 0xFF78C8FF).chip().extra());
             }
         }
-        if (tower && fold && heightInRow(si)) {   // tower ground height (boxed mountain) sits after the arrow / clearance on the line above
+        if (tower && fold && mtnUp(si)) {   // tower ground height (boxed mountain) sits after the arrow / clearance on the line above
             DSeg ms = new DSeg("", 20, bold, g).extra();
             ms.mtn = si;
             if (!d.isEmpty()) d.add(new DSeg("  ", 17, bold, g).extra());
