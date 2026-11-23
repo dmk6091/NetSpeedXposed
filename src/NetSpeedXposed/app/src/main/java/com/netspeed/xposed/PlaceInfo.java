@@ -105,8 +105,9 @@ final class PlaceInfo {
     static String[] guide(String state, double lat, double lon) {
         String s = state == null ? "" : state.toLowerCase(Locale.ROOT);
         if (s.contains("maharashtra") || s.isEmpty()) {
-            if (lon < 73.45 && lat < 20.2) return new String[]{"Laterite and coastal soil", "mango, coconut, cashew, jackfruit, mangrove"};
-            if (lon < 74.1 && lat < 21) return new String[]{"Thin red-laterite hill soil", "teak, ain, karvi, bamboo, wild grass"};
+            double crest = lat >= 19.5 ? 73.45 : lat >= 18 ? 73.5 : lat >= 16.5 ? 73.9 : 74.1;   // Sahyadri crest line, roughly
+            if (lon < crest - 0.3 && lat < 20.4) return new String[]{"Laterite and coastal soil", "mango, coconut, cashew, jackfruit, mangrove"};
+            if (lon < crest + 0.15 && lat < 21) return new String[]{"Thin red-laterite hill soil", "teak, ain, karvi, bamboo, wild grass"};
             if (lon > 77.0) return new String[]{"Black and red soil", "teak, mahua, tendu, cotton, sorghum"};
             return new String[]{"Black basalt soil (regur)", "neem, babul, tamarind, teak, bamboo"};
         }

@@ -26,7 +26,7 @@ final class SkyScene {
     private SkyScene() {}
 
     private static final float VW = 1080f, VH = 2280f;
-    private static final float HORIZON = 1350f;      // y of the horizon
+    private static final float HORIZON = 1230f;      // y of the horizon
     private static final float SPAN = 160f;          // degrees of sky across the screen (facing south, east on the left)
     private static final float TOP_ALT = 88f;        // altitude at the top of the screen
     private static final float AZ0 = 180f;
@@ -185,7 +185,7 @@ final class SkyScene {
             if (xy[0] > 30 && xy[0] < VW - 30 && xy[1] > 30) drawMoon(cv, xy[0], xy[1], 34f, moon, dark, dim, (float) moon.alt);
         }
 
-        drawHighlights(cv, st, pl, dark, sun.alt, wx, az0);
+        drawHighlights(cv, st, pl, dark, sun.alt, wx, az0, peakLabelBox(lat, lon));
         drawClouds(cv, wx, sun.alt, ms);
         drawLand(cv, sun.alt, lat, lon, ms, sun, moon, lst, wx);
 
@@ -467,6 +467,20 @@ final class SkyScene {
     private static final float[][] FLAT = {{-380, 330}, {-300, 300}, {-230, 230}, {-170, 150}, {-120, 70}, {-90, 22}, {-70, 0}, {60, 0}, {85, 22}, {120, 60}, {180, 140}, {260, 230}, {340, 300}, {400, 330}};
     private static final float[][] DOME = {{-420, 330}, {-330, 280}, {-240, 200}, {-150, 110}, {-70, 40}, {-20, 8}, {20, 0}, {80, 18}, {160, 70}, {250, 150}, {340, 230}, {430, 330}};
 
+    /** Where the nearest peak's text sits, so stars highlighted on the horizon keep clear of it. */
+    private static RectF peakLabelBox(double lat, double lon) {
+        Object[] pk = peakNow != null ? peakNow : nearestPeak(lat, lon);
+        double az = (Double) pk[3];
+        float x0 = (float) (VW / 2 + angDiff(az, AZ0) * (VW / SPAN));
+        float scale = 0.8f + 0.3f * Math.min(1f, ((Integer) pk[1]) / 1400f);
+        float half = 430 * scale;
+        x0 = Math.max(half * 0.7f + 20, Math.min(VW - half * 0.7f - 20, x0));
+        float top = HORIZON + 10 - 290 * scale;
+        boolean left = x0 > VW / 2f;
+        float tx = left ? x0 - 70 : x0 + 70;
+        return new RectF(left ? tx - 440 : tx - 20, top - 70, left ? tx + 20 : tx + 440, top + 200);
+    }
+
     private static void drawPeak(Canvas cv, float day, double lat, double lon) {
         Object[] pk = peakNow != null ? peakNow : nearestPeak(lat, lon);
         String shape = (String) pk[4];
@@ -477,7 +491,7 @@ final class SkyScene {
         float half = 430 * scale;
         x0 = Math.max(half * 0.7f + 20, Math.min(VW - half * 0.7f - 20, x0));
         float base = HORIZON + 10;
-        float top = base - 330 * scale;
+        float top = base - 290 * scale;
         Path m = new Path();
         m.moveTo(-40, VH); m.lineTo(-40, base);
         m.lineTo(x0 + (sh[0][0] - 400) * scale, base);
@@ -614,7 +628,7 @@ final class SkyScene {
             Astro.Pos q = Astro.sun(t, la, lo);
             if (q.alt < -0.5) continue;
             float[] xy = proj(q.alt, q.az, az0);
-            if (xy[0] < 12 || xy[0] > VW - 12 || xy[1] < 12) continue;
+            if (xy[0] < 120 || xy[0] > 960 || xy[1] < 280) continue;
             cv.drawCircle(xy[0], xy[1], 3.2f, dp);
             if (first == null) first = xy;
             last = xy;
@@ -625,21 +639,21 @@ final class SkyScene {
         tp.setTextAlign(Paint.Align.CENTER);
         if (noonXY != null) shadowText(cv, "Noon " + hm(noonT), noonXY[0], noonXY[1] - 62, tp, sd);
         tp.setTextAlign(Paint.Align.LEFT);
-        if (first != null && rise != 0) shadowText(cv, "Rise " + hm(rise), Math.max(16, first[0] - 6), first[1] + 40, tp, sd);
+        if (first != null && rise != 0) shadowText(cv, "Rise " + hm(rise), Math.max(140, first[0] - 6), first[1] + 40, tp, sd);
         tp.setTextAlign(Paint.Align.RIGHT);
-        if (last != null && set != 0) shadowText(cv, "Set " + hm(set), Math.min(VW - 16, last[0] + 6), last[1] + 40, tp, sd);
+        if (last != null && set != 0) shadowText(cv, "Set " + hm(set), Math.min(940, last[0] + 6), last[1] + 40, tp, sd);
     }
 
     private static final class Hl { float x, y; String name, sub; int col; double order; java.util.ArrayList<float[]> trail; }
 
-    private static void drawHighlights(Canvas cv, double[][] st, double[][] pl, float dark, double sunAlt, int[] wx, float az0) {
+    private static void drawHighlights(Canvas cv, double[][] st, double[][] pl, float dark, double sunAlt, int[] wx, float az0, RectF avoid) {
         java.util.ArrayList<Hl> cs = new java.util.ArrayList<>();
         if (dark > 0.5f) {
             for (int i = 0; i < st.length; i++) {
                 double mag = (Double) SkyObjects.STARS[i][3];
                 if (mag > 2.3 || st[i][0] < 1 || st[i][0] > 30) continue;
                 float[] xy = proj(st[i][0], st[i][1], az0);
-                if (xy[0] < 50 || xy[0] > VW - 50 || xy[1] < 40) continue;
+                if (xy[0] < 150 || xy[0] > 930 || xy[1] < 300) continue;
                 Hl h = new Hl(); h.x = xy[0]; h.y = xy[1]; h.name = (String) SkyObjects.STARS[i][0]; h.col = 0xFFFFFFFF; h.order = mag;
                 h.sub = "star · " + Math.round(st[i][0]) + "° " + compass(st[i][1]);
                 cs.add(h);
@@ -648,7 +662,7 @@ final class SkyScene {
         for (int i = 0; i < 4; i++) {
             if (pl[i][0] > 30 || planetVis(i, pl[i][0], dark, sunAlt, wx) < 0.3f) continue;
             float[] xy = proj(pl[i][0], pl[i][1], az0);
-            if (xy[0] < 50 || xy[0] > VW - 50 || xy[1] < 40) continue;
+            if (xy[0] < 150 || xy[0] > 930 || xy[1] < 300) continue;
             Hl h = new Hl(); h.x = xy[0]; h.y = xy[1]; h.name = SkyObjects.PLANETS[i]; h.col = 0xFFFFC85A; h.order = SkyObjects.PLANET_MAG[i] - 1;
             h.sub = "planet · " + Math.round(pl[i][0]) + "° " + compass(pl[i][1]);
             cs.add(h);
@@ -656,7 +670,7 @@ final class SkyScene {
         for (double[] r : stationsNow) {
             if (r[1] < 0.5) continue;
             float[] xy = proj(r[1], r[2], az0);
-            if (xy[0] < 50 || xy[0] > VW - 50 || xy[1] < 40) continue;
+            if (xy[0] < 150 || xy[0] > 930 || xy[1] < 300) continue;
             Hl h = new Hl(); h.x = xy[0]; h.y = xy[1]; h.name = r[0] == 25544 ? "ISS" : "Tiangong"; h.col = 0xFF5ADCF0; h.order = -20;
             h.sub = Math.round(r[1]) + "° " + compass(r[2]) + " · up now";
             h.trail = new java.util.ArrayList<>();
@@ -665,6 +679,7 @@ final class SkyScene {
         }
         cs.sort((a, b) -> Double.compare(a.order, b.order));
         java.util.ArrayList<RectF> used = new java.util.ArrayList<>();
+        if (avoid != null) used.add(avoid);
         Paint g = new Paint(Paint.ANTI_ALIAS_FLAG), ring = new Paint(Paint.ANTI_ALIAS_FLAG), tp = new Paint(Paint.ANTI_ALIAS_FLAG), sd = new Paint(Paint.ANTI_ALIAS_FLAG), tl = new Paint(Paint.ANTI_ALIAS_FLAG);
         ring.setStyle(Paint.Style.STROKE); ring.setStrokeWidth(3f);
         sd.setStyle(Paint.Style.STROKE); sd.setStrokeWidth(5); sd.setColor(0x99000000);
@@ -672,7 +687,7 @@ final class SkyScene {
         int n = 0;
         for (Hl h : cs) {
             if (n >= 6) break;
-            boolean left = h.x > VW - 360;
+            boolean left = h.x > 620;
             RectF box = new RectF(left ? h.x - 320 : h.x + 30, h.y - 40, left ? h.x - 30 : h.x + 320, h.y + 40);
             boolean clash = false;
             for (RectF u : used) if (RectF.intersects(u, box)) { clash = true; break; }
@@ -723,15 +738,15 @@ final class SkyScene {
         bg.setStyle(Paint.Style.STROKE); bg.setStrokeWidth(1.6f); bg.setColor(Color.argb(80, 255, 255, 255)); cv.drawRoundRect(new RectF(x, y, x + w, y + h), 24, 24, bg);
         Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG); dot.setColor(col);
         boolean two = b != null && !b.isEmpty();
-        cv.drawCircle(x + 30, y + h / 2f, 11, dot);
+        cv.drawCircle(x + 26, y + h / 2f, 9, dot);
         Paint t = new Paint(Paint.ANTI_ALIAS_FLAG);
-        t.setColor(Color.WHITE); t.setTypeface(Typeface.create("sans-serif", Typeface.BOLD)); t.setTextSize(24);
-        fit(t, a, w - 72, 14);
-        cv.drawText(a, x + 56, two ? y + h * 0.42f : y + h / 2f + 8, t);
+        t.setColor(Color.WHITE); t.setTypeface(Typeface.create("sans-serif", Typeface.BOLD)); t.setTextSize(22);
+        fit(t, a, w - 62, 11);
+        cv.drawText(a, x + 46, two ? y + h * 0.42f : y + h / 2f + 8, t);
         if (two) {
-            t.setColor(Color.rgb(212, 222, 244)); t.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL)); t.setTextSize(20);
-            fit(t, b, w - 72, 13);
-            cv.drawText(b, x + 56, y + h * 0.80f, t);
+            t.setColor(Color.rgb(212, 222, 244)); t.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL)); t.setTextSize(18);
+            fit(t, b, w - 62, 11);
+            cv.drawText(b, x + 46, y + h * 0.80f, t);
         }
     }
 
@@ -788,7 +803,7 @@ final class SkyScene {
         }
 
         // layout, built upwards from the bottom so nothing runs under the system's charging line
-        float placeY = 1776f, chipH = 76f, row = 84f;
+        float placeY = 1604f, chipH = 76f, row = 84f;
         PlaceInfo.Info pi = placeNow;
         boolean hasPlace = pi != null && !pi.where().isEmpty();
         float bottom = hasPlace ? placeY : placeY + chipH;
@@ -799,7 +814,7 @@ final class SkyScene {
         float y0 = endY - rows * row;
         for (int i = 0; i < ch.size(); i++) {
             Chip c = ch.get(i);
-            drawChip(cv, 48 + (i % 2) * 500, y0 + (i / 2) * row, 484, chipH, c.a, c.b, c.col);
+            drawChip(cv, 150 + (i % 2) * 396, y0 + (i / 2) * row, 384, chipH, c.a, c.b, c.col);
         }
         if (hasUv) {
             int lv = uv < 3 ? 0 : uv < 6 ? 1 : uv < 8 ? 2 : uv < 11 ? 3 : 4;
@@ -810,8 +825,8 @@ final class SkyScene {
             float[] med = {200, 250, 300, 450, 600, 900};
             int burn = (int) Math.round(med[skinType - 1] / (1.5 * Math.max(0.5, uv)) / 5.0) * 5, tan = Math.max(5, (int) Math.round(burn * 0.4 / 5.0) * 5);
             String a = lv == 0 ? String.format(java.util.Locale.US, "UV %.0f · LOW", uv) : String.format(java.util.Locale.US, "UV %.0f · %s · tans in ~%d min", uv, nm[lv], tan);
-            drawChip(cv, 48, uvY, 984, chipH + 8, a, adv[lv], cl[lv]);
+            drawChip(cv, 150, uvY, 780, chipH + 8, a, adv[lv], cl[lv]);
         }
-        if (hasPlace) drawChip(cv, 48, placeY, 984, chipH, pi.where(), pi.ground(), 0xFF78B45A);
+        if (hasPlace) drawChip(cv, 150, placeY, 780, chipH, pi.where(), pi.ground(), 0xFF78B45A);
     }
 }
