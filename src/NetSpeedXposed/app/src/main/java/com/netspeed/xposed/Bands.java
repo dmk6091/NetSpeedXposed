@@ -669,7 +669,7 @@ final class Bands {
                                    List<CellInfo> cells, SubscriptionInfo si) {
         String key = slot + ":" + band;
         synchronized (sRawLogged) {
-            if (!sRawLogged.add(key)) return;
+            if (!sRawLogged.add(key)) return;   // once per SIM and band per start
         }
         StringBuilder sb = new StringBuilder("SIM" + slot + " " + band + " raw TA:");
         try {
@@ -678,6 +678,8 @@ final class Bands {
                     sb.append(" signal.lte=").append(((android.telephony.CellSignalStrengthLte) cs).getTimingAdvance());
                 } else {
                     sb.append(" signal.").append(cs.getClass().getSimpleName());
+                    try { sb.append("(taMicros=").append(cs.getClass().getMethod("getTimingAdvanceMicros").invoke(cs)).append(')'); }
+                    catch (Throwable e) { sb.append("(no taMicros method)"); }
                 }
             }
             int n = 0;
@@ -690,6 +692,8 @@ final class Bands {
                             .append("]=").append(((CellInfoLte) ci).getCellSignalStrength().getTimingAdvance());
                 } else {
                     sb.append(" cell.").append(ci.getClass().getSimpleName());
+                    try { Object c2 = ci.getClass().getMethod("getCellSignalStrength").invoke(ci); sb.append("(taMicros=").append(c2.getClass().getMethod("getTimingAdvanceMicros").invoke(c2)).append(')'); }
+                    catch (Throwable e) { sb.append("(no taMicros method)"); }
                 }
             }
             sb.append(" (registered cells ").append(n).append(", SIM ")
