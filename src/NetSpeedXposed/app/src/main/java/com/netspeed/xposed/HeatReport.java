@@ -31,7 +31,7 @@ final class HeatReport {
 
     private static double num(String s, double def) { try { return Double.parseDouble(s.trim()); } catch (Throwable t) { return def; } }
 
-    /** pid -> {name, ticks} from one read of /proc/*/stat. */
+    /** pid -> {name, ticks}, from one read of every process stat file. */
     private static HashMap<Integer, Object[]> procTicks() {
         HashMap<Integer, Object[]> m = new HashMap<>();
         String s = sh("cat /proc/[0-9]*/stat 2>/dev/null");
