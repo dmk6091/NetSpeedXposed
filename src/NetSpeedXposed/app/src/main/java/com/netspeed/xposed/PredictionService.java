@@ -261,7 +261,6 @@ public class PredictionService extends AppPredictionService {
             android.content.pm.LauncherApps la = getSystemService(android.content.pm.LauncherApps.class);
             for (android.content.pm.LauncherActivityInfo ai : la.getActivityList(null, Process.myUserHandle())) {
                 String pkg = ai.getComponentName().getPackageName();
-                if (pkg.equals(getPackageName())) continue;
                 launchable.putIfAbsent(pkg, ai.getComponentName().getClassName());
             }
         } catch (Throwable t) {
@@ -270,7 +269,6 @@ public class PredictionService extends AppPredictionService {
         for (ResolveInfo ri : pm.queryIntentActivities(main, 0)) {
             if (ri.activityInfo == null) continue;
             String pkg = ri.activityInfo.packageName;
-            if (pkg.equals(getPackageName())) continue;
             launchable.putIfAbsent(pkg, ri.activityInfo.name);
         }
         // Some apps (sideloaded ones like Termux, MiXplorer here) are hidden from this process's package
@@ -278,7 +276,6 @@ public class PredictionService extends AppPredictionService {
         Map<String, String> rootList = rootLaunchable();
         int added = 0;
         for (Map.Entry<String, String> e : rootList.entrySet()) {
-            if (e.getKey().equals(getPackageName())) continue;
             if (launchable.putIfAbsent(e.getKey(), e.getValue()) == null) added++;
         }
         status("rootlist", rootList.size() + " from root, " + added + " not visible to the app");
