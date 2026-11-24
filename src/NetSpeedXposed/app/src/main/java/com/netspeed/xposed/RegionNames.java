@@ -12,6 +12,9 @@ import java.util.List;
 final class RegionNames {
     private RegionNames() { }
 
+    /** The label boxes already taken by the last draw(), so the India layer can keep clear of them. */
+    static List<RectF> lastUsed = null;
+
     private static final Object[][] CITIES = {
             {"Mumbai", 19.076, 72.878}, {"Thane", 19.218, 72.978}, {"Panvel", 18.989, 73.112}, {"Pune", 18.520, 73.857},
             {"Nashik", 19.998, 73.790}, {"Satara", 17.680, 74.018}, {"Kolhapur", 16.705, 74.243}, {"Sangli", 16.855, 74.564},
@@ -102,8 +105,9 @@ final class RegionNames {
         List<RectF> used = new ArrayList<>();
         used.add(new RectF(0, 0, W, H * 0.22f));
         used.add(new RectF(0, H * 0.68f, W, H));
-        used.add(new RectF(W * 0.02f, H * 0.165f, W * 0.66f, H * 0.265f));
+        used.add(new RectF(W * 0.02f, H * 0.165f, W * 0.66f, IndiaMap.legendBottom(W, H)));
         used.add(new RectF(W / 2f - 60 * u, H * 0.5f - 60 * u, W / 2f + 60 * u, H * 0.5f + 60 * u));
+        lastUsed = used;
         float gu = W / 1080f;
         // region names across the landscape (faint, spaced out, turned along the ranges)
         Paint rg = new Paint(Paint.ANTI_ALIAS_FLAG);

@@ -111,7 +111,8 @@ final class TerrainMaker {
         final boolean[] elOk = new boolean[1];
         final android.content.SharedPreferences wsp = WallpaperMaker.sp(c);
         final boolean showFaults = wsp.getInt("faults", 0) == 0, showCoast = wsp.getInt("coast", 0) == 0, showCities = wsp.getInt("cities", 0) == 0,
-                showForest = wsp.getInt("forest", 0) == 0, showLegend = wsp.getInt("legend", 0) == 0;
+                showForest = wsp.getInt("forest", 0) == 0, showLegend = wsp.getInt("legend", 0) == 0,
+                showRivers = wsp.getInt("rivers", 0) == 0, showDams = wsp.getInt("dams", 0) == 0, showParks = wsp.getInt("parks", 0) == 0, showPhys = wsp.getInt("phys", 0) == 0;
         WpStatus.step(1);
         final List<int[]> need = new ArrayList<>();
         for (int ty = ty0; ty <= ty1; ty++) if (ty >= 0 && ty < n) for (int tx = tx0; tx <= tx1; tx++) need.add(new int[]{tx, ty});
@@ -410,10 +411,14 @@ final class TerrainMaker {
 
         if (info != null) { info.forestKm = bestF; info.wetKm = bestW; info.wetCount = wetN; }
         if (card) drawCard(c, cv, W, H, lat, lon, day, faultTxt, bestF, bestW, info, mx - mn);
-        if (showLegend) drawLegend(cv, W, H, day);
+        IndiaMap.dedupe = showDams;
+        IndiaMap.legendRows = 4;
+        if (showLegend) drawLegend(cv, W, H, day, showDams, showParks);
         WpStatus.step(5);
         try { if (WallpaperMaker.sp(c).getBoolean("names", true)) MapNames.draw(c, cv, W, H, lat, lon, z, ox, oy, S, day, halfKm); } catch (Throwable ignored) { }
+        RegionNames.lastUsed = null;
         if (showCities && halfKm > 40) try { RegionNames.draw(cv, W, H, lat, lon, z, ox, oy, S, day); } catch (Throwable ignored) { }
+        if (showRivers || showDams || showParks || showPhys) try { IndiaMap.draw(cv, W, H, lat, lon, z, ox, oy, S, day, halfKm, showRivers, showDams, showParks, showPhys, RegionNames.lastUsed); } catch (Throwable ignored) { }
         Paint at = new Paint(Paint.ANTI_ALIAS_FLAG);
         at.setColor(day ? Color.argb(210, 40, 40, 30) : Color.argb(190, 255, 255, 255));
         at.setTextSize(W * 0.019f);
@@ -447,13 +452,19 @@ final class TerrainMaker {
         return null;
     }
 
-    private static void drawLegend(Canvas cv, int W, int H, boolean day) {
+    private static void drawLegend(Canvas cv, int W, int H, boolean day, boolean dams, boolean parks) {
         float u = W / 1080f;
         String[] names = {"Forest", "Grassland", "Scrub", "Marsh / swamp", "Mangrove", "Water", "Fault line"};
         int[] cols = day ? new int[]{Color.rgb(52, 128, 62), Color.rgb(176, 206, 92), Color.rgb(150, 146, 74), Color.rgb(30, 170, 150), Color.rgb(120, 60, 150), Color.rgb(70, 140, 210), Color.rgb(210, 40, 30)}
                 : new int[]{Color.rgb(20, 74, 40), Color.rgb(70, 112, 44), Color.rgb(76, 84, 40), Color.rgb(70, 225, 170), Color.rgb(200, 120, 235), Color.rgb(18, 54, 104), Color.rgb(255, 96, 72)};
         float lx = 60 * u, ly = H * 0.185f, rh = 40 * u, colW = 330 * u;
-        int rows = 4;
+        java.util.List<String> nl = new java.util.ArrayList<>(java.util.Arrays.asList(names));
+        java.util.List<Integer> kinds = new java.util.ArrayList<>();   // 0 = colour swatch, 1..4 = map symbols
+        for (int i = 0; i < names.length; i++) kinds.add(0);
+        if (dams) { nl.add("Dam"); kinds.add(1); }
+        if (parks) { nl.add("National park"); kinds.add(2); nl.add("Wildlife sanctuary"); kinds.add(3); nl.add("Biosphere reserve"); kinds.add(4); }
+        int rows = Math.max(4, (nl.size() + 1) / 2);
+        IndiaMap.legendRows = rows;
         Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
         bg.setColor(day ? Color.argb(215, 250, 248, 238) : Color.argb(190, 10, 14, 18));
         cv.drawRoundRect(new RectF(lx - 20 * u, ly - 22 * u, lx + 2 * colW - 40 * u, ly + rows * rh + 4 * u), 16 * u, 16 * u, bg);
@@ -461,13 +472,17 @@ final class TerrainMaker {
         t.setTextSize(24 * u);
         t.setColor(day ? Color.rgb(30, 30, 25) : Color.rgb(224, 230, 236));
         Paint sw = new Paint(Paint.ANTI_ALIAS_FLAG);
-        for (int i = 0; i < names.length; i++) {
+        for (int i = 0; i < nl.size(); i++) {
             float x0 = lx + (i / rows) * colW;
             float y = ly + (i % rows) * rh + 14 * u;
-            sw.setColor(cols[i]);
-            if (i == names.length - 1) { sw.setStrokeWidth(5 * u); cv.drawLine(x0, y, x0 + 34 * u, y, sw); }
-            else cv.drawRect(x0, y - 10 * u, x0 + 34 * u, y + 10 * u, sw);
-            cv.drawText(names[i], x0 + 52 * u, y + 8 * u, t);
+            int kd = kinds.get(i);
+            if (kd > 0) IndiaMap.symbol(cv, kd, x0 + 17 * u, y, 9 * u, day);
+            else {
+                sw.setColor(cols[i]);
+                if (i == names.length - 1) { sw.setStrokeWidth(5 * u); cv.drawLine(x0, y, x0 + 34 * u, y, sw); }
+                else cv.drawRect(x0, y - 10 * u, x0 + 34 * u, y + 10 * u, sw);
+            }
+            cv.drawText(nl.get(i), x0 + 52 * u, y + 8 * u, t);
         }
     }
 

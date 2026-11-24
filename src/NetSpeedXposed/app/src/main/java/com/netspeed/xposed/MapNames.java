@@ -60,7 +60,7 @@ final class MapNames {
         List<RectF> used = new ArrayList<>();
         used.add(new RectF(0, 0, W, H * 0.22f));                           // clock and status bar
         used.add(new RectF(0, H * 0.66f, W, H));                           // icons, dock, search bar
-        used.add(new RectF(W * 0.02f, H * 0.165f, W * 0.66f, H * 0.265f)); // legend
+        used.add(new RectF(W * 0.02f, H * 0.165f, W * 0.66f, IndiaMap.legendBottom(W, H))); // legend
         used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));   // you
         int[] cap = {3, 4, 2, halfKm > 60 ? 6 : 2, 2, 1, 2, 3, 1, 1};
         int[] got = new int[KINDS];
@@ -214,6 +214,7 @@ final class MapNames {
 
     private static void dams(List<L> out, double lat, double lon, double halfKm) {
         for (DamAll.Hit h : DamAll.nearest(lat, lon, 8, halfKm * 1.2, false)) {
+            if (IndiaMap.dedupe && IndiaMap.majorNear(h.lat, h.lon)) continue;   // the India layer names the big ones with their facts
             L l = new L();
             l.kind = DAM; l.lat = h.lat; l.lon = h.lon; l.rank = -h.km;
             String n = h.name.replaceAll("(?i)\\s+(dam|barrage|reservoir)$", "").trim();

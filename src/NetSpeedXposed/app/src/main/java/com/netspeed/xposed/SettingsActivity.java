@@ -54,7 +54,7 @@ public class SettingsActivity extends Activity {
     private static int classify(String raw) {
         String t = raw.toLowerCase(java.util.Locale.ROOT);
         if (t.equals("sim box guide") || t.equals("uv guide and sunscreen timer") || t.equals("heat and power diagnostics") || t.startsWith("heat and power history")
-                || t.equals("place guide: soil and plants") || t.equals("climate guide: el ni\u00f1o and the others") || t.equals("sky guide: what is up now")) return 7;
+                || t.equals("map wallpaper guide: what the symbols mean") || t.equals("place guide: soil and plants") || t.equals("climate guide: el ni\u00f1o and the others") || t.equals("sky guide: what is up now")) return 7;
         if (t.contains("satellite strip")) return 2;
         if (t.contains("fault line")) return 3;
         if (t.contains("reservoir")) return 2;
@@ -427,6 +427,7 @@ public class SettingsActivity extends Activity {
         button(c, "Place guide: soil and plants", false, v -> showPlaceGuide());
         button(c, "Sky guide: what is up now", false, v -> showSkyGuide());
         button(c, "Climate guide: El Ni\u00f1o and the others", false, v -> showClimateGuide());
+        button(c, "Map wallpaper guide: what the symbols mean", false, v -> showMapGuide());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
             toggle(c, "Speedometer with the net speed", "Small gauge for download speed (1 K/s to 100 M/s); "
@@ -2086,6 +2087,10 @@ public class SettingsActivity extends Activity {
         wpChoice(opts, wp, "Cities, big peaks, rivers, region names (Region and Far sizes)", "cities", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "Forest and grass colour", "forest", 0, new String[]{"Show", "Hide (plain terrain)"});
         wpChoice(opts, wp, "Colour key (legend)", "legend", 0, new String[]{"Show", "Hide"});
+        wpChoice(opts, wp, "Rivers (thin lines with names, all India)", "rivers", 0, new String[]{"Show", "Hide"});
+        wpChoice(opts, wp, "Major dams with river, size, height, type, year", "dams", 0, new String[]{"Show", "Hide"});
+        wpChoice(opts, wp, "National parks, sanctuaries, biosphere reserves", "parks", 0, new String[]{"Show", "Hide"});
+        wpChoice(opts, wp, "Physical features: ranges, plateaus, big peaks", "phys", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "Info card on the picture", "card", 0, new String[]{"Show rock, soil, fault, relief", "Hide"});
         TextView n = text("The job runs about every 30 min but only draws when you have moved. Needs location permission and the phone not on low battery. Maps: OpenStreetMap.", 11, sub);
         n.setPadding(0, dp(8), 0, 0);
@@ -2528,6 +2533,20 @@ public class SettingsActivity extends Activity {
                 + "NAO +1.2 positive\n  The North Atlantic Oscillation, a pressure see-saw that steers storms over Europe and North America. It matters little for India. Above +0.5 positive, below \u22120.5 negative. NOAA, monthly.\n\n"
                 + "PDO \u22121.2 cool phase\n  The Pacific Decadal Oscillation, a slow warm or cool pattern of the North Pacific that lasts years, so it hardly changes between months. NOAA, monthly.";
         showGuideText("Climate guide", t);
+    }
+
+
+    private void showMapGuide() {
+        String t = "What the terrain wallpaper draws on top of the land (Settings, wallpaper options, each can be hidden):\n\n"
+                + "RIVERS  (thin blue lines with the name)\n  About 340 river pieces for all of India (Natural Earth, public domain, simplified to about 2 km), plus the Pavana, Mula, Mutha, Mula-Mutha and Indrayani around Pune, which are hand placed. "
+                + "A line can sit a few km from the real water you see in the map, so use it for which river it is, not for where exactly it runs. The name shows once, where there is room.\n\n"
+                + "DAMS  (blue square)\n  About 70 major dams. Line 1: the name and the river. Line 2: gross storage in TMC (~ means approximate), height, type and year built. If the app has a live level for that dam, the percent full is added at the end. "
+                + "Close maps show both lines; wide maps show only the name and only the biggest dams. Figures are from public sources and approximate. The app's own list of about 6,750 dams is still used for the small ones.\n\n"
+                + "NATIONAL PARK  (dark green hexagon, NP)\nWILDLIFE SANCTUARY  (lime triangle, WLS)\nBIOSPHERE RESERVE  (purple ring, BR)\n  About 110 well known protected areas. Each is a marker at its centre, not its boundary. Wide maps show only the best known.\n\n"
+                + "PHYSICAL FEATURES\n  Faint, letter-spaced names of ranges, plateaus, plains and coasts (Himalayas, Aravalli, Vindhya, Satpura, Thar Desert, Ganges Plain and more) on wide maps, and well known peaks with their height (Kanchenjunga, Nanda Devi, Anamudi and others).\n\n"
+                + "Everything above is built into the app, so it appears without a map server. The colour key lists the symbols that are switched on. "
+                + "Positions are approximate and the layer is for orientation, not surveying.";
+        showGuideText("Map wallpaper guide", t);
     }
 
     private double[] guideLatLon() {
