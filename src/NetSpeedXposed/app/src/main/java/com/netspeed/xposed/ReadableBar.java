@@ -368,6 +368,12 @@ final class ReadableBar extends View {
     private int red() { return SysViews.red(dk); }
     private int purple() { return SysViews.purple(dk); }
     /** Secondary text (units, labels): light grey on a dark bar so it stays readable, dimmed text on a light one. */
+    /** "LOS clear" / clear F green: pale on dark backgrounds, the normal darker green on light ones (pale green vanished on light). */
+    private int losGreen(boolean est) { return dk ? (est ? 0xFFB4E6D2 : 0xFF96F0C8) : fade(green(), est ? 0.85f : 1f); }
+
+    /** Light grey-blue text for the \u2220 / km line and the landform text; the dim colour on light backgrounds. */
+    private int geoGrey() { return dk ? 0xFFC8D4E4 : grey(); }
+
     private int grey() { return dk ? 0xFFCDCDCD : SysViews.dim(color); }
 
     private static int fade(int col, float k) {
@@ -3227,7 +3233,7 @@ final class ReadableBar extends View {
         final int gc = d.los > 2 ? orange() : d.towerEst ? fade(green(), 0.8f) : green();
         if (d.towerEst) e = textB(c, "~", e, 0, 18, 18, bold, gc);
         e = geoIcon(c, TowerElev.LAND, e, gc);
-        final int wc = fade(0xFFC8D4E4, d.towerEst ? 0.85f : 1f);
+        final int wc = fade(geoGrey(), d.towerEst ? 0.85f : 1f);
         if (TowerElev.SHADE_M > 0) e = textB(c, geoShade(), e, 0, 20, 18, semi, wc);
         String pk = peakText(d);
         if (!pk.isEmpty()) textB(c, pk, e, 0, 20, 18, semi, gc);
@@ -3804,7 +3810,7 @@ final class ReadableBar extends View {
         }
         if (si.los >= 0) {
             boolean clr = si.los <= 2;
-            tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 22, bold, clr ? (est ? 0xFFB4E6D2 : 0xFF96F0C8) : orange()));
+            tl.add(new DSeg((tl.isEmpty() ? (est ? "~" : "") : " \u00b7 ") + (clr ? "LOS clear" : "rise " + si.los + "m"), 22, bold, clr ? losGreen(est) : orange()));
         }
         // geometry to the antenna: angle up, radio horizon, how clear the path is; small and faint, in its own room after the line
         if (tower && fold) {
@@ -3824,12 +3830,12 @@ final class ReadableBar extends View {
                 final String t0 = roughAll || !real ? "~" : "";
                 String ex = t0 + "\u2220" + (ang >= 0 ? "+" : "\u2212") + Math.abs(ang) + "\u00b0 \u00b7 " + t0 + (real ? si.horizonKm : TowerElev.HORIZON_KM) + " km";
                 if (si.clearPct >= 0) {   // path clearance: "F ~100%" up on the arrow line, coloured by how clear the path is
-                    int pc = si.clearPct >= 80 ? (roughAll ? 0xFFB4E6D2 : 0xFF96F0C8) : si.clearPct >= 50 ? yellow() : orange();
+                    int pc = si.clearPct >= 80 ? losGreen(roughAll) : si.clearPct >= 50 ? yellow() : orange();
                     if (!d.isEmpty()) d.add(new DSeg("  ", 17, bold, pc).extra());
                     d.add(new DSeg("F", 15, bold, pc).chip().extra());
                     d.add(new DSeg(" " + t0 + si.clearPct + "%", 19, bold, fade(pc, roughAll ? 0.9f : 1f)).extra());
                 }
-                tl.add(new DSeg(ex, 18, bold, fade(0xFFC8D4E4, roughAll ? 0.9f : 1f)).extra());
+                tl.add(new DSeg(ex, 18, bold, fade(geoGrey(), roughAll ? 0.9f : 1f)).extra());
                 if (real && !roughAll) tl.add(new DSeg(" mast " + si.mastM + "m", 15, bold, 0xFF78C8FF).chip().extra());
             }
         }
