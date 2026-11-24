@@ -105,7 +105,7 @@ final class RegionNames {
         List<RectF> used = new ArrayList<>();
         used.add(new RectF(0, 0, W, H * 0.22f));
         used.add(new RectF(0, H * 0.68f, W, H));
-        used.add(new RectF(W * 0.02f, H * 0.165f, W * 0.66f, IndiaMap.legendBottom(W, H)));
+        IndiaMap.reserve(used, W, H);
         used.add(new RectF(W / 2f - 60 * u, H * 0.5f - 60 * u, W / 2f + 60 * u, H * 0.5f + 60 * u));
         lastUsed = used;
         float gu = W / 1080f;
