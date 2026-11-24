@@ -80,12 +80,12 @@ final class MapNames {
         used.add(new RectF(0, H * 0.955f, W, H));                          // credit line only: names may sit under icons and dock
         IndiaMap.reserve(used, W, H); // legend
         used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));   // you
-        int[] cap = {3, 4, 2, halfKm > 60 ? 6 : 2, 2, 1, 2, 3, 1, 1};
+        int[] cap = {5, 8, 4, halfKm > 60 ? 6 : 3, 3, 2, 4, 5, 2, 3};
         int[][] got = new int[3][KINDS];   // each third of the screen gets its own share of names
         int[] total = new int[3];
         for (L l : all) {
             int bd = l.y < H * 0.42f ? 0 : l.y < H * 0.68f ? 1 : 2;
-            if (total[bd] >= 9 || got[bd][l.kind] >= cap[l.kind] + (l.kind == PEAK ? 1 : 0) || l.text == null || l.text.isEmpty()) continue;
+            if (total[bd] >= 18 || got[bd][l.kind] >= cap[l.kind] || l.text == null || l.text.isEmpty()) continue;
             boolean italic = l.kind == WATER || l.kind == RIVER || l.kind == STREAM || l.kind == RESERVE || l.kind == FAULT;
             t.setTypeface(Typeface.create(Typeface.DEFAULT, italic ? Typeface.ITALIC : Typeface.NORMAL));
             halo.setTypeface(t.getTypeface());
@@ -248,7 +248,7 @@ final class MapNames {
             mx[by * bw + bx] = hi; mn[by * bw + bx] = lo; mi[by * bw + bx] = hiI;
         }
         double cellKm = B * mpp / 1000.0;
-        int r1 = (int) Math.max(2, Math.round(2.5 / cellKm)), r2 = (int) Math.max(r1 + 2, Math.round(5.0 / cellKm));
+        int r1 = (int) Math.max(2, Math.round(1.6 / cellKm)), r2 = (int) Math.max(r1 + 2, Math.round(4.0 / cellKm));
         List<float[]> out = new ArrayList<>();
         for (int by = 0; by < bh; by++) for (int bx = 0; bx < bw; bx++) {
             int c = by * bw + bx;
@@ -261,14 +261,14 @@ final class MapNames {
             if (!top) continue;
             float low = 1e9f;
             for (int y = Math.max(0, by - r2); y <= Math.min(bh - 1, by + r2); y++) for (int x = Math.max(0, bx - r2); x <= Math.min(bw - 1, bx + r2); x++) low = Math.min(low, mn[y * bw + x]);
-            if (v - low < 90f) continue;
+            if (v - low < 45f) continue;
             int gi = mi[c], gx = gi % gw, gy = gi / gw;
             float h = v;
             for (int y = Math.max(0, gy - 4); y <= Math.min(gh - 1, gy + 4); y++) for (int x = Math.max(0, gx - 4); x <= Math.min(gw - 1, gx + 4); x++) h = Math.max(h, el[y * gw + x]);
             out.add(new float[]{(float) (offX + (gx + 0.5f) * S), (float) (offY + (gy + 0.5f) * S), h});
         }
         Collections.sort(out, (a, b) -> Float.compare(b[2], a[2]));
-        demPeaks = out.size() > 40 ? new ArrayList<>(out.subList(0, 40)) : out;
+        demPeaks = out.size() > 90 ? new ArrayList<>(out.subList(0, 90)) : out;
     }
 
     private static String clip(String s) { return s.length() > 26 ? s.substring(0, 25) + "…" : s; }
