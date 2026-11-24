@@ -319,16 +319,19 @@ final class IndiaMap {
         return s + "\u2026";
     }
 
+    static void dt(Canvas cv, String s, float x, float y, Paint p, boolean day, float u) {
+        Paint h = halo(p, 3.6f * u, day);
+        cv.drawText(s, x, y, h);
+        cv.drawText(s, x, y, p);
+    }
+
     private static void panel(Canvas cv, int W, int H, float u, boolean day, List<String[]> pd, List<String[]> pp, List<String[]> pr) {
         if (pd.isEmpty() && pp.isEmpty() && pr.isEmpty()) return;
         float x0 = W * 0.04f, x1 = W * 0.96f, y0 = legendBottom(W, H) + 10 * u;
-        Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
-        bg.setColor(day ? 0xD8FFFFFF : 0xD2080C0A);
-        cv.drawRoundRect(new RectF(x0 - 14 * u, y0, x1 + 14 * u, y0 + PANEL_H * u), 22 * u, 22 * u, bg);
         int cMain = day ? 0xFF0A1E3C : 0xFFFFFFFF, cSub = day ? 0xFF3C4A5A : 0xFFB9C6BC;
         Paint hd = text(16 * u, true, false, cSub);
         hd.setLetterSpacing(0.15f);
-        cv.drawText("NEAR YOU", x0, y0 + 24 * u, hd);
+        dt(cv, "NEAR YOU", x0, y0 + 24 * u, hd, day, u);
         Paint t1 = text(18 * u, true, false, cMain), t2 = text(15 * u, false, false, cSub);
         Paint id = text(18 * u, true, false, day ? 0xFF1E46A0 : 0xFF78AAFF);
         float colW = (x1 - x0) / 2f;
@@ -336,10 +339,10 @@ final class IndiaMap {
         for (int i = 0; i < pd.size() && i < 8; i++) {
             float x = x0 + (i / per) * colW, y = y0 + 40 * u + (i % per) * 40 * u;
             String[] e = pd.get(i);
-            cv.drawText(e[0], x, y + 14 * u, id);
+            dt(cv, e[0], x, y + 14 * u, id, day, u);
             float ix = x + id.measureText("D8") + 10 * u;
-            cv.drawText(fit(t1, e[1], colW - (ix - x) - 14 * u), ix, y + 14 * u, t1);
-            if (e[2] != null && !e[2].isEmpty()) cv.drawText(fit(t2, e[2], colW - (ix - x) - 14 * u), ix, y + 33 * u, t2);
+            dt(cv, fit(t1, e[1], colW - (ix - x) - 14 * u), ix, y + 14 * u, t1, day, u);
+            if (e[2] != null && !e[2].isEmpty()) dt(cv, fit(t2, e[2], colW - (ix - x) - 14 * u), ix, y + 33 * u, t2, day, u);
         }
         float yy = y0 + 40 * u + 4 * 40 * u + 22 * u;
         float wmax = x1 - x0;
@@ -350,7 +353,7 @@ final class IndiaMap {
                 String body = " " + e[1] + (e.length > 2 && e[2] != null ? "  " + e[2] : "");
                 float w = pid.measureText(e[0]) + pt.measureText(body) + 22 * u;
                 if (x + w > x0 + wmax) break;
-                cv.drawText(e[0], x, yy, pid); cv.drawText(body, x + pid.measureText(e[0]), yy, pt);
+                dt(cv, e[0], x, yy, pid, day, u); dt(cv, body, x + pid.measureText(e[0]), yy, pt, day, u);
                 x += w;
             }
             yy += 30 * u;
@@ -362,7 +365,7 @@ final class IndiaMap {
                 String body = " " + e[1];
                 float w = rid.measureText(e[0]) + rt.measureText(body) + 22 * u;
                 if (x + w > x0 + wmax) break;
-                cv.drawText(e[0], x, yy, rid); cv.drawText(body, x + rid.measureText(e[0]), yy, rt);
+                dt(cv, e[0], x, yy, rid, day, u); dt(cv, body, x + rid.measureText(e[0]), yy, rt, day, u);
                 x += w;
             }
         }

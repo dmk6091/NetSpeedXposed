@@ -468,9 +468,6 @@ final class TerrainMaker {
         if (parks) { nl.add("National park"); kinds.add(2); nl.add("Wildlife sanctuary"); kinds.add(3); nl.add("Biosphere reserve"); kinds.add(4); }
         int rows = Math.max(4, (nl.size() + 1) / 2);
         IndiaMap.legendRows = rows;
-        Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
-        bg.setColor(day ? Color.argb(215, 250, 248, 238) : Color.argb(190, 10, 14, 18));
-        cv.drawRoundRect(new RectF(lx - 20 * u, ly - 22 * u, lx + 2 * colW - 40 * u, ly + rows * rh + 4 * u), 16 * u, 16 * u, bg);
         Paint t = new Paint(Paint.ANTI_ALIAS_FLAG);
         t.setTextSize(24 * u);
         t.setColor(day ? Color.rgb(30, 30, 25) : Color.rgb(224, 230, 236));
@@ -482,10 +479,14 @@ final class TerrainMaker {
             if (kd > 0) IndiaMap.symbol(cv, kd, x0 + 17 * u, y, 9 * u, day);
             else {
                 sw.setColor(cols[i]);
-                if (i == names.length - 1) { sw.setStrokeWidth(5 * u); cv.drawLine(x0, y, x0 + 34 * u, y, sw); }
-                else cv.drawRect(x0, y - 10 * u, x0 + 34 * u, y + 10 * u, sw);
+                if (i == names.length - 1) { sw.setStyle(Paint.Style.STROKE); sw.setStrokeWidth(5 * u); cv.drawLine(x0, y, x0 + 34 * u, y, sw); }
+                else {
+                    sw.setStyle(Paint.Style.FILL); cv.drawRect(x0, y - 10 * u, x0 + 34 * u, y + 10 * u, sw);
+                    Paint ob = new Paint(Paint.ANTI_ALIAS_FLAG); ob.setStyle(Paint.Style.STROKE); ob.setStrokeWidth(2 * u); ob.setColor(day ? 0xCC000000 : 0xCCFFFFFF);
+                    cv.drawRect(x0, y - 10 * u, x0 + 34 * u, y + 10 * u, ob);
+                }
             }
-            cv.drawText(nl.get(i), x0 + 52 * u, y + 8 * u, t);
+            IndiaMap.dt(cv, nl.get(i), x0 + 52 * u, y + 8 * u, t, day, u);
         }
     }
 
