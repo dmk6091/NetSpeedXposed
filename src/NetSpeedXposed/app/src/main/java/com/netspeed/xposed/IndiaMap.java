@@ -300,7 +300,7 @@ final class IndiaMap {
         if (used == null) {
             used = new ArrayList<>();
             used.add(new RectF(0, 0, W, H * 0.22f));
-            used.add(new RectF(0, H * 0.68f, W, H));
+            used.add(new RectF(0, H * 0.955f, W, H));
             reserve(used, W, H);
             used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));
         }
@@ -384,7 +384,7 @@ final class IndiaMap {
             String s = (String) r[0];
             float x = sx((Double) r[2], z, ox, S), y = sy((Double) r[1], z, oy, S);
             float tw = rg.measureText(s);
-            if (x < 30 * u || x > W - 30 * u || y < H * 0.25f || y > H * 0.62f) continue;
+            if (x < 30 * u || x > W - 30 * u || y < H * 0.25f || y > H * 0.93f) continue;
             if (Math.hypot(x - W / 2f, y - H / 2f) < 180 * u) continue;
             RectF b = new RectF(x - tw / 2, y - 26 * u, x + tw / 2, y + 8 * u);
             if (b.left < 8 * u || b.right > W - 8 * u || !free(used, b)) continue;

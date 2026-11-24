@@ -392,7 +392,7 @@ final class TerrainMaker {
                 Paint ch = new Paint(ct); ch.setStyle(Paint.Style.STROKE); ch.setStrokeWidth(3.2f * u); ch.setColor(day ? 0xD2FFFFFF : 0xDC000000);
                 ct.setColor(day ? Color.rgb(20, 70, 160) : Color.rgb(170, 215, 255));
                 String ctx = "coast " + Math.round(km) + " km " + dir;
-                float tx = Math.max(20 * u, Math.min(W - 20 * u - ct.measureText(ctx), sbx * S + 14 * u)), ty = Math.max(H * 0.24f, Math.min(H * 0.64f, sby * S - 14 * u));
+                float tx = Math.max(20 * u, Math.min(W - 20 * u - ct.measureText(ctx), sbx * S + 14 * u)), ty = Math.max(H * 0.24f, Math.min(H * 0.93f, sby * S - 14 * u));
                 cv.drawText(ctx, tx, ty, ch); cv.drawText(ctx, tx, ty, ct);
             }
         } catch (Throwable ignored) { }

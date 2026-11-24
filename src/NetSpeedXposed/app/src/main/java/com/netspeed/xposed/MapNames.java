@@ -59,7 +59,7 @@ final class MapNames {
 
         List<RectF> used = new ArrayList<>();
         used.add(new RectF(0, 0, W, H * 0.22f));                           // clock and status bar
-        used.add(new RectF(0, H * 0.66f, W, H));                           // icons, dock, search bar
+        used.add(new RectF(0, H * 0.955f, W, H));                          // credit line only: names may sit under icons and dock
         IndiaMap.reserve(used, W, H); // legend
         used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));   // you
         int[] cap = {3, 4, 2, halfKm > 60 ? 6 : 2, 2, 1, 2, 3, 1, 1};

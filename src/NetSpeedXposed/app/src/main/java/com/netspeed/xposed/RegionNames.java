@@ -54,7 +54,7 @@ final class RegionNames {
         Paint h = new Paint(t); h.setStyle(Paint.Style.STROKE); h.setStrokeWidth(3.2f * u); h.setStrokeJoin(Paint.Join.ROUND); h.setColor(day ? 0xD2FFFFFF : 0xDC000000);
         t.setColor(col);
         float tw = t.measureText(text);
-        float tx = Math.max(16 * u, Math.min(W - 16 * u - tw, x + 14 * u)), ty = Math.max(H * 0.24f, Math.min(H * 0.64f, y - 12 * u));
+        float tx = Math.max(16 * u, Math.min(W - 16 * u - tw, x + 14 * u)), ty = Math.max(H * 0.24f, Math.min(H * 0.93f, y - 12 * u));
         cv.drawText(text, tx, ty, h); cv.drawText(text, tx, ty, t);
     }
 
@@ -104,7 +104,7 @@ final class RegionNames {
         Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG);
         List<RectF> used = new ArrayList<>();
         used.add(new RectF(0, 0, W, H * 0.22f));
-        used.add(new RectF(0, H * 0.68f, W, H));
+        used.add(new RectF(0, H * 0.955f, W, H));
         IndiaMap.reserve(used, W, H);
         used.add(new RectF(W / 2f - 60 * u, H * 0.5f - 60 * u, W / 2f + 60 * u, H * 0.5f + 60 * u));
         lastUsed = used;
@@ -115,7 +115,7 @@ final class RegionNames {
         rg.setColor(day ? 0x883C2810 : 0x99DCE6F5);
         for (Object[] r : REGIONS) {
             float x = (float) ((WallpaperMaker.worldX((Double) r[2], z) - ox) * S), y = (float) ((WallpaperMaker.worldY((Double) r[1], z) - oy) * S);
-            if (x < 40 * gu || x > W - 40 * gu || y < H * 0.25f || y > H * 0.62f) continue;
+            if (x < 40 * gu || x > W - 40 * gu || y < H * 0.25f || y > H * 0.93f) continue;
             if (Math.hypot(x - W / 2f, y - H / 2f) < 180 * gu) continue;
             cv.save(); cv.rotate(((Double) r[3]).floatValue(), x, y);
             cv.drawText((String) r[0], x - rg.measureText((String) r[0]) / 2, y, rg);
