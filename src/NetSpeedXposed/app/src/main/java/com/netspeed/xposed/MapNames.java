@@ -39,6 +39,11 @@ final class MapNames {
         List<L> all = new ArrayList<>();
         try { dams(all, lat, lon, halfKm); } catch (Throwable t) { WpStatus.note("dam names skipped: " + t.getClass().getSimpleName()); }
         try { faults(all, lat, lon, halfKm); } catch (Throwable ignored) { }
+        for (Object[] g : GHATS) {   // mountain passes (ghats) from the built-in list
+            L l = new L();
+            l.kind = PASS; l.lat = (Double) g[1]; l.lon = (Double) g[2]; l.rank = 0; l.text = (String) g[0];
+            all.add(l);
+        }
         if (halfKm <= 60) try { osm(c, all, lat, lon, halfKm, z); } catch (Throwable t) {
             WpStatus.note("peaks, lakes, wetland, river and forest names skipped: " + (String.valueOf(t.getMessage()).contains("busy") ? "OpenStreetMap servers busy" : t.getClass().getSimpleName()));
         }
@@ -270,6 +275,13 @@ final class MapNames {
             {"Prabalgad", 18.9970, 73.2090}, {"Naneghat", 19.2900, 73.7400}, {"Ratangad", 19.3780, 73.7130}, {"Sajjangad", 17.6580, 73.9000},
             {"Vishalgad", 16.8960, 73.7120}, {"Vetal Tekdi", 18.5160, 73.8350}, {"Parvati", 18.4950, 73.8450}, {"Baner Hill", 18.5700, 73.7800},
             {"Kamalgad", 17.9833, 73.7300}, {"Raireshwar", 18.0800, 73.6000}, {"Vasota", 17.5700, 73.7700}, {"Ajinkyatara", 17.6800, 73.9900},
+            {"Tung", 18.6650, 73.5300}, {"Tailbaila", 18.7300, 73.4600}, {"Ghangad", 18.6260, 73.4000}, {"Dhak Bahiri", 18.7500, 73.4300},
+            {"Kurdugad", 18.5500, 73.6000}, {"Kenjalgad", 17.9970, 73.6200}, {"Chandragad", 17.9900, 73.5600}, {"Makrandgad", 17.9600, 73.5700},
+            {"Mangalgad", 18.0300, 73.3900}, {"Birwadi", 18.2300, 73.3300}, {"Songad", 18.1800, 73.4300}, {"Rohida", 18.1000, 73.7900},
+            {"Rajmachi", 18.8200, 73.3950}, {"Peth Fort", 18.8120, 73.4310}, {"Sarasgad", 18.5400, 73.3200}, {"Tamhini Peak", 18.4300, 73.4400},
+            {"Kataldhar", 18.3600, 73.5700}, {"Chandar", 18.1900, 73.5200}, {"Singhgad Ridge", 18.3300, 73.7400}, {"Kondhana", 18.3664, 73.7558},
+            {"Sinhagad West", 18.3600, 73.7300}, {"Gunjavane", 18.3300, 73.6700}, {"Rajgad East", 18.2500, 73.7200}, {"Torna South", 18.2500, 73.6200},
+            {"Kolhapur Hill", 18.2000, 73.9000}, {"Bhairavgad", 18.4200, 73.3800}, {"Jivdhan", 19.2600, 73.7900}, {"Dhodap", 20.3300, 74.0900},
     };
 
     static volatile List<Object[]> lateHills;   // {x, y, text}
@@ -304,6 +316,12 @@ final class MapNames {
             cv.drawText(s, x + 13 * u, y + 6 * u, h); cv.drawText(s, x + 13 * u, y + 6 * u, t);
         }
     }
+
+    private static final Object[][] GHATS = {
+            {"Bor Ghat", 18.7550, 73.3700}, {"Malshej Ghat", 19.3400, 73.7800}, {"Kasara Ghat", 19.6500, 73.4700}, {"Tamhini Ghat", 18.4800, 73.4300},
+            {"Varandha Ghat", 18.0900, 73.4700}, {"Katraj Ghat", 18.4500, 73.8600}, {"Dive Ghat", 18.3900, 73.9900}, {"Khambatki Ghat", 17.9500, 73.9800},
+            {"Kumbharli Ghat", 17.5700, 73.7500}, {"Amba Ghat", 16.9500, 73.7700}, {"Mahabaleshwar Ghat", 17.9500, 73.5500}, {"Pasarni Ghat", 17.9300, 73.7200},
+    };
 
     static volatile List<float[]> demPeaks;   // screen x, y and height
 

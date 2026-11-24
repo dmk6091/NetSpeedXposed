@@ -429,7 +429,7 @@ final class IndiaMap {
                 lines.add(new float[][]{xs, ys}); names.add(nm);
             }
         }
-        Map<String, float[]> best = new HashMap<>();   // name -> {visible points, x, y}
+        Map<String, Object[]> best = new HashMap<>();   // name -> {visible points, xs, ys} of its longest visible line
         for (int i = 0; i < lines.size(); i++) {
             float[] xs = lines.get(i)[0], ys = lines.get(i)[1];
             String nm = names.get(i);
@@ -444,35 +444,42 @@ final class IndiaMap {
             if (maxx < -50 || minx > W + 50 || maxy < -50 || miny > H + 50) continue;
             cv.drawPath(p, ln);
             if (!nm.isEmpty() && vis > 0) {
-                int seen = 0, want = vis / 2, mid = -1;
-                for (int k = 0; k < xs.length; k++) {
-                    if (xs[k] > 30 * u && xs[k] < W - 30 * u && ys[k] > H * 0.08f && ys[k] < H * 0.95f) { if (seen++ == want) { mid = k; break; } }
-                }
-                float[] cur = best.get(nm);
-                if (mid >= 0 && (cur == null || vis > cur[0])) best.put(nm, new float[]{vis, xs[mid], ys[mid]});
+                Object[] cur = best.get(nm);
+                if (cur == null || vis > (Integer) cur[0]) best.put(nm, new Object[]{vis, xs, ys});
             }
         }
         if (tags) {
-            List<Map.Entry<String, float[]>> es = new ArrayList<>(best.entrySet());
-            java.util.Collections.sort(es, (a, b) -> Float.compare(b.getValue()[0], a.getValue()[0]));
+            List<Map.Entry<String, Object[]>> es = new ArrayList<>(best.entrySet());
+            java.util.Collections.sort(es, (a, b) -> Integer.compare((Integer) b.getValue()[0], (Integer) a.getValue()[0]));
             int n = 0;
-            for (Map.Entry<String, float[]> e : es) {
+            for (Map.Entry<String, Object[]> e : es) {
                 if (n >= 8) break;
                 String id = "R" + (n + 1);
-                RectF r = tagRect(id, e.getValue()[1], e.getValue()[2], u);
-                if (r.left < 8 * u || r.right > W - 8 * u || !free(used, r)) continue;
-                used.add(r);
-                tag(cv, id, r, u, 0xEB1E5A8C);
-                pr.add(new String[]{id, e.getKey()});
-                n++;
+                float[] xs = (float[]) e.getValue()[1], ys = (float[]) e.getValue()[2];
+                List<Integer> vis = new ArrayList<>();
+                for (int k = 0; k < xs.length; k++) if (xs[k] > 30 * u && xs[k] < W - 30 * u && ys[k] > H * 0.08f && ys[k] < H * 0.95f) vis.add(k);
+                float[] fr = {0.5f, 0.4f, 0.6f, 0.3f, 0.7f, 0.2f, 0.8f, 0.1f, 0.9f, 0.05f, 0.95f};
+                for (float f : fr) {
+                    int k = vis.get(Math.min(vis.size() - 1, (int) (vis.size() * f)));
+                    RectF r = tagRect(id, xs[k], ys[k], u);
+                    if (r.left < 8 * u || r.right > W - 8 * u || !free(used, r)) continue;
+                    used.add(r);
+                    tag(cv, id, r, u, 0xEB1E5A8C);
+                    pr.add(new String[]{id, e.getKey()});
+                    n++;
+                    break;
+                }
             }
             return;
         }
         Paint t = text(19 * u, false, true, day ? 0xFF123A8C : 0xFFBEE1FF);
         Paint h = halo(t, 3f * u, day);
-        for (Map.Entry<String, float[]> e : best.entrySet()) {
+        for (Map.Entry<String, Object[]> e : best.entrySet()) {
             String s = e.getKey();
-            float tw = t.measureText(s), x = e.getValue()[1], y = e.getValue()[2];
+            float[] bxs = (float[]) e.getValue()[1], bys = (float[]) e.getValue()[2];
+            int bk = 0, cnt = 0, want = (Integer) e.getValue()[0] / 2;
+            for (int k = 0; k < bxs.length; k++) if (bxs[k] > 30 * u && bxs[k] < W - 30 * u && bys[k] > H * 0.08f && bys[k] < H * 0.95f) { if (cnt++ == want) { bk = k; break; } }
+            float tw = t.measureText(s), x = bxs[bk], y = bys[bk];
             RectF r = new RectF(x - tw / 2 - 4 * u, y - 24 * u, x + tw / 2 + 4 * u, y + 2 * u);
             if (r.left < 8 * u || r.right > W - 8 * u || !free(used, r)) continue;
             used.add(r);

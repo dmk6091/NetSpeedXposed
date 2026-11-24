@@ -26,6 +26,17 @@ final class RegionNames {
             {"Mangaon", 18.234, 73.275}, {"Khopoli", 18.785, 73.346}, {"Bhor", 18.150, 73.844}, {"Wai", 17.951, 73.890},
             {"Daman", 20.414, 72.832}, {"Nagpur", 21.146, 79.088}, {"Hyderabad", 17.385, 78.487}, {"Bengaluru", 12.972, 77.594},
             {"Goa (Margao)", 15.270, 73.958}, {"Ahmedabad", 23.023, 72.572}, {"Indore", 22.720, 75.858}, {"Bhopal", 23.260, 77.413},
+            // towns and villages of the Pune - Raigad - Satara - Thane region (approximate centres)
+            {"Pimpri-Chinchwad", 18.628, 73.801}, {"Chakan", 18.760, 73.863}, {"Talegaon", 18.735, 73.676}, {"Karjat", 18.910, 73.323},
+            {"Alandi", 18.677, 73.897}, {"Rajgurunagar", 18.862, 73.883}, {"Shirur", 18.826, 74.377}, {"Saswad", 18.347, 74.030},
+            {"Jejuri", 18.273, 74.158}, {"Panchgani", 17.921, 73.800}, {"Paud", 18.525, 73.618}, {"Velhe", 18.280, 73.620},
+            {"Hadapsar", 18.500, 73.930}, {"Hinjewadi", 18.591, 73.738}, {"Wagholi", 18.580, 73.980}, {"Loni Kalbhor", 18.480, 74.020},
+            {"Daund", 18.460, 74.580}, {"Shikrapur", 18.685, 74.123}, {"Kamshet", 18.768, 73.546}, {"Vadgaon Maval", 18.770, 73.650},
+            {"Pen", 18.736, 73.098}, {"Roha", 18.439, 73.120}, {"Mahad", 18.083, 73.416}, {"Poladpur", 17.985, 73.472},
+            {"Pali", 18.540, 73.220}, {"Matheran", 18.986, 73.268}, {"Narayangaon", 19.130, 73.950}, {"Manchar", 19.000, 73.940},
+            {"Dehu", 18.714, 73.765}, {"Kothrud", 18.507, 73.807}, {"Katraj", 18.450, 73.860}, {"Uruli Kanchan", 18.480, 74.150},
+            {"Lonand", 18.040, 74.180}, {"Nira", 18.150, 74.230}, {"Shirwal", 18.150, 73.980}, {"Khed Shivapur", 18.340, 73.810},
+            {"Ghodegaon", 19.000, 73.700}, {"Ambegaon", 19.040, 73.740}, {"Kasara", 19.650, 73.470}, {"Murbad", 19.250, 73.390},
     };
 
     static String dir8(double northKm, double eastKm) {
@@ -145,12 +156,14 @@ final class RegionNames {
             cv.drawText(label, x + 14 * gu, y + 6 * gu, pkh); cv.drawText(label, x + 14 * gu, y + 6 * gu, pk);
             if (++np >= 7) break;
         }
-        int shown = 0;
+        int[] shownBand = new int[3];   // each third of the screen gets its own places
         // bigger places first: the list is roughly in order of size for the Maharashtra region
         for (Object[] c : CITIES) {
             double la = (Double) c[1], lo = (Double) c[2];
             if (la == 0) continue;
             float x = (float) ((WallpaperMaker.worldX(lo, z) - ox) * S), y = (float) ((WallpaperMaker.worldY(la, z) - oy) * S);
+            int bandOf = y < H * 0.42f ? 0 : y < H * 0.68f ? 1 : 2;
+            if (shownBand[bandOf] >= 8) continue;
             float tw = t.measureText((String) c[0]);
             RectF r = new RectF(x - 8 * u, y - 14 * u, x + 14 * u + tw, y + 8 * u);
             if (r.left < 8 * u || r.right > W - 8 * u || r.top < 0 || r.bottom > H) continue;
@@ -165,7 +178,7 @@ final class RegionNames {
             t.setColor(day ? 0xFF222222 : 0xFFFFFFFF);
             cv.drawText((String) c[0], x + 12 * u, y + 6 * u, halo);
             cv.drawText((String) c[0], x + 12 * u, y + 6 * u, t);
-            if (++shown >= 12) break;
+            shownBand[bandOf]++;
         }
         try { rivers(cv, W, H, lat, lon, z, ox, oy, S, day, Math.max(W, H) / S * 156543.03 * Math.cos(Math.toRadians(lat)) / (1 << z) / 2000.0, used, u); } catch (Throwable ignored) { }
     }
