@@ -332,8 +332,9 @@ final class IndiaMap {
         Paint t1 = text(18 * u, true, false, cMain), t2 = text(15 * u, false, false, cSub);
         Paint id = text(18 * u, true, false, day ? 0xFF1E46A0 : 0xFF78AAFF);
         float colW = (x1 - x0) / 2f;
+        int per = Math.max(1, (Math.min(pd.size(), 8) + 1) / 2);
         for (int i = 0; i < pd.size() && i < 8; i++) {
-            float x = x0 + (i / 4) * colW, y = y0 + 40 * u + (i % 4) * 40 * u;
+            float x = x0 + (i / per) * colW, y = y0 + 40 * u + (i % per) * 40 * u;
             String[] e = pd.get(i);
             cv.drawText(e[0], x, y + 14 * u, id);
             float ix = x + id.measureText("D8") + 10 * u;
@@ -434,14 +435,14 @@ final class IndiaMap {
             for (int k = 0; k < xs.length; k++) {
                 if (k == 0) p.moveTo(xs[k], ys[k]); else p.lineTo(xs[k], ys[k]);
                 minx = Math.min(minx, xs[k]); maxx = Math.max(maxx, xs[k]); miny = Math.min(miny, ys[k]); maxy = Math.max(maxy, ys[k]);
-                if (xs[k] > 30 * u && xs[k] < W - 30 * u && ys[k] > H * 0.26f && ys[k] < H * 0.62f) vis++;
+                if (xs[k] > 30 * u && xs[k] < W - 30 * u && ys[k] > H * 0.08f && ys[k] < H * 0.95f) vis++;
             }
             if (maxx < -50 || minx > W + 50 || maxy < -50 || miny > H + 50) continue;
             cv.drawPath(p, ln);
             if (!nm.isEmpty() && vis > 0) {
                 int seen = 0, want = vis / 2, mid = -1;
                 for (int k = 0; k < xs.length; k++) {
-                    if (xs[k] > 30 * u && xs[k] < W - 30 * u && ys[k] > H * 0.26f && ys[k] < H * 0.62f) { if (seen++ == want) { mid = k; break; } }
+                    if (xs[k] > 30 * u && xs[k] < W - 30 * u && ys[k] > H * 0.08f && ys[k] < H * 0.95f) { if (seen++ == want) { mid = k; break; } }
                 }
                 float[] cur = best.get(nm);
                 if (mid >= 0 && (cur == null || vis > cur[0])) best.put(nm, new float[]{vis, xs[mid], ys[mid]});
@@ -452,7 +453,7 @@ final class IndiaMap {
             java.util.Collections.sort(es, (a, b) -> Float.compare(b.getValue()[0], a.getValue()[0]));
             int n = 0;
             for (Map.Entry<String, float[]> e : es) {
-                if (n >= 6) break;
+                if (n >= 8) break;
                 String id = "R" + (n + 1);
                 RectF r = tagRect(id, e.getValue()[1], e.getValue()[2], u);
                 if (r.left < 8 * u || r.right > W - 8 * u || !free(used, r)) continue;
