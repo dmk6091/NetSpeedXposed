@@ -310,6 +310,7 @@ final class IndiaMap {
         if (parks) try { parkMarks(cv, W, H, z, ox, oy, S, day, halfKm, used, u, lat, lon, tags, pp); } catch (Throwable ignored) { }
         if (dams) try { damMarks(cv, W, H, z, ox, oy, S, day, halfKm, used, u, lat, lon, tags, pd); } catch (Throwable ignored) { }
         if (phys && halfKm >= 150) try { peakMarks(cv, W, H, z, ox, oy, S, day, used, u); } catch (Throwable ignored) { }
+        try { MapNames.drawLate(cv, W, H, day, used); } catch (Throwable ignored) { }
         if (tags) try { panel(cv, W, H, u, day, pd, pp, pr); } catch (Throwable ignored) { }
     }
 

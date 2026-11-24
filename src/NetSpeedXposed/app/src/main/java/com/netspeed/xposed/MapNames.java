@@ -49,6 +49,8 @@ final class MapNames {
         }
         // hills found in the elevation data: heights without names, left out where a named peak is already close
         List<float[]> dp = demPeaks;
+        List<Object[]> late = new ArrayList<>();
+        lateHills = late;
         if (dp != null) {
             double mppD = 156543.03 * Math.cos(Math.toRadians(lat)) / (1 << z);
             float near = (float) (1500.0 / mppD * S);
@@ -73,6 +75,7 @@ final class MapNames {
                 for (L o : all) if (o.kind == PEAK && Math.hypot(o.x - q[0], o.y - q[1]) < near) { dup = true; break; }
                 for (float[] k : known) if (Math.hypot(k[0] - q[0], k[1] - q[1]) < near3) { dup = true; break; }
                 if (dup) continue;
+                if (nameOf[i] == null) { late.add(new Object[]{q[0], q[1], Math.round(q[2]) + " m"}); continue; }   // unnamed hills are drawn last, after the dam and river tags
                 L l = new L();
                 l.kind = PEAK; l.fixed = true; l.x = q[0]; l.y = q[1]; l.lat = lat; l.lon = lon;
                 l.rank = nameOf[i] != null ? q[2] : q[2] - 5000;   // named hills first, then the unnamed ones
@@ -268,6 +271,39 @@ final class MapNames {
             {"Vishalgad", 16.8960, 73.7120}, {"Vetal Tekdi", 18.5160, 73.8350}, {"Parvati", 18.4950, 73.8450}, {"Baner Hill", 18.5700, 73.7800},
             {"Kamalgad", 17.9833, 73.7300}, {"Raireshwar", 18.0800, 73.6000}, {"Vasota", 17.5700, 73.7700}, {"Ajinkyatara", 17.6800, 73.9900},
     };
+
+    static volatile List<Object[]> lateHills;   // {x, y, text}
+
+    /** Hills with a height only: written after everything else, in the room that is left, at most 8 per third of the screen. */
+    static void drawLate(Canvas cv, int W, int H, boolean day, List<RectF> used) {
+        List<Object[]> hl = lateHills;
+        if (hl == null || used == null) return;
+        float u = W / 1080f;
+        Paint t = new Paint(Paint.ANTI_ALIAS_FLAG);
+        t.setTextSize(17 * u); t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL)); t.setColor(day ? 0xFF46280F : 0xFFFFFFFF);
+        Paint h = new Paint(t);
+        h.setStyle(Paint.Style.STROKE); h.setStrokeWidth(3.2f * u); h.setStrokeJoin(Paint.Join.ROUND); h.setColor(day ? 0xD2FFFFFF : 0xDC000000);
+        Paint ip = new Paint(Paint.ANTI_ALIAS_FLAG); ip.setColor(t.getColor());
+        int[] n = new int[3];
+        for (Object[] q : hl) {
+            float x = (Float) q[0], y = (Float) q[1];
+            String s = (String) q[2];
+            int bd = y < H * 0.42f ? 0 : y < H * 0.68f ? 1 : 2;
+            if (n[bd] >= 8) continue;
+            float tw = t.measureText(s);
+            RectF r = new RectF(x - 9 * u, y - 14 * u, x + 16 * u + tw, y + 8 * u);
+            if (r.left < 8 * u || r.right > W - 8 * u || r.top < 0 || r.bottom > H) continue;
+            boolean ok = true;
+            for (RectF o : used) if (RectF.intersects(o, r)) { ok = false; break; }
+            if (!ok) continue;
+            used.add(r);
+            n[bd]++;
+            Path p = new Path();
+            p.moveTo(x, y - 7 * u); p.lineTo(x + 6.5f * u, y + 5 * u); p.lineTo(x - 6.5f * u, y + 5 * u); p.close();
+            cv.drawPath(p, ip);
+            cv.drawText(s, x + 13 * u, y + 6 * u, h); cv.drawText(s, x + 13 * u, y + 6 * u, t);
+        }
+    }
 
     static volatile List<float[]> demPeaks;   // screen x, y and height
 
