@@ -418,6 +418,7 @@ final class TerrainMaker {
         IndiaMap.panelOn = halfKm <= 150 && (showRivers || showDams || showParks);
         if (showLegend) drawLegend(cv, W, H, day, showDams, showParks);
         WpStatus.step(5);
+        MapNames.sharedUsed = null;
         try { if (WallpaperMaker.sp(c).getBoolean("names", true)) MapNames.draw(c, cv, W, H, lat, lon, z, ox, oy, S, day, halfKm); } catch (Throwable ignored) { }
         RegionNames.lastUsed = null;
         if (showCities && halfKm > 40) try { RegionNames.draw(cv, W, H, lat, lon, z, ox, oy, S, day); } catch (Throwable ignored) { }

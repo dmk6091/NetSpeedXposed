@@ -42,7 +42,7 @@ final class RegionNames {
             {"Pratapgad", 17.935, 73.577, 1080}, {"Matheran", 18.986, 73.268, 803}, {"Rajmachi", 18.820, 73.400, 826},
     };
     // {text, lat, lon, angle in degrees}: big, faint, letter-spaced names of the landscape
-    private static final Object[][] REGIONS = {
+    static final Object[][] REGIONS = {
             {"SAHYADRI", 18.55, 73.45, 72.0}, {"KONKAN", 17.15, 73.25, 72.0}, {"DECCAN PLATEAU", 18.0, 75.1, 8.0},
             {"ARABIAN SEA", 17.4, 71.9, 72.0}, {"KONKAN", 19.9, 72.95, 72.0},
     };
@@ -102,7 +102,7 @@ final class RegionNames {
         halo.setStyle(Paint.Style.STROKE); halo.setStrokeWidth(3.4f * u); halo.setStrokeJoin(Paint.Join.ROUND);
         halo.setColor(day ? 0xD2FFFFFF : 0xDC000000);
         Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG);
-        List<RectF> used = new ArrayList<>();
+        List<RectF> used = MapNames.sharedUsed != null ? MapNames.sharedUsed : new ArrayList<>();   // one collision list for every label source
         used.add(new RectF(0, 0, W, H * 0.22f));
         used.add(new RectF(0, H * 0.955f, W, H));
         IndiaMap.reserve(used, W, H);

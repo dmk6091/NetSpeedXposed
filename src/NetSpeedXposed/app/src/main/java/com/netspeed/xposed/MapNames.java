@@ -52,13 +52,31 @@ final class MapNames {
         if (dp != null) {
             double mppD = 156543.03 * Math.cos(Math.toRadians(lat)) / (1 << z);
             float near = (float) (1500.0 / mppD * S);
-            for (float[] q : dp) {
+            float near3 = (float) (3000.0 / mppD * S);
+            // spots already named by the built-in lists (RegionNames and IndiaData draw those themselves)
+            List<float[]> known = new ArrayList<>();
+            for (Object[] k : RegionNames.PEAKS) known.add(new float[]{(float) ((WallpaperMaker.worldX((Double) k[2], z) - ox) * S), (float) ((WallpaperMaker.worldY((Double) k[1], z) - oy) * S)});
+            for (Object[] k : IndiaData.PEAKS) known.add(new float[]{(float) ((WallpaperMaker.worldX((Double) k[2], z) - ox) * S), (float) ((WallpaperMaker.worldY((Double) k[1], z) - oy) * S)});
+            String[] nameOf = new String[dp.size()];
+            for (Object[] h : HILLS) {
+                float hx = (float) ((WallpaperMaker.worldX((Double) h[2], z) - ox) * S), hy = (float) ((WallpaperMaker.worldY((Double) h[1], z) - oy) * S);
+                int bi = -1; double bdist = near3;
+                for (int i = 0; i < dp.size(); i++) {
+                    double d = Math.hypot(dp.get(i)[0] - hx, dp.get(i)[1] - hy);
+                    if (d < bdist && nameOf[i] == null) { bdist = d; bi = i; }
+                }
+                if (bi >= 0) nameOf[bi] = (String) h[0];
+            }
+            for (int i = 0; i < dp.size(); i++) {
+                float[] q = dp.get(i);
                 boolean dup = false;
                 for (L o : all) if (o.kind == PEAK && Math.hypot(o.x - q[0], o.y - q[1]) < near) { dup = true; break; }
+                for (float[] k : known) if (Math.hypot(k[0] - q[0], k[1] - q[1]) < near3) { dup = true; break; }
                 if (dup) continue;
                 L l = new L();
-                l.kind = PEAK; l.fixed = true; l.x = q[0]; l.y = q[1]; l.lat = lat; l.lon = lon; l.rank = q[2] - 5000;   // after the named ones
-                l.text = Math.round(q[2]) + " m";
+                l.kind = PEAK; l.fixed = true; l.x = q[0]; l.y = q[1]; l.lat = lat; l.lon = lon;
+                l.rank = nameOf[i] != null ? q[2] : q[2] - 5000;   // named hills first, then the unnamed ones
+                l.text = (nameOf[i] != null ? nameOf[i] + " " : "") + Math.round(q[2]) + " m";
                 all.add(l);
             }
             Collections.sort(all, (a, b) -> a.kind != b.kind ? Integer.compare(prio(a.kind), prio(b.kind)) : Double.compare(b.rank, a.rank));
@@ -79,6 +97,16 @@ final class MapNames {
         used.add(new RectF(0, 0, W, H * 0.22f));                           // clock and status bar
         used.add(new RectF(0, H * 0.955f, W, H));                          // credit line only: names may sit under icons and dock
         IndiaMap.reserve(used, W, H); // legend
+        // the big faint region names (SAHYADRI ...) are written afterwards: keep their room free
+        for (Object[] rg : RegionNames.REGIONS) {
+            float rx = (float) ((WallpaperMaker.worldX((Double) rg[2], z) - ox) * S), ry = (float) ((WallpaperMaker.worldY((Double) rg[1], z) - oy) * S);
+            double th = Math.toRadians((Double) rg[3]);
+            float hw = ((String) rg[0]).length() * 30 * u * 0.55f, hh = 20 * u;
+            float ex = (float) (Math.abs(Math.cos(th)) * hw + Math.abs(Math.sin(th)) * hh), ey = (float) (Math.abs(Math.sin(th)) * hw + Math.abs(Math.cos(th)) * hh);
+            if (rx + ex < 0 || rx - ex > W || ry + ey < 0 || ry - ey > H) continue;
+            used.add(new RectF(rx - ex, ry - ey, rx + ex, ry + ey));
+        }
+        sharedUsed = used;
         used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));   // you
         int[] cap = {5, 8, 4, halfKm > 60 ? 6 : 3, 3, 2, 4, 5, 2, 3};
         int[][] got = new int[3][KINDS];   // each third of the screen gets its own share of names
@@ -228,6 +256,18 @@ final class MapNames {
         switch (k) { case DAM: return 0; case PEAK: return 1; case FAULT: return 2; case WET: return 3; case FEAT: return 4; case PASS: return 5;
             case WATER: return 6; case RESERVE: return 7; case RIVER: return 8; default: return 9; }
     }
+
+    /** The collision list of this class, handed on so the other label sources keep clear of what is already written. */
+    static volatile List<RectF> sharedUsed;
+
+    // well known hills and forts of the Pune - Raigad - Satara - Nashik region: {name, lat, lon}; used to name the hills found in the elevation data
+    private static final Object[][] HILLS = {
+            {"Visapur", 18.7131, 73.4887}, {"Korigad", 18.6975, 73.3850}, {"Sudhagad", 18.5400, 73.3000}, {"Mahabaleshwar Plateau", 17.9237, 73.6586},
+            {"Chandan-Vandan", 17.9500, 73.8900}, {"Pandavgad", 17.9361, 73.7822}, {"Malhargad", 18.2840, 74.0020}, {"Karnala", 18.8890, 73.1280},
+            {"Prabalgad", 18.9970, 73.2090}, {"Naneghat", 19.2900, 73.7400}, {"Ratangad", 19.3780, 73.7130}, {"Sajjangad", 17.6580, 73.9000},
+            {"Vishalgad", 16.8960, 73.7120}, {"Vetal Tekdi", 18.5160, 73.8350}, {"Parvati", 18.4950, 73.8450}, {"Baner Hill", 18.5700, 73.7800},
+            {"Kamalgad", 17.9833, 73.7300}, {"Raireshwar", 18.0800, 73.6000}, {"Vasota", 17.5700, 73.7700}, {"Ajinkyatara", 17.6800, 73.9900},
+    };
 
     static volatile List<float[]> demPeaks;   // screen x, y and height
 
