@@ -4127,19 +4127,24 @@ final class ReadableBar extends View {
             // the last row (data / Q) is the more important one: a line it lands on shows faintly behind it
             boolean under = hasFoldRow(si) && Math.abs(lcy - foldRowY(si, cw)) < 21f;
             if (under) c.saveLayerAlpha(x - 6, lcy - 16, x + cw + 6, lcy + 16, 90);
-            fit(c, x, lcy, w, cw, () -> {
+            // when the main part and the extra info (F tag, mountain) are too wide together, the main part (age, tower changes, ping, arrow)
+            // gives way first, down to 70 % of its size, so the F tag and the mountain keep their full size
+            float mcw = cw;
+            if (wx > 0 && w > 0 && w + 10 + wx > cw) mcw = Math.min(cw, Math.max(cw - wx - 10, w * 0.7f));
+            final float mainW = Math.min(w, mcw);
+            fit(c, x, lcy, w, mcw, () -> {
                 float e = 0;
                 for (DSeg sg : ln) if (!sg.extra) e = dsDraw(c, sg, e);
             });
             if (wx > 0) {   // the extra info: after the line's own end, scaled down only if the room is short
-                final float xe = x + Math.min(w, cw) + 10, room = x + cw - xe;
+                final float xe = x + mainW + 10, room = x + cw - xe;
                 if (room > 24f) fit(c, xe, lcy, wx, room, () -> {
                     float e = 0;
                     for (DSeg sg : ln) if (sg.extra) e = dsDraw(c, sg, e);
                 });
             }
             if (under) c.restore();
-            slots.add(new float[]{lcy, x + Math.min(w, cw)});
+            slots.add(new float[]{lcy, x + Math.min(w, mcw)});
             cy += 22f;
         }
         if (first) drawPlace(c, si, x, cw, cy);   // no other lines at all: still show the place name
