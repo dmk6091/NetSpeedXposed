@@ -305,6 +305,17 @@ final class ReadableBar extends View {
     }
 
     /** Draws left to right from x, dropping the lowest priority item until it fits before maxX. */
+    /** Row 4 weather: laid out in a wider space and drawn 12 % smaller, so it ends sooner and leaves room for the disaster item and the climate slot. */
+    private static final float WX4_SCALE = 0.88f;
+    private float drawLineSmall(Canvas c, List<Item> items, float x, float cy, float maxX) {
+        float vmax = x + (maxX - x) / WX4_SCALE;
+        c.save();
+        c.scale(WX4_SCALE, WX4_SCALE, x, cy);
+        float end;
+        try { end = drawLine(c, items, x, cy, vmax, tightGap(items, x, vmax, 10)); } finally { c.restore(); }
+        return x + (end - x) * WX4_SCALE;
+    }
+
     private float drawLine(Canvas c, List<Item> items, float x, float cy, float maxX, float gap) {
         List<Item> use = new ArrayList<>(items);
         while (use.size() > 1) {
@@ -4763,7 +4774,7 @@ final class ReadableBar extends View {
         if (!rot && !Float.isNaN(wxWind))
             l4.add(new Item(5, 25).t(wxArrow == null ? "" : wxArrow, 24, bold, grey()).sp(4).t(String.valueOf(Math.round(wxWind)), 25, bold, color));
         float s4 = e + 14;
-        l4End = drawLine(c, l4, s4, y4, maxX4, tightGap(l4, s4, maxX4, 10));
+        l4End = drawLineSmall(c, l4, s4, y4, maxX4);
         if (l4End < s4) l4End = e;
 
         // row 3: tide, then the sea temperature; the disaster item follows (proSky)
@@ -4931,7 +4942,7 @@ final class ReadableBar extends View {
                     .t(String.valueOf(Math.round(wxWind)), 25, bold, color));   // the arrow already says wind
         }
         // the coast distance now sits with the sea temperature (proSea)
-        l4End = drawLine(c, l4, x4, y(P4), maxX4, tightGap(l4, x4, maxX4, 10));
+        l4End = drawLineSmall(c, l4, x4, y(P4), maxX4);
     }
 
 
