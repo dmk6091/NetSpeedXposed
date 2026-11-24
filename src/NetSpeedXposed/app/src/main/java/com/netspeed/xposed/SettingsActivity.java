@@ -357,10 +357,8 @@ public class SettingsActivity extends Activity {
         toggle(c, "Battery health and cycles", "Battery health % and charge cycles next to the SIM boxes", Cfg.SH_HEALTH, Cfg.D_SH_HEALTH);
         toggle(c, "CPU load", "CPU load % after the temperatures", Cfg.SH_LOAD, Cfg.D_SH_LOAD);
         toggle(c, "Free RAM", "Free memory after the system icons", Cfg.SH_RAM, Cfg.D_SH_RAM);
-        toggle(c, "Screen refresh rate", "Current refresh rate in Hz (e.g. 120)", Cfg.SH_HZ, Cfg.D_SH_HZ);
         toggle(c, "CPU clock", "Current CPU frequency in GHz", Cfg.SH_GHZ, Cfg.D_SH_GHZ);
         toggle(c, "Deep sleep share", "Time the phone spent in deep sleep, as %", Cfg.SH_SLEEP, Cfg.D_SH_SLEEP);
-        toggle(c, "Tower changes today", "Number of tower hand-overs today (twr)", Cfg.SH_TWR, Cfg.D_SH_TWR);
         toggle(c, "Next alarm", "Time of the next alarm", Cfg.SH_ALARM, Cfg.D_SH_ALARM);
         toggle(c, "Notification count", "Bell with the number of notifications", Cfg.SH_NOTIF, Cfg.D_SH_NOTIF);
         toggle(c, "Bluetooth device battery", "Battery % of the connected Bluetooth device", Cfg.SH_BTBAT, Cfg.D_SH_BTBAT);

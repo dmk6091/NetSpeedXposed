@@ -2739,7 +2739,6 @@ final class DualRow {
             rb.ghz = cpuGhz;
             rb.ramFree = ramFree;
             rb.ramTotal = ramTotal;
-            try { rb.hz = bar.getDisplay() == null ? -1 : Math.round(bar.getDisplay().getRefreshRate()); } catch (Throwable t) { rb.hz = -1; }
             rb.fix = lastFix;
             ElevTrack.start(ctx);
             try { if (lastFix != null && lastFix.length > 2) ElevTrack.gps(lastFix[2]); } catch (Throwable ignored) { }

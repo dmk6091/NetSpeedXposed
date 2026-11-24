@@ -115,12 +115,10 @@ final class Cfg {
     static final String SPEED_STOCK = "speed_stock"; static final boolean D_SPEED_STOCK = true;  // speed readout when the 4-row bar is off
     static final String SH_HEALTH = "sh_health"; static final boolean D_SH_HEALTH = true;
     static final String SH_RAM = "sh_ram"; static final boolean D_SH_RAM = true;
-    static final String SH_HZ = "sh_hz"; static final boolean D_SH_HZ = true;
     static final String SH_ALARM = "sh_alarm"; static final boolean D_SH_ALARM = true;
     static final String SH_NOTIF = "sh_notif"; static final boolean D_SH_NOTIF = true;
     static final String SH_BTBAT = "sh_btbat"; static final boolean D_SH_BTBAT = true;
     static final String SH_SLEEP = "sh_sleep"; static final boolean D_SH_SLEEP = true;
-    static final String SH_TWR = "sh_twr"; static final boolean D_SH_TWR = false;
     static final String SH_LOAD = "sh_load"; static final boolean D_SH_LOAD = false;
     static final String SH_GHZ = "sh_ghz"; static final boolean D_SH_GHZ = true;
     static final String SH_DATA = "sh_data"; static final boolean D_SH_DATA = true;
