@@ -3726,16 +3726,12 @@ final class ReadableBar extends View {
         final String band = si.band != null ? si.band : "?";
         final String dist = si.dist;
         final String cells = si.cells > 0 ? String.valueOf(si.cells) : null;
-        float w2 = tw(band, 26, semi) + (dist != null ? 10 + tw("📡 ", 18, bold) + tw(dist, 26, semi) : 0)
+        float w2 = tw(band, 26, semi) + (dist != null ? 10 + tw(dist, 26, semi) : 0)
                 + (cells != null ? 12 + DISH_W + 4 + tw(cells, 24, bold) : 0);
         fitK(c, x, yL3, w2, cw, S3, () -> {
             float e = textB(c, band, 0, 0, 26, 26, semi, fade(blue(), k));
             if (dist != null) {
-                if (Cfg.b(Cfg.TOWER_MAST, Cfg.D_TOWER_MAST)) {
-                    towerIcon(c, e + 10, 0, fade(grey(), k));
-                    e += 10 + tw("📡 ", 18, bold);
-                } else e = textB(c, "📡 ", e + 10, 0, 26, 18, bold, fade(grey(), k));
-                e = textB(c, dist, e, 0, 26, 26, semi, fade(color, k));
+                e = textB(c, dist, e + 10, 0, 26, 26, semi, fade(color, k));   // tower icon before the distance removed 2026-11-24
             }
             if (cells != null) {
                 dish(c, e + 12, 0, grey());
