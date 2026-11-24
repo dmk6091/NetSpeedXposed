@@ -4088,7 +4088,7 @@ final class DualRow {
                 lastRefreshAt = now;
                 wxTriedAt = 0; wxFetchedAt = 0;
                 Tide.triedAt = 0; Tide.fetchedFor = null;
-                EarthSci.triedAt = 0; EarthSci.at = 0;
+                EarthSci.triedAt = 0; EarthSci.at = 0; ClimIdx.triedAt = 0; ClimIdx.at = 0;
             } catch (Throwable ignored) { }
         }
         double[] wxLatLon = {18.62, 73.80};
@@ -4529,6 +4529,10 @@ final class DualRow {
                     try { EarthSci.parse(EarthSci.get(EarthSci.URL_IDX), EarthSci.get(EarthSci.URL_ONI), System.currentTimeMillis()); }
                     catch (Throwable t) { EarthSci.why = "failed: " + t; }
                 }, "enso-fetch").start();
+            }
+            if (Cfg.b(Cfg.EARTH_SLOT, Cfg.D_EARTH_SLOT) && ClimIdx.due(now)) {
+                ClimIdx.triedAt = now;
+                new Thread(() -> { try { ClimIdx.fetch(System.currentTimeMillis()); } catch (Throwable ignored) { } }, "clim-fetch").start();
             }
             if (Cfg.b(Cfg.TIDE, Cfg.D_TIDE) && Tide.beachPt(lat, lon) == null && !Tide.beachRunning && now - Tide.beachTriedAt > 10 * 60_000L) {
                 Tide.beachTriedAt = now;

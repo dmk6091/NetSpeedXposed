@@ -2560,7 +2560,7 @@ final class ReadableBar extends View {
         earthNames.clear();
         double la = fix != null ? fix[0] : latLon[0], lo = fix != null ? fix[1] : latLon[1];
         try {
-            if (!Double.isNaN(EarthSci.oni) && System.currentTimeMillis() - EarthSci.at < 40L * 86400_000L) {
+            if (Cfg.b(Cfg.CL_ENSO, Cfg.D_CL_ENSO) && !Double.isNaN(EarthSci.oni) && System.currentTimeMillis() - EarthSci.at < 40L * 86400_000L) {
                 String ph = EarthSci.phase(), st = EarthSci.strengthShort();
                 double o = EarthSci.oni;
                 int pcl = o >= 1.5 ? red() : o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey();
@@ -2577,7 +2577,73 @@ final class ReadableBar extends View {
                 out.add(v); earthNames.add("El Ni\u00f1o");
             }
         } catch (Throwable ignored) { }
+        try { climFrames(out); } catch (Throwable ignored) { }
         return out;
+    }
+
+
+    /** One climate-pattern frame: label, value, word, detail; each shorter version drops the detail, then the word, then the value. */
+    private void climFrame(List<List<Item>> out, String name, String lab, int lc, String val, String word, String det, int wc) {
+        List<Item> v = new ArrayList<>();
+        if (!word.isEmpty() && !det.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 16, semi, wc).sp(6).t(det, 16, semi, grey()));
+        if (!word.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 16, semi, wc));
+        v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color));
+        v.add(new Item(3, 24).t(lab, 19, bold, lc));
+        out.add(v); earthNames.add(name);
+    }
+
+    /** The other climate patterns that take turns beside El Nino: IOD, MJO, monsoon, El Nino trend, Arabian Sea, NAO, PDO. */
+    private void climFrames(List<List<Item>> out) {
+        long now = System.currentTimeMillis();
+        boolean fresh = now - ClimIdx.at < 5L * 86400_000L;
+        if (Cfg.b(Cfg.CL_IOD, Cfg.D_CL_IOD) && fresh && !Double.isNaN(ClimIdx.iod)) {
+            double o = ClimIdx.iod;
+            climFrame(out, "IOD", "IOD", o >= 0.4 ? green() : o <= -0.4 ? orange() : grey(), ClimIdx.fmt(o),
+                    ClimIdx.sign(o, 0.4, "positive", "negative", "neutral"), ClimIdx.MON[ClimIdx.iodM] + (o >= 0.4 ? " \u00b7 wetter monsoon" : o <= -0.4 ? " \u00b7 drier monsoon" : ""), grey());
+        }
+        if (Cfg.b(Cfg.CL_MJO, Cfg.D_CL_MJO) && fresh && !Double.isNaN(ClimIdx.mjoAmp)) {
+            boolean weak = ClimIdx.mjoAmp < 1.0;
+            String w = weak ? "weak" : ClimIdx.mjoAmp >= 2.0 ? "strong" : "active";
+            int lc = weak ? grey() : (ClimIdx.mjoPhase == 2 || ClimIdx.mjoPhase == 3) ? blue() : teal();
+            climFrame(out, "MJO", "MJO", lc, weak ? "" : "ph" + ClimIdx.mjoPhase, w, weak ? "" : ClimIdx.mjoWhere(), weak ? grey() : color);
+        }
+        if (Cfg.b(Cfg.CL_MON, Cfg.D_CL_MON)) {
+            String[] m = ClimIdx.monsoon();
+            List<Item> v = new ArrayList<>();
+            if (!m[1].isEmpty()) v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[1], 16, semi, grey()).sp(6).t(m[2], 16, semi, grey()));
+            else v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[2], 16, semi, grey()));
+            v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[1].isEmpty() ? m[2] : m[1], 16, semi, grey()));
+            v.add(new Item(3, 24).t(m[0], 22, bold, blue()));
+            out.add(v); earthNames.add("Monsoon");
+        }
+        if (Cfg.b(Cfg.CL_TREND, Cfg.D_CL_TREND) && !Double.isNaN(ClimIdx.trend) && !Double.isNaN(EarthSci.oni) && now - EarthSci.at < 40L * 86400_000L) {
+            double t = ClimIdx.trend, o = EarthSci.oni;
+            boolean toward0 = Math.abs(o - t) > Math.abs(o) + 0.0;   // earlier season was further from zero than now
+            String arrow = Math.abs(t) < 0.15 ? "\u2192" : t > 0 ? "\u2191" : "\u2193";
+            String w = Math.abs(t) < 0.15 ? "steady" : (o >= 0.5 || o <= -0.5) ? (Math.abs(o) > Math.abs(o - t) ? "strengthening" : "weakening") : (t > 0 ? "warming" : "cooling");
+            climFrame(out, "ENSO trend", "ENSO", Math.abs(t) < 0.15 ? grey() : t > 0 ? orange() : blue(), arrow, w, "over 3 seasons", grey());
+        }
+        if (Cfg.b(Cfg.CL_SST, Cfg.D_CL_SST) && fresh && !Double.isNaN(ClimIdx.sst)) {
+            double a = ClimIdx.sstAnom();
+            String sv = String.format(Locale.US, "%.1f\u00b0", ClimIdx.sst), an = "\u2248" + ClimIdx.fmt(a) + "\u00b0";
+            int ac = a >= 0.5 ? red() : a >= 0.2 ? orange() : a <= -0.5 ? blue() : grey();
+            List<Item> v = new ArrayList<>();
+            v.add(new Item(3, 24).t("Arabian Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, grey()).sp(6).t("vs normal", 16, semi, grey()));
+            v.add(new Item(3, 24).t("Arabian Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, grey()));
+            v.add(new Item(3, 24).t("Arab Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, grey()));
+            v.add(new Item(3, 24).t("Arab Sea", 19, bold, ac).sp(6).t(sv, 19, bold, color));
+            out.add(v); earthNames.add("Arabian Sea");
+        }
+        if (Cfg.b(Cfg.CL_NAO, Cfg.D_CL_NAO) && !Double.isNaN(ClimIdx.nao) && ClimIdx.naoM > 0) {
+            double o = ClimIdx.nao;
+            climFrame(out, "NAO", "NAO", o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey(), ClimIdx.fmt(o),
+                    ClimIdx.sign(o, 0.5, "positive", "negative", "neutral"), ClimIdx.MON[ClimIdx.naoM], grey());
+        }
+        if (Cfg.b(Cfg.CL_PDO, Cfg.D_CL_PDO) && !Double.isNaN(ClimIdx.pdo) && ClimIdx.pdoM > 0) {
+            double o = ClimIdx.pdo;
+            climFrame(out, "PDO", "PDO", o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey(), ClimIdx.fmt(o),
+                    o >= 0.5 ? "warm phase" : o <= -0.5 ? "cool phase" : "neutral", ClimIdx.MON[ClimIdx.pdoM], grey());
+        }
     }
 
     private void proSky(Canvas c, float cx) {
@@ -2741,19 +2807,28 @@ final class ReadableBar extends View {
                 float ex0 = x + tw + 22, eroom = hi - ex0;
                 if (eroom >= 60) {
                     List<Item> shown = new ArrayList<>();
+                    List<Float> shownF = new ArrayList<>();
                     List<List<Item>> efs = earthFrames();
                     StringBuilder sh = new StringBuilder(), hid = new StringBuilder();
                     for (int fi = 0; fi < efs.size(); fi++) {
                         Item fit = null;
-                        for (Item v : efs.get(fi)) if (v.w() <= eroom) { fit = v; break; }
+                        float fs0 = 1f;
+                        for (Item v : efs.get(fi)) if (v.w() * 0.85f <= eroom) { fit = v; fs0 = Math.min(1f, eroom / v.w()); break; }   // up to 15 % smaller so a longer version fits
                         String nm = fi < earthNames.size() ? earthNames.get(fi) : "?";
-                        if (fit != null) { shown.add(fit); sh.append(sh.length() > 0 ? ", " : "").append(nm).append(" ").append(Math.round(fit.w())).append("px"); }
+                        if (fit != null) { shown.add(fit); shownF.add(fs0); sh.append(sh.length() > 0 ? ", " : "").append(nm).append(" ").append(Math.round(fit.w())).append("px"); }
                         else hid.append(hid.length() > 0 ? ", " : "").append(nm).append(" (even the shortest is wider than the room)");
                     }
                     Info.row4 = Diag.fmt("weather ends at x %.0f; disaster item x %.0f to %.0f; earth slot starts x %.0f, room %.0f px up to x %.0f; shown: %s%s", l4End, x, x + tw, ex0, eroom, hi, sh.length() > 0 ? sh : "none", hid.length() > 0 ? "; left out: " + hid : "");
                     if (!shown.isEmpty()) {
-                        Item pk = shown.get((int) ((System.currentTimeMillis() / 5000L) % shown.size()));
-                        skyEnd4 = Math.max(skyEnd4, drawItem(c, pk, ex0, rowY));
+                        long secs = Math.max(3, Math.min(20, Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS)));
+                        int pi = (int) ((System.currentTimeMillis() / (secs * 1000L)) % shown.size());
+                        Item pk = shown.get(pi);
+                        float pf = shownF.get(pi);
+                        c.save();
+                        c.scale(pf, pf, ex0, rowY);
+                        float pe;
+                        try { pe = drawItem(c, pk, ex0, rowY); } finally { c.restore(); }
+                        skyEnd4 = Math.max(skyEnd4, ex0 + (pe - ex0) * pf);
                     }
                 }
             }

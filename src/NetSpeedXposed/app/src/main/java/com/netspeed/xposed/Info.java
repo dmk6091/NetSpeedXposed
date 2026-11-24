@@ -113,6 +113,12 @@ final class Info {
         add(b, 'E', "El Ni\u00f1o (Pacific)", offE + (Double.isNaN(EarthSci.oni) ? "not available yet" : EarthSci.phase() + String.format(us, " %+.1f\u00b0 ONI %s", EarthSci.oni, EarthSci.oniSeason) + (EarthSci.strength().isEmpty() ? "" : " \u00b7 " + EarthSci.strength())));
         add(b, 'E', "El Ni\u00f1o: where the water is", offE + (EarthSci.whereLong().isEmpty() ? "" : "strongest in " + EarthSci.whereLong()));
         add(b, 'E', "El Ni\u00f1o feed (NOAA CPC)", Diag.line("www.cpc.ncep.noaa.gov") + (EarthSci.why.isEmpty() ? "" : " \u00b7 " + EarthSci.why));
+        add(b, 'E', "Climate topics (IOD, MJO, NAO, PDO, Arabian Sea)", offE + (ClimIdx.at == 0 ? "not fetched yet" : String.format(us, "IOD %s (%s) \u00b7 MJO %s \u00b7 NAO %s (%s) \u00b7 PDO %s (%s) \u00b7 sea %s \u00b7 ENSO trend %s",
+                Double.isNaN(ClimIdx.iod) ? "-" : ClimIdx.fmt(ClimIdx.iod), ClimIdx.MON[ClimIdx.iodM],
+                Double.isNaN(ClimIdx.mjoAmp) ? "-" : "ph" + ClimIdx.mjoPhase + " amp " + String.format(us, "%.1f", ClimIdx.mjoAmp),
+                Double.isNaN(ClimIdx.nao) ? "-" : ClimIdx.fmt(ClimIdx.nao), ClimIdx.MON[ClimIdx.naoM],
+                Double.isNaN(ClimIdx.pdo) ? "-" : ClimIdx.fmt(ClimIdx.pdo), ClimIdx.MON[ClimIdx.pdoM],
+                Double.isNaN(ClimIdx.sst) ? "-" : String.format(us, "%.1f\u00b0", ClimIdx.sst), Double.isNaN(ClimIdx.trend) ? "-" : ClimIdx.fmt(ClimIdx.trend))));
         try {
             float[] sv = Tide.sea(now);
             double[] xy = Tide.placeXY();

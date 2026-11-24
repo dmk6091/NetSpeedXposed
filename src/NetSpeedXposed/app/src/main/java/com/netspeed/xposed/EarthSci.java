@@ -232,6 +232,7 @@ final class EarthSci {
             last = null;
             for (String ln : oniTxt.split("\n")) if (ln.trim().matches("^[A-Z]{3}\\s+\\d{4}\\s+.*")) last = ln.trim();
             if (last != null) { String[] f = last.split("\\s+"); oni = Double.parseDouble(f[3]); oniSeason = f[0] + " " + f[1]; }
+            ClimIdx.trendFrom(oniTxt);
             if (!Double.isNaN(oni)) { at = now; why = "ok"; }
             else why = "no ONI value in the reply";
         } catch (Throwable t) { why = "failed: " + t; }

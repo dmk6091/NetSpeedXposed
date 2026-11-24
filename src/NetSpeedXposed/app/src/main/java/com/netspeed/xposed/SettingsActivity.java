@@ -599,6 +599,15 @@ public class SettingsActivity extends Activity {
         toggle(c, "Weather on row 4", "Puts the temperature, high / low, air quality, visibility, cloud and rain on row 4. Row 3 then holds "
                 + "the tide, the sea temperature and the disaster / quake item", Cfg.WX_ROW4, Cfg.D_WX_ROW4);
         toggle(c, "Earth: plate, boundary, El Ni\u00f1o", "Row 4 (right) shows the El Ni\u00f1o state; the place line (Ravet \u00b7 \u2026) takes turns showing the tectonic plate you are on and the nearest plate boundary with its type, distance, direction and rate. Plate data: Bird (2003) PB2002; El Ni\u00f1o: NOAA. Approximate", Cfg.EARTH_SLOT, Cfg.D_EARTH_SLOT);
+        slider(c, "Climate topics: seconds each", "s", Cfg.CL_SECS, Cfg.D_CL_SECS, 3, 20);
+        toggle(c, "Climate: El Ni\u00f1o", "The El Ni\u00f1o / La Ni\u00f1a state (NOAA, monthly)", Cfg.CL_ENSO, Cfg.D_CL_ENSO);
+        toggle(c, "Climate: Indian Ocean Dipole (IOD)", "How much warmer the west Indian Ocean is than the east. Positive usually means a wetter Indian monsoon (NOAA, monthly, a few weeks late)", Cfg.CL_IOD, Cfg.D_CL_IOD);
+        toggle(c, "Climate: MJO", "The tropical rain pulse that circles the globe in 30 to 60 days: its phase and where it is (Australian BoM, daily)", Cfg.CL_MJO, Cfg.D_CL_MJO);
+        toggle(c, "Climate: monsoon season", "Which Indian monsoon season it is and the day count, from the calendar (approximate)", Cfg.CL_MON, Cfg.D_CL_MON);
+        toggle(c, "Climate: El Ni\u00f1o trend", "Whether El Ni\u00f1o / La Ni\u00f1a is strengthening or weakening, from the last three NOAA seasons", Cfg.CL_TREND, Cfg.D_CL_TREND);
+        toggle(c, "Climate: Arabian Sea temperature", "Sea surface temperature at 15\u00b0N 68\u00b0E from the marine model, with how far it is from the usual for the month (the usual is a rough built-in table)", Cfg.CL_SST, Cfg.D_CL_SST);
+        toggle(c, "Climate: NAO", "North Atlantic Oscillation, a pressure see-saw that steers weather over Europe and North America (NOAA, monthly)", Cfg.CL_NAO, Cfg.D_CL_NAO);
+        toggle(c, "Climate: PDO", "Pacific Decadal Oscillation, a slow Pacific warm / cool phase that lasts years (NOAA, monthly)", Cfg.CL_PDO, Cfg.D_CL_PDO);
         toggle(c, "Row 3: tide and sea side by side", "With weather on row 4: row 3 shows the tide, the sea temperature, the wave height and period, the sea "
                 + "state and the ocean current all at once; the disaster item moves to row 4. When row 3 is too tight the current, then the sea state "
                 + "drop out, and below that the sea frames take turns in the tide slot instead", Cfg.SEA_ROW3, Cfg.D_SEA_ROW3);

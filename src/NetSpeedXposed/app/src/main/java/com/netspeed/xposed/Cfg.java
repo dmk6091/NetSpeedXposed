@@ -158,6 +158,15 @@ final class Cfg {
     static final String SEA_FRAMES = "sea_frames";     static final boolean D_SEA_FRAMES = true;   // tide slot rotates: tide, waves, sea state, current
     static final String REFRESH_REQ = "refresh_req";   static final int D_REFRESH_REQ = 0;   // "Refresh data now" button: counts up
     static final String EARTH_SLOT = "earth_slot";     static final boolean D_EARTH_SLOT = true;  // row 4, right of the disaster item: plate, nearest plate boundary, El Nino
+    static final String CL_ENSO = "cl_enso"; static final boolean D_CL_ENSO = true;
+    static final String CL_IOD = "cl_iod"; static final boolean D_CL_IOD = true;
+    static final String CL_MJO = "cl_mjo"; static final boolean D_CL_MJO = true;
+    static final String CL_MON = "cl_mon"; static final boolean D_CL_MON = true;
+    static final String CL_TREND = "cl_trend"; static final boolean D_CL_TREND = true;
+    static final String CL_SST = "cl_sst"; static final boolean D_CL_SST = true;
+    static final String CL_NAO = "cl_nao"; static final boolean D_CL_NAO = true;
+    static final String CL_PDO = "cl_pdo"; static final boolean D_CL_PDO = true;
+    static final String CL_SECS = "cl_secs"; static final int D_CL_SECS = 8;
     static final String SEA_ROW3 = "sea_row3";         static final boolean D_SEA_ROW3 = true;    // row 3: tide, sea temperature, waves, sea state and current side by side; the disaster item goes to row 4
     static final String WX_ROW4 = "wx_row4";           static final boolean D_WX_ROW4 = true;     // weather on row 4; tide and the disaster item on row 3
     static final String TIDE = "tide";                 static final boolean D_TIDE = true;
