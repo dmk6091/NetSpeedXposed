@@ -318,16 +318,25 @@ final class TerrainMaker {
         String faultTxt = "";
         float nfx = 0, nfy = 0; double nfd = 1e18;
         if (showFaults) try {
+            // every fault is thin and faint; only the one nearest to you keeps the bold line, so the lines stop covering the icons and text
+            List<Path> fps = new ArrayList<>();
+            int nearIdx = -1;
             for (float[][] l : Faults.linesIn(lat, lon, halfKm)) {
                 Path p = new Path();
                 for (int i = 0; i < l[0].length; i++) {
                     float x = (float) ((WallpaperMaker.worldX(l[0][i], z) - ox) * S), y = (float) ((WallpaperMaker.worldY(l[1][i], z) - oy) * S);
                     if (i == 0) p.moveTo(x, y); else p.lineTo(x, y);
                     double dd2 = (double) (x - px) * (x - px) + (double) (y - py) * (y - py);
-                    if (dd2 < nfd) { nfd = dd2; nfx = x; nfy = y; }
+                    if (dd2 < nfd) { nfd = dd2; nfx = x; nfy = y; nearIdx = fps.size(); }
                 }
-                cv.drawPath(p, fp);
+                fps.add(p);
             }
+            Paint faint = new Paint(fp);
+            faint.setStrokeWidth(2.2f);
+            faint.setAlpha(day ? 95 : 85);
+            faint.setPathEffect(new DashPathEffect(new float[]{18f, 20f}, 0f));
+            for (int i = 0; i < fps.size(); i++) if (i != nearIdx) cv.drawPath(fps.get(i), faint);
+            if (nearIdx >= 0) cv.drawPath(fps.get(nearIdx), fp);
             List<Faults.Hit> hs = Faults.nearest(lat, lon, 1);
             if (!hs.isEmpty()) faultTxt = hs.get(0).label() + " · " + Math.round(hs.get(0).km) + " km " + hs.get(0).dir;
         } catch (Throwable ignored) { }
