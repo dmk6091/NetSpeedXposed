@@ -31,6 +31,7 @@ final class MapNames {
         double lat, lon, rank;
         float x, y;
         int sub;            // feature kind: 1 cave, 2 spring, 3 waterfall
+        boolean fixed;      // x, y already on screen (peaks found in the elevation data)
         double[] flow;      // downstream direction as {dLat, dLon} for rivers and streams
     }
 
@@ -42,8 +43,25 @@ final class MapNames {
             WpStatus.note("peaks, lakes, wetland, river and forest names skipped: " + (String.valueOf(t.getMessage()).contains("busy") ? "OpenStreetMap servers busy" : t.getClass().getSimpleName()));
         }
         for (L l : all) {
+            if (l.fixed) continue;
             l.x = (float) ((WallpaperMaker.worldX(l.lon, z) - ox) * S);
             l.y = (float) ((WallpaperMaker.worldY(l.lat, z) - oy) * S);
+        }
+        // hills found in the elevation data: heights without names, left out where a named peak is already close
+        List<float[]> dp = demPeaks;
+        if (dp != null) {
+            double mppD = 156543.03 * Math.cos(Math.toRadians(lat)) / (1 << z);
+            float near = (float) (1500.0 / mppD * S);
+            for (float[] q : dp) {
+                boolean dup = false;
+                for (L o : all) if (o.kind == PEAK && Math.hypot(o.x - q[0], o.y - q[1]) < near) { dup = true; break; }
+                if (dup) continue;
+                L l = new L();
+                l.kind = PEAK; l.fixed = true; l.x = q[0]; l.y = q[1]; l.lat = lat; l.lon = lon; l.rank = q[2] - 5000;   // after the named ones
+                l.text = Math.round(q[2]) + " m";
+                all.add(l);
+            }
+            Collections.sort(all, (a, b) -> a.kind != b.kind ? Integer.compare(prio(a.kind), prio(b.kind)) : Double.compare(b.rank, a.rank));
         }
         Collections.sort(all, (a, b) -> a.kind != b.kind ? Integer.compare(prio(a.kind), prio(b.kind)) : Double.compare(b.rank, a.rank));
 
@@ -63,10 +81,11 @@ final class MapNames {
         IndiaMap.reserve(used, W, H); // legend
         used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));   // you
         int[] cap = {3, 4, 2, halfKm > 60 ? 6 : 2, 2, 1, 2, 3, 1, 1};
-        int[] got = new int[KINDS];
-        int total = 0;
+        int[][] got = new int[3][KINDS];   // each third of the screen gets its own share of names
+        int[] total = new int[3];
         for (L l : all) {
-            if (total >= 14 || got[l.kind] >= cap[l.kind] || l.text == null || l.text.isEmpty()) continue;
+            int bd = l.y < H * 0.42f ? 0 : l.y < H * 0.68f ? 1 : 2;
+            if (total[bd] >= 9 || got[bd][l.kind] >= cap[l.kind] + (l.kind == PEAK ? 1 : 0) || l.text == null || l.text.isEmpty()) continue;
             boolean italic = l.kind == WATER || l.kind == RIVER || l.kind == STREAM || l.kind == RESERVE || l.kind == FAULT;
             t.setTypeface(Typeface.create(Typeface.DEFAULT, italic ? Typeface.ITALIC : Typeface.NORMAL));
             halo.setTypeface(t.getTypeface());
@@ -96,8 +115,8 @@ final class MapNames {
             for (RectF o : used) if (ok && RectF.intersects(o, r)) ok = false;
             if (!ok) continue;
             used.add(r);
-            got[l.kind]++;
-            total++;
+            got[bd][l.kind]++;
+            total[bd]++;
             float by = l.y + 6 * u;
             int ink;
             switch (l.kind) {
@@ -210,10 +229,52 @@ final class MapNames {
             case WATER: return 6; case RESERVE: return 7; case RIVER: return 8; default: return 9; }
     }
 
+    static volatile List<float[]> demPeaks;   // screen x, y and height
+
+    /** Hills from the elevation grid: the highest cell of a neighbourhood that stands at least 90 m above the low ground around it. */
+    static void findPeaks(float[] el, float[] e2, int gw, int gh, float S, double offX, double offY, double mpp) {
+        demPeaks = null;
+        final int B = 8, bw = gw / B, bh = gh / B;
+        if (bw < 6 || bh < 6) return;
+        float[] mx = new float[bw * bh], mn = new float[bw * bh];
+        int[] mi = new int[bw * bh];
+        for (int by = 0; by < bh; by++) for (int bx = 0; bx < bw; bx++) {
+            float hi = -1e9f, lo = 1e9f; int hiI = 0;
+            for (int y = by * B; y < by * B + B; y++) for (int x = bx * B; x < bx * B + B; x++) {
+                float v = e2[y * gw + x];
+                if (v > hi) { hi = v; hiI = y * gw + x; }
+                if (v < lo) lo = v;
+            }
+            mx[by * bw + bx] = hi; mn[by * bw + bx] = lo; mi[by * bw + bx] = hiI;
+        }
+        double cellKm = B * mpp / 1000.0;
+        int r1 = (int) Math.max(2, Math.round(2.5 / cellKm)), r2 = (int) Math.max(r1 + 2, Math.round(5.0 / cellKm));
+        List<float[]> out = new ArrayList<>();
+        for (int by = 0; by < bh; by++) for (int bx = 0; bx < bw; bx++) {
+            int c = by * bw + bx;
+            float v = mx[c];
+            boolean top = true;
+            for (int y = Math.max(0, by - r1); y <= Math.min(bh - 1, by + r1) && top; y++) for (int x = Math.max(0, bx - r1); x <= Math.min(bw - 1, bx + r1); x++) {
+                int o = y * bw + x;
+                if (o != c && (mx[o] > v || (mx[o] == v && o < c))) { top = false; break; }
+            }
+            if (!top) continue;
+            float low = 1e9f;
+            for (int y = Math.max(0, by - r2); y <= Math.min(bh - 1, by + r2); y++) for (int x = Math.max(0, bx - r2); x <= Math.min(bw - 1, bx + r2); x++) low = Math.min(low, mn[y * bw + x]);
+            if (v - low < 90f) continue;
+            int gi = mi[c], gx = gi % gw, gy = gi / gw;
+            float h = v;
+            for (int y = Math.max(0, gy - 4); y <= Math.min(gh - 1, gy + 4); y++) for (int x = Math.max(0, gx - 4); x <= Math.min(gw - 1, gx + 4); x++) h = Math.max(h, el[y * gw + x]);
+            out.add(new float[]{(float) (offX + (gx + 0.5f) * S), (float) (offY + (gy + 0.5f) * S), h});
+        }
+        Collections.sort(out, (a, b) -> Float.compare(b[2], a[2]));
+        demPeaks = out.size() > 40 ? new ArrayList<>(out.subList(0, 40)) : out;
+    }
+
     private static String clip(String s) { return s.length() > 26 ? s.substring(0, 25) + "…" : s; }
 
     private static void dams(List<L> out, double lat, double lon, double halfKm) {
-        for (DamAll.Hit h : DamAll.nearest(lat, lon, 8, halfKm * 1.2, false)) {
+        for (DamAll.Hit h : DamAll.nearest(lat, lon, 30, halfKm * 1.2, false)) {
             if (IndiaMap.dedupe && IndiaMap.majorNear(h.lat, h.lon)) continue;   // the India layer names the big ones with their facts
             L l = new L();
             l.kind = DAM; l.lat = h.lat; l.lon = h.lon; l.rank = -h.km;

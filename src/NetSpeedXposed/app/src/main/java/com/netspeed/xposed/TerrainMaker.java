@@ -419,6 +419,8 @@ final class TerrainMaker {
         try { if (WallpaperMaker.sp(c).getBoolean("names", true)) MapNames.draw(c, cv, W, H, lat, lon, z, ox, oy, S, day, halfKm); } catch (Throwable ignored) { }
         RegionNames.lastUsed = null;
         if (showCities && halfKm > 40) try { RegionNames.draw(cv, W, H, lat, lon, z, ox, oy, S, day); } catch (Throwable ignored) { }
+        MapNames.demPeaks = null;
+        try { MapNames.findPeaks(el, e2, gw, gh, S, (iox - ox) * S, (ioy - oy) * S, mpp); } catch (Throwable ignored) { MapNames.demPeaks = null; }
         IndiaMap.traced = null; IndiaMap.tracedName = null;
         if (showRivers && halfKm <= 150) try { IndiaMap.trace(e2, gw, gh, S, mpp, (iox - ox) * S, (ioy - oy) * S, z, ox, oy, halfKm, W, H); } catch (Throwable ignored) { IndiaMap.traced = null; }
         if (showRivers || showDams || showParks || showPhys) try { IndiaMap.draw(cv, W, H, lat, lon, z, ox, oy, S, day, halfKm, showRivers, showDams, showParks, showPhys, RegionNames.lastUsed); } catch (Throwable ignored) { }
