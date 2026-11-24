@@ -621,7 +621,7 @@ public class SettingsActivity extends Activity {
         toggle(c, "SIM boxes up (moon line off)", "Drops the moon phase and time-name line above the SIM boxes and moves the boxes up into its space", Cfg.SIM_UP, Cfg.D_SIM_UP);
         toggle(c, "Q for the second SIM", "The SIM that is not carrying data also gets its own signal quality Q in the bottom row of its box (folded layouts)", Cfg.Q_SECOND, Cfg.D_Q_SECOND);
         toggle(c, "Tower column: site and sector", "Tower number and the side of it you are on (Tower column layout only)", Cfg.TC_SITE, Cfg.D_TC_SITE);
-        toggle(c, "Tower column: channel width", "10 / 20 / 100 MHz of the serving channel, when the modem reports it", Cfg.TC_BW, Cfg.D_TC_BW);
+        toggle(c, "Channel width", "10 / 20 / 100 MHz of the serving channel, after the cells-heard number on the band line; ~ when estimated", Cfg.TC_BW, Cfg.D_TC_BW);
         toggle(c, "Tower column: strongest neighbour", "Band and signal of the best other tower the phone hears", Cfg.TC_NB, Cfg.D_TC_NB);
         toggle(c, "Tint behind the SIM boxes", "A faint colour behind each SIM box, from its signal quality (Tower column layout only)", Cfg.TC_TINT, Cfg.D_TC_TINT);
         toggle(c, "Tower icon", "A small cell-tower mast before the distance to the tower. Off: the satellite-dish symbol as before", Cfg.TOWER_MAST, Cfg.D_TOWER_MAST);

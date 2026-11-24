@@ -3727,7 +3727,8 @@ final class ReadableBar extends View {
         final String dist = si.dist;
         final String cells = si.cells > 0 ? String.valueOf(si.cells) : null;
         float w2 = tw(band, 26, semi) + (dist != null ? 10 + tw(dist, 26, semi) : 0)
-                + (cells != null ? 12 + DISH_W + 4 + tw(cells, 24, bold) : 0);
+                + (cells != null ? 12 + DISH_W + 4 + tw(cells, 24, bold) : 0)
+                + (bwText(si) != null ? 10 + tw("\u00b7 " + bwText(si), 18, bold) : 0);
         fitK(c, x, yL3, w2, cw, S3, () -> {
             float e = textB(c, band, 0, 0, 26, 26, semi, fade(blue(), k));
             if (dist != null) {
@@ -3736,8 +3737,9 @@ final class ReadableBar extends View {
             if (cells != null) {
                 dish(c, e + 12, 0, grey());
                 e += 12 + DISH_W - 1;
-                textB(c, cells, e + 5, 0, 26, 24, bold, grey());
+                e = textB(c, cells, e + 5, 0, 26, 24, bold, grey());
             }
+            if (bwText(si) != null) textB(c, "\u00b7 " + bwText(si), e + 10, 0, 26, 18, bold, fade(grey(), k));
         });
         slots.add(new float[]{yL3, x + Math.min(w2 + 10, cw)});   // generous: the line's real end is a little past the sum of its parts
         // lines 4-7: radio details of this SIM's serving cell and tower
@@ -3970,6 +3972,16 @@ final class ReadableBar extends View {
         }
     }
 
+    /** Channel width text for the band line ("100 MHz"; "~100 MHz" when the modem gives none and it is a typical value for the band), or null. */
+    private String bwText(SimInfo si) {
+        if (!Cfg.b(Cfg.TC_BW, Cfg.D_TC_BW)) return null;
+        if (si.bw > 0) return si.bw + " MHz";
+        if (si.band == null) return null;
+        String bd = si.band.split("[+ ,]")[0];
+        int est = "n78".equals(bd) ? 100 : "n28".equals(bd) ? 10 : 0;
+        return est > 0 ? "~" + est + " MHz" : null;
+    }
+
     /** Tower column: site, channel width, strongest neighbour - each on the lowest free line that has room at the box's right edge. */
     private void tcColumn(Canvas c, SimInfo si, float x, float cw) {
         if (!si.inService) return;
@@ -3977,13 +3989,7 @@ final class ReadableBar extends View {
         String[] txt = new String[3];
         int[] col = new int[3];
         if (Cfg.b(Cfg.TC_SITE, Cfg.D_TC_SITE) && si.site != null) { txt[0] = si.site.replace('-', '\u00b7'); col[0] = blue(); }
-        if (Cfg.b(Cfg.TC_BW, Cfg.D_TC_BW) && si.bw > 0) { txt[1] = si.bw + " MHz"; col[1] = grey(); }
-        else if (Cfg.b(Cfg.TC_BW, Cfg.D_TC_BW) && si.bw <= 0 && si.band != null) {
-            // the modem reports no width for 5G SA: a typical-for-the-band estimate, marked with a ~
-            String bd = si.band.split("[+ ,]")[0];
-            int est = "n78".equals(bd) ? 100 : "n28".equals(bd) ? 10 : 0;
-            if (est > 0) { txt[1] = "~" + est + " MHz"; col[1] = grey(); }
-        }
+        // channel width moved to the band line (after the cells-heard number), 2026-11-24
         if (Cfg.b(Cfg.TC_NB, Cfg.D_TC_NB) && si.nbr != null) {
             txt[2] = si.nbr;
             col[2] = si.dbm != Bands.NO_DBM && si.nbrDbm > si.dbm ? green() : orange();
