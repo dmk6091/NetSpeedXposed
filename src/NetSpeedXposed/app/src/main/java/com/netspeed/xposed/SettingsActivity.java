@@ -54,7 +54,7 @@ public class SettingsActivity extends Activity {
     private static int classify(String raw) {
         String t = raw.toLowerCase(java.util.Locale.ROOT);
         if (t.equals("sim box guide") || t.equals("uv guide and sunscreen timer") || t.equals("heat and power diagnostics") || t.startsWith("heat and power history")
-                || t.equals("place guide: soil and plants") || t.equals("sky guide: what is up now")) return 7;
+                || t.equals("place guide: soil and plants") || t.equals("climate guide: el ni\u00f1o and the others") || t.equals("sky guide: what is up now")) return 7;
         if (t.contains("satellite strip")) return 2;
         if (t.contains("fault line")) return 3;
         if (t.contains("reservoir")) return 2;
@@ -426,6 +426,7 @@ public class SettingsActivity extends Activity {
         button(c, "UV guide and sunscreen timer", false, v -> showUvGuide());
         button(c, "Place guide: soil and plants", false, v -> showPlaceGuide());
         button(c, "Sky guide: what is up now", false, v -> showSkyGuide());
+        button(c, "Climate guide: El Ni\u00f1o and the others", false, v -> showClimateGuide());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
             toggle(c, "Speedometer with the net speed", "Small gauge for download speed (1 K/s to 100 M/s); "
@@ -2509,6 +2510,25 @@ public class SettingsActivity extends Activity {
     }
 
     private AlertDialog uvDlg;
+
+
+    private void showClimateGuide() {
+        String[] m = ClimIdx.monsoon();
+        String t = "These take turns in the bottom-right slot of row 4, " + Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS) + " seconds each (Settings, Earth frames). "
+                + "The monthly ones arrive weeks late, so the month is shown next to the value. Colours: red and orange are warm or unusual, blue is cool, grey is normal.\n\n"
+                + "EL NI\u00d1O / LA NI\u00d1A  (+2.5\u00b0 very strong off Peru)\n  The Pacific Ocean near the equator, warmer than usual (El Ni\u00f1o, +0.5 or more) or cooler (La Ni\u00f1a, \u22120.5 or less). "
+                + "El Ni\u00f1o tends to weaken the Indian monsoon and heat the world; La Ni\u00f1a does the opposite. 'off Peru' is where the anomaly is strongest. NOAA, monthly.\n\n"
+                + "ENSO \u2191 strengthening\n  Whether that Pacific state grew or faded over the last three seasons: \u2191 growing, \u2193 fading, \u2192 steady. It is a trend of the measured numbers, not a forecast.\n\n"
+                + "IOD +0.7 positive\n  The Indian Ocean Dipole: the west Indian Ocean minus the east. Above +0.4 (positive) usually means a wetter Indian monsoon; below \u22120.4 (negative) a drier one. NOAA, monthly.\n\n"
+                + "MJO ph3 active Indian Ocean\n  A pulse of cloud and rain that circles the tropics in 30 to 60 days. Phases 2 and 3 put the wet part over the Indian Ocean, 4 and 5 over Indonesia, 6 and 7 over the west Pacific, 8 and 1 over Africa. "
+                + "'weak' means the pulse is too faint to matter (amplitude below 1). Australian Bureau of Meteorology, daily.\n\n"
+                + "MONSOON  (" + m[0] + (m[1].isEmpty() ? "" : " " + m[1]) + " today)\n  Which Indian season it is, worked out from the date: SW monsoon from June to September, withdrawing early October, NE monsoon from mid-October (rain for south-east India, dry in Pune), then winter and the hot pre-monsoon. "
+                + "Real onset and withdrawal move from year to year, so this is approximate.\n\n"
+                + "ARABIAN SEA  (29.1\u00b0 \u2248+1.1\u00b0 vs normal)\n  Sea surface temperature at 15\u00b0N 68\u00b0E from the marine model. The \u2248 difference is against a rough built-in table of usual values for the month, so it is a guide, not a measurement. Warm sea feeds cyclones and heavy rain.\n\n"
+                + "NAO +1.2 positive\n  The North Atlantic Oscillation, a pressure see-saw that steers storms over Europe and North America. It matters little for India. Above +0.5 positive, below \u22120.5 negative. NOAA, monthly.\n\n"
+                + "PDO \u22121.2 cool phase\n  The Pacific Decadal Oscillation, a slow warm or cool pattern of the North Pacific that lasts years, so it hardly changes between months. NOAA, monthly.";
+        showGuideText("Climate guide", t);
+    }
 
     private double[] guideLatLon() {
         try {
