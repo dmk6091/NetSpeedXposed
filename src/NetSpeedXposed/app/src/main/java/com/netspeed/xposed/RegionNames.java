@@ -15,7 +15,10 @@ final class RegionNames {
     /** The label boxes already taken by the last draw(), so the India layer can keep clear of them. */
     static List<RectF> lastUsed = null;
 
-    private static final Object[][] CITIES = {
+    static final List<RectF> noteRects = new ArrayList<>();   // the "nearest ..." notes, so names keep clear of them
+    private static int extraFrom = -1;
+
+    static final Object[][] CITIES = {
             {"Mumbai", 19.076, 72.878}, {"Thane", 19.218, 72.978}, {"Panvel", 18.989, 73.112}, {"Pune", 18.520, 73.857},
             {"Nashik", 19.998, 73.790}, {"Satara", 17.680, 74.018}, {"Kolhapur", 16.705, 74.243}, {"Sangli", 16.855, 74.564},
             {"Solapur", 17.660, 75.906}, {"Ahmednagar", 19.095, 74.748}, {"Sambhajinagar", 19.876, 75.343}, {"Alibag", 18.641, 72.872},
@@ -67,6 +70,7 @@ final class RegionNames {
         float tw = t.measureText(text);
         float tx = Math.max(16 * u, Math.min(W - 16 * u - tw, x + 14 * u)), ty = Math.max(H * 0.24f, Math.min(H * 0.93f, y - 12 * u));
         cv.drawText(text, tx, ty, h); cv.drawText(text, tx, ty, t);
+        noteRects.add(new RectF(tx - 6 * u, ty - 24 * u, tx + tw + 6 * u, ty + 8 * u));
     }
 
     private static void rivers(Canvas cv, int W, int H, double lat, double lon, int z, double ox, double oy, float S, boolean day, double halfKm, List<RectF> used, float u) {
@@ -119,11 +123,12 @@ final class RegionNames {
         IndiaMap.reserve(used, W, H);
         used.add(new RectF(W / 2f - 60 * u, H * 0.5f - 60 * u, W / 2f + 60 * u, H * 0.5f + 60 * u));
         lastUsed = used;
+        used.addAll(noteRects);
         float gu = W / 1080f;
         // region names across the landscape (faint, spaced out, turned along the ranges)
         Paint rg = new Paint(Paint.ANTI_ALIAS_FLAG);
         rg.setTextSize(30 * gu); rg.setLetterSpacing(0.35f); rg.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        rg.setColor(day ? 0x883C2810 : 0x99DCE6F5);
+        rg.setColor(day ? 0xAA3C2810 : 0xBBE6EEFA);
         for (Object[] r : REGIONS) {
             float x = (float) ((WallpaperMaker.worldX((Double) r[2], z) - ox) * S), y = (float) ((WallpaperMaker.worldY((Double) r[1], z) - oy) * S);
             if (x < 40 * gu || x > W - 40 * gu || y < H * 0.25f || y > H * 0.93f) continue;
@@ -147,6 +152,7 @@ final class RegionNames {
             if (r.left < 8 * gu || r.right > W - 8 * gu || r.top < 0 || r.bottom > H) continue;
             boolean ok = true;
             for (RectF o : used) if (RectF.intersects(o, r)) { ok = false; break; }
+            if (ok && IndiaMap.softHit(r, W, H)) ok = false;
             if (!ok) continue;
             used.add(r);
             android.graphics.Path tri = new android.graphics.Path();
@@ -156,19 +162,24 @@ final class RegionNames {
             cv.drawText(label, x + 14 * gu, y + 6 * gu, pkh); cv.drawText(label, x + 14 * gu, y + 6 * gu, pk);
             if (++np >= 7) break;
         }
-        int[] shownBand = new int[3];   // each third of the screen gets its own places
+        int[] shownBand = new int[3];
+        if (extraFrom < 0) { extraFrom = CITIES.length; for (int i = 0; i < CITIES.length; i++) if ("Pimpri-Chinchwad".equals(CITIES[i][0])) { extraFrom = i; break; } }
+        int ci = -1;   // each third of the screen gets its own places
         // bigger places first: the list is roughly in order of size for the Maharashtra region
         for (Object[] c : CITIES) {
+            ci++;
+            if (ci >= extraFrom && !IndiaMap.optTowns) continue;
             double la = (Double) c[1], lo = (Double) c[2];
             if (la == 0) continue;
             float x = (float) ((WallpaperMaker.worldX(lo, z) - ox) * S), y = (float) ((WallpaperMaker.worldY(la, z) - oy) * S);
             int bandOf = y < H * 0.42f ? 0 : y < H * 0.68f ? 1 : 2;
-            if (shownBand[bandOf] >= 8) continue;
+            if (shownBand[bandOf] >= Math.max(2, Math.round(8 * IndiaMap.densF))) continue;
             float tw = t.measureText((String) c[0]);
             RectF r = new RectF(x - 8 * u, y - 14 * u, x + 14 * u + tw, y + 8 * u);
             if (r.left < 8 * u || r.right > W - 8 * u || r.top < 0 || r.bottom > H) continue;
             boolean ok = true;
             for (RectF o : used) if (RectF.intersects(o, r)) { ok = false; break; }
+            if (ok && ci < extraFrom && IndiaMap.softHit(r, W, H)) ok = false;   // the big places stay clear of icons and dock
             if (!ok) continue;
             used.add(r);
             dot.setStyle(Paint.Style.FILL); dot.setColor(day ? 0xFF222222 : 0xFFFFFFFF);

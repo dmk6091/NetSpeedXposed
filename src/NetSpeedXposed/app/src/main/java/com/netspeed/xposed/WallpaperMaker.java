@@ -222,6 +222,12 @@ final class WallpaperMaker {
             boolean skyLock = sp.getInt("lockSky", 0) == 0 && (flags & WallpaperManager.FLAG_LOCK) != 0;
             if (skyLock) flags &= ~WallpaperManager.FLAG_LOCK;
             if (flags != 0) wm.setBitmap(b, null, true, flags);
+            try {   // a small copy for the preview in the app
+                int pw = 540;
+                Bitmap sm = Bitmap.createScaledBitmap(b, pw, Math.max(1, b.getHeight() * pw / b.getWidth()), true);
+                java.io.FileOutputStream fo = new java.io.FileOutputStream(new java.io.File(c.getFilesDir(), "wp_preview.jpg"));
+                sm.compress(Bitmap.CompressFormat.JPEG, 82, fo); fo.close(); sm.recycle();
+            } catch (Throwable ignored) { }
             b.recycle();
             if (skyLock) SkyScene.applyLock(c, lat, lon);
             String nt = WpStatus.notesText();

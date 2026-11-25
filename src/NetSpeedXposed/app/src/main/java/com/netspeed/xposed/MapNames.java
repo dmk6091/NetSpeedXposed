@@ -39,7 +39,7 @@ final class MapNames {
         List<L> all = new ArrayList<>();
         try { dams(all, lat, lon, halfKm); } catch (Throwable t) { WpStatus.note("dam names skipped: " + t.getClass().getSimpleName()); }
         try { faults(all, lat, lon, halfKm); } catch (Throwable ignored) { }
-        for (Object[] g : GHATS) {   // mountain passes (ghats) from the built-in list
+        if (IndiaMap.optGhats) for (Object[] g : GHATS) {   // mountain passes (ghats) from the built-in list
             L l = new L();
             l.kind = PASS; l.lat = (Double) g[1]; l.lon = (Double) g[2]; l.rank = 0; l.text = (String) g[0];
             all.add(l);
@@ -53,7 +53,7 @@ final class MapNames {
             l.y = (float) ((WallpaperMaker.worldY(l.lat, z) - oy) * S);
         }
         // hills found in the elevation data: heights without names, left out where a named peak is already close
-        List<float[]> dp = demPeaks;
+        List<float[]> dp = IndiaMap.optHills ? demPeaks : null;
         List<Object[]> late = new ArrayList<>();
         lateHills = late;
         if (dp != null) {
@@ -114,14 +114,17 @@ final class MapNames {
             if (rx + ex < 0 || rx - ex > W || ry + ey < 0 || ry - ey > H) continue;
             used.add(new RectF(rx - ex, ry - ey, rx + ex, ry + ey));
         }
+        used.addAll(RegionNames.noteRects);   // the "nearest forest / wetland / fault" notes are already on the picture
         sharedUsed = used;
         used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));   // you
         int[] cap = {5, 8, 4, halfKm > 60 ? 6 : 3, 3, 2, 4, 5, 2, 3};
+        for (int ci = 0; ci < cap.length; ci++) cap[ci] = Math.max(1, Math.round(cap[ci] * IndiaMap.densF));
+        final int bandMax = Math.max(4, Math.round(18 * IndiaMap.densF));
         int[][] got = new int[3][KINDS];   // each third of the screen gets its own share of names
         int[] total = new int[3];
         for (L l : all) {
             int bd = l.y < H * 0.42f ? 0 : l.y < H * 0.68f ? 1 : 2;
-            if (total[bd] >= 18 || got[bd][l.kind] >= cap[l.kind] || l.text == null || l.text.isEmpty()) continue;
+            if (total[bd] >= bandMax || got[bd][l.kind] >= cap[l.kind] || l.text == null || l.text.isEmpty()) continue;
             boolean italic = l.kind == WATER || l.kind == RIVER || l.kind == STREAM || l.kind == RESERVE || l.kind == FAULT;
             t.setTypeface(Typeface.create(Typeface.DEFAULT, italic ? Typeface.ITALIC : Typeface.NORMAL));
             halo.setTypeface(t.getTypeface());
@@ -149,6 +152,8 @@ final class MapNames {
             RectF r = new RectF(left - (sym && !rightPin ? ic + 4 * u : 4 * u), top - 12 * u * (l.flow != null ? 1 : 0) - 4 * u, right + (rightPin ? ic + 4 * u : 4 * u), bottom + 4 * u);
             boolean ok = r.top > 0 && r.bottom < H;
             for (RectF o : used) if (ok && RectF.intersects(o, r)) ok = false;
+            boolean imp = l.kind == DAM || (l.kind == PEAK && !l.text.matches("\\d+ m"));
+            if (ok && imp && IndiaMap.softHit(r, W, H)) ok = false;   // big names stay clear of icons and dock
             if (!ok) continue;
             used.add(r);
             got[bd][l.kind]++;
@@ -269,7 +274,7 @@ final class MapNames {
     static volatile List<RectF> sharedUsed;
 
     // well known hills and forts of the Pune - Raigad - Satara - Nashik region: {name, lat, lon}; used to name the hills found in the elevation data
-    private static final Object[][] HILLS = {
+    static final Object[][] HILLS = {
             {"Visapur", 18.7131, 73.4887}, {"Korigad", 18.6975, 73.3850}, {"Sudhagad", 18.5400, 73.3000}, {"Mahabaleshwar Plateau", 17.9237, 73.6586},
             {"Chandan-Vandan", 17.9500, 73.8900}, {"Pandavgad", 17.9361, 73.7822}, {"Malhargad", 18.2840, 74.0020}, {"Karnala", 18.8890, 73.1280},
             {"Prabalgad", 18.9970, 73.2090}, {"Naneghat", 19.2900, 73.7400}, {"Ratangad", 19.3780, 73.7130}, {"Sajjangad", 17.6580, 73.9000},
@@ -301,7 +306,7 @@ final class MapNames {
             float x = (Float) q[0], y = (Float) q[1];
             String s = (String) q[2];
             int bd = y < H * 0.42f ? 0 : y < H * 0.68f ? 1 : 2;
-            if (n[bd] >= 8) continue;
+            if (n[bd] >= Math.max(2, Math.round(8 * IndiaMap.densF))) continue;
             float tw = t.measureText(s);
             RectF r = new RectF(x - 9 * u, y - 14 * u, x + 16 * u + tw, y + 8 * u);
             if (r.left < 8 * u || r.right > W - 8 * u || r.top < 0 || r.bottom > H) continue;
@@ -317,7 +322,7 @@ final class MapNames {
         }
     }
 
-    private static final Object[][] GHATS = {
+    static final Object[][] GHATS = {
             {"Bor Ghat", 18.7550, 73.3700}, {"Malshej Ghat", 19.3400, 73.7800}, {"Kasara Ghat", 19.6500, 73.4700}, {"Tamhini Ghat", 18.4800, 73.4300},
             {"Varandha Ghat", 18.0900, 73.4700}, {"Katraj Ghat", 18.4500, 73.8600}, {"Dive Ghat", 18.3900, 73.9900}, {"Khambatki Ghat", 17.9500, 73.9800},
             {"Kumbharli Ghat", 17.5700, 73.7500}, {"Amba Ghat", 16.9500, 73.7700}, {"Mahabaleshwar Ghat", 17.9500, 73.5500}, {"Pasarni Ghat", 17.9300, 73.7200},

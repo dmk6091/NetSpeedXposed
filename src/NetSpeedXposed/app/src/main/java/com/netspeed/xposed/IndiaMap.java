@@ -32,7 +32,14 @@ final class IndiaMap {
 
     /** True when the wallpaper shows the numbered markers and the "near you" list panel (maps up to 150 km half-width). */
     static volatile boolean panelOn = false;
-    static final float PANEL_H = 282f;
+    static volatile float densF = 1f;                                   // 0.35 sparse, 0.65 normal, 1 busy
+    static volatile boolean optTowns = true, optGhats = true, optHills = true, optList = true;
+
+    /** Where the launcher keeps app icons, the dock and the search bar on this phone: big names stay out of these bands. */
+    static boolean softHit(RectF r, int W, int H) {
+        return (r.bottom > H * 0.66f && r.top < H * 0.75f) || (r.bottom > H * 0.80f && r.top < H * 0.87f) || (r.bottom > H * 0.885f && r.top < H * 0.96f);
+    }
+    static final float PANEL_H = 316f;
 
     /** Keeps other labels off the colour key and, when it is on, the list panel under it. */
     static void reserve(List<RectF> used, int W, int H) {
@@ -296,11 +303,12 @@ final class IndiaMap {
     static void draw(Canvas cv, int W, int H, double lat, double lon, int z, double ox, double oy, float S, boolean day, double halfKm,
                      boolean rivers, boolean dams, boolean parks, boolean phys, List<RectF> used) {
         final float u = W / 1080f;
-        final boolean tags = halfKm <= 150 && (rivers || dams || parks);
+        final boolean tags = halfKm <= 150 && (rivers || dams || parks) && optList;
         if (used == null) {
             used = new ArrayList<>();
             used.add(new RectF(0, 0, W, H * 0.22f));
             used.add(new RectF(0, H * 0.955f, W, H));
+            used.addAll(RegionNames.noteRects);
             reserve(used, W, H);
             used.add(new RectF(W / 2f - 100 * u, H * 0.5f - 100 * u, W / 2f + 100 * u, H * 0.5f + 100 * u));
         }
@@ -311,7 +319,7 @@ final class IndiaMap {
         if (dams) try { damMarks(cv, W, H, z, ox, oy, S, day, halfKm, used, u, lat, lon, tags, pd); } catch (Throwable ignored) { }
         if (phys && halfKm >= 150) try { peakMarks(cv, W, H, z, ox, oy, S, day, used, u); } catch (Throwable ignored) { }
         try { MapNames.drawLate(cv, W, H, day, used); } catch (Throwable ignored) { }
-        if (tags) try { panel(cv, W, H, u, day, pd, pp, pr); } catch (Throwable ignored) { }
+        if (tags) try { panel(cv, W, H, u, day, pd, pp, pr, lat, lon); } catch (Throwable ignored) { }
     }
 
     private static String fit(Paint t, String s, float w) {
@@ -326,8 +334,7 @@ final class IndiaMap {
         cv.drawText(s, x, y, p);
     }
 
-    private static void panel(Canvas cv, int W, int H, float u, boolean day, List<String[]> pd, List<String[]> pp, List<String[]> pr) {
-        if (pd.isEmpty() && pp.isEmpty() && pr.isEmpty()) return;
+    private static void panel(Canvas cv, int W, int H, float u, boolean day, List<String[]> pd, List<String[]> pp, List<String[]> pr, double lat, double lon) {
         float x0 = W * 0.04f, x1 = W * 0.96f, y0 = legendBottom(W, H) + 10 * u;
         int cMain = day ? 0xFF0A1E3C : 0xFFFFFFFF, cSub = day ? 0xFF3C4A5A : 0xFFB9C6BC;
         Paint hd = text(16 * u, true, false, cSub);
@@ -370,6 +377,20 @@ final class IndiaMap {
                 x += w;
             }
         }
+        // nearest town, hill or fort, and mountain pass (from the built-in lists)
+        String nt = null, nh = null, ng = null; double dt2 = 1e9, dh = 1e9, dg = 1e9;
+        for (Object[] c : RegionNames.CITIES) { double d = km(lat, lon, (Double) c[1], (Double) c[2]); if (d > 2 && d < dt2) { dt2 = d; nt = (String) c[0]; } }
+        for (Object[] c : RegionNames.PEAKS) { double d = km(lat, lon, (Double) c[1], (Double) c[2]); if (d < dh) { dh = d; nh = (String) c[0]; } }
+        for (Object[] c : MapNames.HILLS) { double d = km(lat, lon, (Double) c[1], (Double) c[2]); if (d < dh) { dh = d; nh = (String) c[0]; } }
+        if (optGhats) for (Object[] c : MapNames.GHATS) { double d = km(lat, lon, (Double) c[1], (Double) c[2]); if (d < dg) { dg = d; ng = (String) c[0]; } }
+        StringBuilder nb = new StringBuilder();
+        if (nt != null) nb.append("Town ").append(nt).append(' ').append(Math.round(dt2)).append(" km");
+        if (nh != null) nb.append(nb.length() > 0 ? "   \u00b7   " : "").append("Hill ").append(nh).append(' ').append(Math.round(dh)).append(" km");
+        if (ng != null) nb.append(nb.length() > 0 ? "   \u00b7   " : "").append(ng).append(' ').append(Math.round(dg)).append(" km");
+        if (nb.length() > 0) {
+            Paint nl = text(17 * u, false, false, cMain);
+            dt(cv, "Nearest: " + fit(nl, nb.toString(), wmax - 100 * u), x0, y0 + (PANEL_H - 22) * u, nl, day, u);
+        }
     }
 
     private static float sx(double lon, int z, double ox, float S) { return (float) ((WallpaperMaker.worldX(lon, z) - ox) * S); }
@@ -405,7 +426,7 @@ final class IndiaMap {
         load();
         Paint ln = new Paint(Paint.ANTI_ALIAS_FLAG);
         ln.setStyle(Paint.Style.STROKE); ln.setStrokeWidth(2.2f * u); ln.setStrokeCap(Paint.Cap.ROUND); ln.setStrokeJoin(Paint.Join.ROUND);
-        ln.setColor(day ? 0xD22B6AD0 : 0xD286C8FF);
+        ln.setColor(day ? 0xE62B6AD0 : 0xEB9ED2FF);
         List<float[][]> lines = new ArrayList<>();
         List<String> names = new ArrayList<>();
         List<float[]> tr = traced;
@@ -459,14 +480,17 @@ final class IndiaMap {
                 List<Integer> vis = new ArrayList<>();
                 for (int k = 0; k < xs.length; k++) if (xs[k] > 30 * u && xs[k] < W - 30 * u && ys[k] > H * 0.08f && ys[k] < H * 0.95f) vis.add(k);
                 float[] fr = {0.5f, 0.4f, 0.6f, 0.3f, 0.7f, 0.2f, 0.8f, 0.1f, 0.9f, 0.05f, 0.95f};
-                for (float f : fr) {
+                boolean placed = false;
+                for (int pass = 0; pass < 2 && !placed; pass++) for (float f : fr) {
                     int k = vis.get(Math.min(vis.size() - 1, (int) (vis.size() * f)));
                     RectF r = tagRect(id, xs[k], ys[k], u);
                     if (r.left < 8 * u || r.right > W - 8 * u || !free(used, r)) continue;
+                    if (pass == 0 && softHit(r, W, H)) continue;   // first try clear of the icons and dock
                     used.add(r);
                     tag(cv, id, r, u, 0xEB1E5A8C);
                     pr.add(new String[]{id, e.getKey()});
                     n++;
+                    placed = true;
                     break;
                 }
             }
@@ -512,7 +536,7 @@ final class IndiaMap {
                 if (n >= 4) continue;
                 String id = "P" + (n + 1);
                 RectF r = tagRect(id, x + 14 * u + tagRect(id, 0, 0, u).width() / 2, y, u);
-                if (r.right > W - 8 * u || !free(used, r)) continue;
+                if (r.right > W - 8 * u || !free(used, r) || softHit(r, W, H)) continue;
                 used.add(r);
                 tag(cv, id, r, u, 0xEB3C6E14);
                 pp.add(new String[]{id, p[0] + (k.equals("N") ? " NP" : k.equals("W") ? " WLS" : " BR"), Math.round((Double) c[3]) + " km"});
@@ -579,7 +603,7 @@ final class IndiaMap {
                 if (n >= 8) continue;
                 String id = "D" + (n + 1);
                 RectF r = tagRect(id, x + 14 * u + tagRect(id, 0, 0, u).width() / 2, y, u);
-                if (r.right > W - 8 * u || !free(used, r)) continue;
+                if (r.right > W - 8 * u || !free(used, r) || softHit(r, W, H)) continue;
                 used.add(r);
                 tag(cv, id, r, u, 0xEB1E46A0);
                 String nm = (String) d[0];

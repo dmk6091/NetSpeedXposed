@@ -55,6 +55,7 @@ public class SettingsActivity extends Activity {
         String t = raw.toLowerCase(java.util.Locale.ROOT);
         if (t.equals("sim box guide") || t.equals("uv guide and sunscreen timer") || t.equals("heat and power diagnostics") || t.startsWith("heat and power history")
                 || t.equals("map wallpaper guide: what the symbols mean") || t.equals("place guide: soil and plants") || t.equals("climate guide: el ni\u00f1o and the others") || t.equals("sky guide: what is up now")) return 7;
+        if (t.equals("back up all settings to downloads") || t.equals("restore settings from downloads")) return 6;
         if (t.contains("satellite strip")) return 2;
         if (t.contains("fault line")) return 3;
         if (t.contains("reservoir")) return 2;
@@ -428,6 +429,8 @@ public class SettingsActivity extends Activity {
         button(c, "Sky guide: what is up now", false, v -> showSkyGuide());
         button(c, "Climate guide: El Ni\u00f1o and the others", false, v -> showClimateGuide());
         button(c, "Map wallpaper guide: what the symbols mean", false, v -> showMapGuide());
+        button(c, "Back up all settings to Downloads", false, v -> backupSettings());
+        button(c, "Restore settings from Downloads", false, v -> restoreSettings());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
         if (OLD_LAYOUTS) {
             toggle(c, "Speedometer with the net speed", "Small gauge for download speed (1 K/s to 100 M/s); "
@@ -2042,6 +2045,21 @@ public class SettingsActivity extends Activity {
             android.widget.Toast.makeText(this, "Retrying in the background. You can leave the app; a notification says when it is ready.", android.widget.Toast.LENGTH_LONG).show();
         }));
         c.addView(st);
+        final android.widget.ImageView pv = new android.widget.ImageView(this);
+        pv.setAdjustViewBounds(true);
+        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(-1, -2);
+        plp.topMargin = dp(8);
+        pv.setLayoutParams(plp);
+        final Runnable loadPv = () -> {
+            try {
+                java.io.File pf = new java.io.File(getFilesDir(), "wp_preview.jpg");
+                if (pf.exists()) pv.setImageBitmap(android.graphics.BitmapFactory.decodeFile(pf.getAbsolutePath()));
+            } catch (Throwable ignored) { }
+        };
+        loadPv.run();
+        pv.setOnClickListener(x -> loadPv.run());
+        c.addView(text("Preview of the last wallpaper made (tap to reload)", 12, sub));
+        c.addView(pv);
         LinearLayout opts = new LinearLayout(this);
         opts.setOrientation(LinearLayout.VERTICAL);
         c.addView(opts);
@@ -2091,6 +2109,11 @@ public class SettingsActivity extends Activity {
         wpChoice(opts, wp, "Major dams with river, size, height, type, year", "dams", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "National parks, sanctuaries, biosphere reserves", "parks", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "Physical features: ranges, plateaus, big peaks", "phys", 0, new String[]{"Show", "Hide"});
+        wpChoice(opts, wp, "Map detail: how many names on the map", "density", 2, new String[]{"Sparse", "Normal", "Busy"});
+        wpChoice(opts, wp, "Towns and villages (extra places)", "towns", 0, new String[]{"Show", "Hide"});
+        wpChoice(opts, wp, "Mountain passes (ghats)", "ghats", 0, new String[]{"Show", "Hide"});
+        wpChoice(opts, wp, "Hills and forts found in the elevation data", "hills", 0, new String[]{"Show", "Hide"});
+        wpChoice(opts, wp, "Near-you list with numbered tags (otherwise names on the map)", "nearlist", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "Info card on the picture", "card", 0, new String[]{"Show rock, soil, fault, relief", "Hide"});
         TextView n = text("The job runs about every 30 min but only draws when you have moved. Needs location permission and the phone not on low battery. Maps: OpenStreetMap.", 11, sub);
         n.setPadding(0, dp(8), 0, 0);
@@ -2536,6 +2559,91 @@ public class SettingsActivity extends Activity {
     }
 
 
+
+    private static void putPref(org.json.JSONObject o, java.util.Map.Entry<String, ?> e) throws org.json.JSONException {
+        Object v = e.getValue();
+        org.json.JSONObject x = new org.json.JSONObject();
+        if (v instanceof Boolean) x.put("t", "b").put("v", v);
+        else if (v instanceof Integer) x.put("t", "i").put("v", v);
+        else if (v instanceof Long) x.put("t", "l").put("v", v);
+        else if (v instanceof Float) x.put("t", "f").put("v", (double) (Float) v);
+        else if (v instanceof String) x.put("t", "s").put("v", v);
+        else if (v instanceof java.util.Set) { org.json.JSONArray a = new org.json.JSONArray(); for (Object s : (java.util.Set<?>) v) a.put(String.valueOf(s)); x.put("t", "S").put("v", a); }
+        else return;
+        o.put(e.getKey(), x);
+    }
+
+    private static void loadPrefs(android.content.SharedPreferences.Editor ed, org.json.JSONObject o) throws org.json.JSONException {
+        java.util.Iterator<String> it = o.keys();
+        while (it.hasNext()) {
+            String k = it.next();
+            org.json.JSONObject x = o.getJSONObject(k);
+            switch (x.getString("t")) {
+                case "b": ed.putBoolean(k, x.getBoolean("v")); break;
+                case "i": ed.putInt(k, x.getInt("v")); break;
+                case "l": ed.putLong(k, x.getLong("v")); break;
+                case "f": ed.putFloat(k, (float) x.getDouble("v")); break;
+                case "s": ed.putString(k, x.getString("v")); break;
+                case "S": { java.util.HashSet<String> hs = new java.util.HashSet<>(); org.json.JSONArray a = x.getJSONArray("v"); for (int i = 0; i < a.length(); i++) hs.add(a.getString(i)); ed.putStringSet(k, hs); break; }
+                default: break;
+            }
+        }
+    }
+
+    /** Saves every setting (the app's and the wallpaper's) as one file in Downloads, through root. */
+    private void backupSettings() {
+        final android.content.Context ctx = getApplicationContext();
+        new Thread(() -> {
+            String msg;
+            try {
+                org.json.JSONObject root = new org.json.JSONObject(), a = new org.json.JSONObject(), w = new org.json.JSONObject();
+                for (java.util.Map.Entry<String, ?> e : sp.getAll().entrySet()) putPref(a, e);
+                for (java.util.Map.Entry<String, ?> e : WallpaperMaker.sp(ctx).getAll().entrySet()) {
+                    String k = e.getKey();
+                    if (k.equals("status") || k.equals("notes") || k.startsWith("last")) continue;   // run results, not settings
+                    putPref(w, e);
+                }
+                root.put("app", a).put("wallpaper", w).put("version", 1);
+                java.io.File f = new java.io.File(ctx.getCacheDir(), "FieldAtlas-settings.json");
+                try (java.io.FileOutputStream fo = new java.io.FileOutputStream(f)) { fo.write(root.toString(1).getBytes("UTF-8")); }
+                Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", "cp '" + f.getAbsolutePath() + "' /sdcard/Download/FieldAtlas-settings.json && chmod 666 /sdcard/Download/FieldAtlas-settings.json"});
+                int rc = p.waitFor();
+                msg = rc == 0 ? "Saved " + a.length() + " + " + w.length() + " settings to Downloads/FieldAtlas-settings.json" : "Could not copy to Downloads (root refused). The file is in the app's cache.";
+            } catch (Throwable t) { msg = "Backup failed: " + t.getClass().getSimpleName(); }
+            final String m = msg;
+            runOnUiThread(() -> android.widget.Toast.makeText(this, m, android.widget.Toast.LENGTH_LONG).show());
+        }).start();
+    }
+
+    /** Puts every setting back from Downloads/FieldAtlas-settings.json. */
+    private void restoreSettings() {
+        final android.content.Context ctx = getApplicationContext();
+        new AlertDialog.Builder(this).setTitle("Restore settings?").setMessage("This replaces your current settings with the ones saved in Downloads/FieldAtlas-settings.json.")
+                .setNegativeButton("Cancel", null).setPositiveButton("Restore", (d, w) -> new Thread(() -> {
+                    String msg;
+                    boolean ok = false;
+                    try {
+                        Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", "cat /sdcard/Download/FieldAtlas-settings.json"});
+                        StringBuilder sb = new StringBuilder();
+                        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream(), "UTF-8"))) {
+                            String ln; while ((ln = br.readLine()) != null) sb.append(ln).append('\n');
+                        }
+                        p.waitFor();
+                        org.json.JSONObject root = new org.json.JSONObject(sb.toString());
+                        android.content.SharedPreferences.Editor e1 = sp.edit();
+                        loadPrefs(e1, root.getJSONObject("app"));
+                        e1.commit();
+                        android.content.SharedPreferences.Editor e2 = WallpaperMaker.sp(ctx).edit();
+                        loadPrefs(e2, root.getJSONObject("wallpaper"));
+                        e2.commit();
+                        ok = true;
+                        msg = "Settings restored. Restart System UI to apply the status bar ones.";
+                    } catch (Throwable t) { msg = "Restore failed: no readable backup in Downloads (" + t.getClass().getSimpleName() + ")"; }
+                    final String m = msg; final boolean okf = ok;
+                    runOnUiThread(() -> { android.widget.Toast.makeText(this, m, android.widget.Toast.LENGTH_LONG).show(); if (okf) recreate(); });
+                }).start()).show();
+    }
+
     private void showMapGuide() {
         String t = "What the terrain wallpaper draws on top of the land (Settings, wallpaper options, each can be hidden):\n\n"
                 + "RIVERS  (thin blue lines, tags R1, R2 ...)\n  On a close map the lines are traced from the terrain itself: the app finds where rain would collect in the same elevation data that shades the land, so each line follows its real valley and lines up with the lakes. "
@@ -2545,6 +2653,8 @@ public class SettingsActivity extends Activity {
                 + "NATIONAL PARK  (dark green hexagon, NP)\nWILDLIFE SANCTUARY  (lime triangle, WLS)\nBIOSPHERE RESERVE  (purple ring, BR)\n  About 110 well known protected areas. Each is a marker at its centre, not its boundary. On a close map the four nearest get a tag (P1 to P4) and are listed in the panel with their distance. Wide maps show only the best known.\n\n"
                 + "PHYSICAL FEATURES\n  Faint, letter-spaced names of ranges, plateaus, plains and coasts (Himalayas, Aravalli, Vindhya, Satpura, Thar Desert, Ganges Plain and more) on wide maps, and well known peaks with their height (Kanchenjunga, Nanda Devi, Anamudi and others).\n\n"
                 + "Everything above is built into the app, so it appears without a map server. The colour key lists the symbols that are switched on. "
+                + "Places, passes and hills: about 80 towns and villages of the Pune, Raigad, Satara and Thane area, 12 ghats, and hills found in the elevation data (named from a built-in list where they match, otherwise just a height). "
+                + "Big names stay clear of the icon and dock bands; minor ones may sit behind them. The NEAR YOU panel ends with the nearest town, hill and pass. The Map detail setting (sparse, normal, busy) controls how many names appear, and each group has its own switch. "
                 + "Positions are approximate and the layer is for orientation, not surveying.";
         showGuideText("Map wallpaper guide", t);
     }

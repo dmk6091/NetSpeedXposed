@@ -113,6 +113,9 @@ final class TerrainMaker {
         final boolean showFaults = wsp.getInt("faults", 0) == 0, showCoast = wsp.getInt("coast", 0) == 0, showCities = wsp.getInt("cities", 0) == 0,
                 showForest = wsp.getInt("forest", 0) == 0, showLegend = wsp.getInt("legend", 0) == 0,
                 showRivers = wsp.getInt("rivers", 0) == 0, showDams = wsp.getInt("dams", 0) == 0, showParks = wsp.getInt("parks", 0) == 0, showPhys = wsp.getInt("phys", 0) == 0;
+        { int dn0 = wsp.getInt("density", 2); IndiaMap.densF = dn0 == 0 ? 0.35f : dn0 == 1 ? 0.65f : 1f;
+          IndiaMap.optTowns = wsp.getInt("towns", 0) == 0; IndiaMap.optGhats = wsp.getInt("ghats", 0) == 0;
+          IndiaMap.optHills = wsp.getInt("hills", 0) == 0; IndiaMap.optList = wsp.getInt("nearlist", 0) == 0; }
         WpStatus.step(1);
         final List<int[]> need = new ArrayList<>();
         for (int ty = ty0; ty <= ty1; ty++) if (ty >= 0 && ty < n) for (int tx = tx0; tx <= tx1; tx++) need.add(new int[]{tx, ty});
@@ -347,6 +350,7 @@ final class TerrainMaker {
         g.setShader(new LinearGradient(0, 0, 0, H * 0.20f, Color.argb(day ? 120 : 190, 0, 0, 0), Color.TRANSPARENT, Shader.TileMode.CLAMP));
         cv.drawRect(0, 0, W, H * 0.20f, g);
 
+        RegionNames.noteRects.clear();
         // leader lines to the nearest forest / wetland
         float u = W / 1080f;
         Paint lp = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -415,7 +419,7 @@ final class TerrainMaker {
         try { MapNames.findPeaks(el, e2, gw, gh, S, (iox - ox) * S, (ioy - oy) * S, mpp); } catch (Throwable ignored) { MapNames.demPeaks = null; }
         IndiaMap.dedupe = showDams;
         IndiaMap.legendRows = 4;
-        IndiaMap.panelOn = halfKm <= 150 && (showRivers || showDams || showParks);
+        IndiaMap.panelOn = halfKm <= 150 && (showRivers || showDams || showParks) && IndiaMap.optList;
         if (showLegend) drawLegend(cv, W, H, day, showDams, showParks);
         WpStatus.step(5);
         MapNames.sharedUsed = null;
