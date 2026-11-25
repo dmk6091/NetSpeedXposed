@@ -3982,19 +3982,6 @@ final class ReadableBar extends View {
             if (!d.isEmpty()) d.add(new DSeg("  ", 17, bold, g).extra());
             d.add(ms);
         }
-        // signal history today beside the mountain, taking turns with nothing (extras shrink or drop when there is no room)
-        try {
-            int[] h = HIST[si.slot & 3];
-            long secs = Math.max(3, Math.min(20, Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS)));
-            if (tower && fold && Cfg.b(Cfg.SH_RADIO, Cfg.D_SH_RADIO) && h[0] != 0 && !d.isEmpty()
-                    && ((System.currentTimeMillis() / (secs * 1000L)) + si.slot + 2) % 2 == 0) {
-                d.add(new DSeg("  ", 17, bold, g).extra());
-                d.add(new DSeg("\u2191", 16, bold, green()).extra());
-                d.add(new DSeg(String.valueOf(h[1]).replace('-', '\u2212'), 18, bold, color).extra());
-                d.add(new DSeg(" \u2193", 16, bold, orange()).extra());
-                d.add(new DSeg(String.valueOf(h[2]).replace('-', '\u2212'), 18, bold, color).extra());
-            }
-        } catch (Throwable ignored) { }
         if (!tl.isEmpty()) L.add(tl);
         return L;
     }
@@ -4076,6 +4063,17 @@ final class ReadableBar extends View {
             f.add(new DSeg(" @" + Math.round(dk) + "km", 16, semi, g));
             fr.add(f);
         }
+        try {
+            int[] h = HIST[si.slot & 3];
+            if (h[0] != 0 && h[1] != h[2]) {
+                java.util.List<DSeg> f = new java.util.ArrayList<>();
+                f.add(new DSeg("today ", 16, semi, g)); f.add(new DSeg("\u2191", 16, bold, green()));
+                f.add(new DSeg(String.valueOf(h[1]).replace('-', '\u2212'), 19, bold, color));
+                f.add(new DSeg(" \u2193", 16, bold, orange()));
+                f.add(new DSeg(String.valueOf(h[2]).replace('-', '\u2212'), 19, bold, color));
+                fr.add(f);
+            }
+        } catch (Throwable ignored) { }
         if (!Double.isNaN(ClimIdx.kp) && ClimIdx.kp >= 4) {
             java.util.List<DSeg> f = new java.util.ArrayList<>();
             f.add(new DSeg("Kp ", 16, semi, g)); f.add(new DSeg(String.format(Locale.US, "%.0f", ClimIdx.kp), 20, bold, ClimIdx.kp >= 6 ? red() : orange()));
