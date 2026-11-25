@@ -2608,8 +2608,8 @@ final class ReadableBar extends View {
     /** One climate-pattern frame: label, value, word, detail; each shorter version drops the detail, then the word, then the value. */
     private void climFrame(List<List<Item>> out, String name, String lab, int lc, String val, String word, String det, int wc) {
         List<Item> v = new ArrayList<>();
-        if (!word.isEmpty() && !det.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 16, semi, wc).sp(6).t(det, 16, semi, climTxt()));
-        if (!word.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 16, semi, wc));
+        if (!word.isEmpty() && !det.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 18, semi, wc).sp(6).t(det, 16, semi, climTxt()));
+        if (!word.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 18, semi, wc));
         v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color));
         v.add(new Item(3, 24).t(lab, 19, bold, lc));
         out.add(v); earthNames.add(name);
@@ -2631,10 +2631,10 @@ final class ReadableBar extends View {
             int wc = weak ? grey() : color;
             String pv = "ph" + ClimIdx.mjoPhase + " " + String.format(Locale.US, "%.1f", ClimIdx.mjoAmp), ef = ClimIdx.mjoEffect();
             List<Item> v = new ArrayList<>();
-            if (!weak && !ef.isEmpty()) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, climTxt()).sp(6).t(ef, 16, semi, climTxt()));
-            if (!weak) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, climTxt()));
-            v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc));
-            v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(weak ? w : "ph" + ClimIdx.mjoPhase, weak ? 16 : 22, weak ? semi : bold, weak ? wc : color));
+            if (!weak && !ef.isEmpty()) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 18, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, climTxt()).sp(6).t(ef, 16, semi, climTxt()));
+            if (!weak) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 18, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, climTxt()));
+            v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 18, semi, wc));
+            v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(weak ? w : "ph" + ClimIdx.mjoPhase, weak ? 18 : 22, weak ? semi : bold, weak ? wc : color));
             v.add(new Item(3, 24).t("MJO", 19, bold, lc));
             out.add(v); earthNames.add("MJO");
         }
