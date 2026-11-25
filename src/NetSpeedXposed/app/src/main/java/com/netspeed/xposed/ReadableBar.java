@@ -4109,15 +4109,37 @@ final class ReadableBar extends View {
         }
     }
 
+    /** Index of the detail line whose main part can sit beside a short one-line place name (and whose extras keep their own row); -1 if none. */
+    private int mergeIdx(SimInfo si, float cw) {
+        if (dupPlace(si) || placeText(si) == null || placeH(si, cw) >= 30f) return -1;
+        java.util.List<java.util.List<DSeg>> L = detailLines(si);
+        for (int i = 0; i < L.size(); i++) {
+            float w = 0; boolean ex = false;
+            for (DSeg sg : L.get(i)) { if (sg.extra) ex = true; else w += dsW(sg) + (sg.chip ? 5 : 0); }
+            if (!ex || w <= 0) continue;
+            return placeW(si) + 14f + w <= cw ? i : -1;
+        }
+        return -1;
+    }
+
     private void simDetail(final Canvas c, SimInfo si, float x, float cw, float y0) {
         float cy = y0;
         boolean first = true;
-        for (final java.util.List<DSeg> ln : detailLines(si)) {
+        final java.util.List<java.util.List<DSeg>> allLn = detailLines(si);
+        final int mi = mergeIdx(si, cw);   // short place name: the main part of one line (age, changes, ping) shares the name's line
+        float mw0 = 0;
+        if (mi >= 0) for (DSeg sg : allLn.get(mi)) if (!sg.extra) mw0 += dsW(sg) + (sg.chip ? 5 : 0);
+        float nameCy = y0;
+        int li = -1;
+        for (final java.util.List<DSeg> ln : allLn) {
+            li++;
+            final boolean merged = li == mi;
             // the place name (if any) is drawn between the first line (CQI) and the rest
             if (first) {
+                nameCy = cy;
                 float ph = drawPlace(c, si, x, cw, cy);
                 if (ph > 0) { nameYs.add(cy); if (ph >= 30f) nameYs.add(cy + 22f); }
-                if (ph > 0 && ph < 30f) slots.add(new float[]{cy, x + Math.min(placeW(si), cw)});
+                if (ph > 0 && ph < 30f) slots.add(new float[]{cy, x + Math.min(mi >= 0 ? placeW(si) + 14f + mw0 : placeW(si), cw)});
                 else if (ph > 0) slots.add(new float[]{cy + 22f, x + cw});   // two-line name: both lines are full
                 cy += ph; first = false;
             }
@@ -4131,21 +4153,28 @@ final class ReadableBar extends View {
             // when the main part and the extra info (F tag, mountain) are too wide together, the main part (age, tower changes, ping, arrow)
             // gives way first, down to 70 % of its size, so the F tag and the mountain keep their full size
             float mcw = cw;
-            if (wx > 0 && w > 0 && w + 10 + wx > cw) mcw = Math.min(cw, Math.max(cw - wx - 10, w * 0.7f));
+            if (merged) {   // main part goes beside the place name; this row keeps only the extras (F tag, mountain), at full size
+                final float xm = x + placeW(si) + 14f;
+                fit(c, xm, nameCy, w, x + cw - xm, () -> {
+                    float e = 0;
+                    for (DSeg sg : ln) if (!sg.extra) e = dsDraw(c, sg, e);
+                });
+                w = 0;
+            } else if (wx > 0 && w > 0 && w + 10 + wx > cw) mcw = Math.min(cw, Math.max(cw - wx - 10, w * 0.7f));
             final float mainW = Math.min(w, mcw);
-            fit(c, x, lcy, w, mcw, () -> {
+            if (!merged) fit(c, x, lcy, w, mcw, () -> {
                 float e = 0;
                 for (DSeg sg : ln) if (!sg.extra) e = dsDraw(c, sg, e);
             });
             if (wx > 0) {   // the extra info: after the line's own end, scaled down only if the room is short
-                final float xe = x + mainW + 10, room = x + cw - xe;
+                final float xe = merged ? x : x + mainW + 10, room = x + cw - xe;
                 if (room > 24f) fit(c, xe, lcy, wx, room, () -> {
                     float e = 0;
                     for (DSeg sg : ln) if (sg.extra) e = dsDraw(c, sg, e);
                 });
             }
             if (under) c.restore();
-            slots.add(new float[]{lcy, x + Math.min(w, mcw)});
+            slots.add(new float[]{lcy, x + Math.min(merged ? wx : w, mcw)});
             cy += 22f;
         }
         if (first) drawPlace(c, si, x, cw, cy);   // no other lines at all: still show the place name
