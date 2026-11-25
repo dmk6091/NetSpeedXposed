@@ -3860,7 +3860,7 @@ final class ReadableBar extends View {
         final String cells = si.cells > 0 ? String.valueOf(si.cells) : null;
         float w2 = tw(band, 26, semi) + (dist != null ? 10 + tw(dist, 26, semi) : 0)
                 + (cells != null ? 12 + DISH_W + 4 + tw(cells, 24, bold) : 0)
-                + (bwText(si) != null && !bwMoved(si, cw) ? 10 + tw("\u00b7 " + bwText(si), 18, bold) : 0);
+                + (bwText(si) != null && !bwMoved(si, cw) ? 10 + tw("\u00b7 " + bwRot(si), 18, bold) : 0);
         fitK(c, x, yL3, w2, cw, S3, () -> {
             float e = textB(c, band, 0, 0, 26, 26, semi, fade(blue(), k));
             if (dist != null) {
@@ -3871,7 +3871,7 @@ final class ReadableBar extends View {
                 e += 12 + DISH_W - 1;
                 e = textB(c, cells, e + 5, 0, 26, 24, bold, grey());
             }
-            if (bwText(si) != null && !bwMoved(si, cw)) textB(c, "\u00b7 " + bwText(si), e + 10, 0, 26, 18, bold, fade(grey(), k));
+            if (bwText(si) != null && !bwMoved(si, cw)) textB(c, "\u00b7 " + bwRot(si), e + 10, 0, 26, 18, bold, fade(grey(), k));
         });
         slots.add(new float[]{yL3, x + Math.min(w2 + 10, cw)});   // generous: the line's real end is a little past the sum of its parts
         // lines 4-7: radio details of this SIM's serving cell and tower
@@ -3908,6 +3908,7 @@ final class ReadableBar extends View {
     private java.util.List<java.util.List<DSeg>> detailLines(SimInfo si) {
         java.util.List<java.util.List<DSeg>> L = new java.util.ArrayList<>();
         int g = grey();
+        try { histTick(si); } catch (Throwable ignored) { }
         // PCI, ARFCN, RSRQ and TAC dropped (2026-11-14: cluttered, hardly visible). CQI kept.
         // The place name moved out of this list into drawPlace() so it can wrap to two lines.
         java.util.List<DSeg> b = new java.util.ArrayList<>();
@@ -3981,6 +3982,19 @@ final class ReadableBar extends View {
             if (!d.isEmpty()) d.add(new DSeg("  ", 17, bold, g).extra());
             d.add(ms);
         }
+        // signal history today beside the mountain, taking turns with nothing (extras shrink or drop when there is no room)
+        try {
+            int[] h = HIST[si.slot & 3];
+            long secs = Math.max(3, Math.min(20, Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS)));
+            if (tower && fold && Cfg.b(Cfg.SH_RADIO, Cfg.D_SH_RADIO) && h[0] != 0 && !d.isEmpty()
+                    && ((System.currentTimeMillis() / (secs * 1000L)) + si.slot + 2) % 2 == 0) {
+                d.add(new DSeg("  ", 17, bold, g).extra());
+                d.add(new DSeg("\u2191", 16, bold, green()).extra());
+                d.add(new DSeg(String.valueOf(h[1]).replace('-', '\u2212'), 18, bold, color).extra());
+                d.add(new DSeg(" \u2193", 16, bold, orange()).extra());
+                d.add(new DSeg(String.valueOf(h[2]).replace('-', '\u2212'), 18, bold, color).extra());
+            }
+        } catch (Throwable ignored) { }
         if (!tl.isEmpty()) L.add(tl);
         return L;
     }
@@ -3994,6 +4008,15 @@ final class ReadableBar extends View {
     }
 
     /** The rotating radio line of a SIM box: one frame at a time (path clearance, rain, k-factor, tower vs sun, bulge, Kp). */
+    private static final int[][] HIST = new int[4][3];   // per SIM slot: day, best dBm, worst dBm
+    private static void histTick(SimInfo si) {
+        if (si.dbm == Bands.NO_DBM || si.dbm > -30 || si.dbm < -160 || !si.inService) return;
+        int[] h = HIST[si.slot & 3];
+        int day = (int) (System.currentTimeMillis() / 86400_000L);
+        if (h[0] != day) { h[0] = day; h[1] = si.dbm; h[2] = si.dbm; }
+        h[1] = Math.max(h[1], si.dbm); h[2] = Math.min(h[2], si.dbm);
+    }
+
     private java.util.List<DSeg> radioFrame(SimInfo si) {
         java.util.List<java.util.List<DSeg>> fr = radioFrames(si);
         if (fr == null || fr.isEmpty()) return null;
@@ -4188,6 +4211,24 @@ final class ReadableBar extends View {
             p.moveTo(x + 14.5f, cy + 9); p.lineTo(x + 19, cy + 5.5f); p.lineTo(x + 19, cy + 12.5f); p.close();
             c.drawPath(p, gp);
         }
+    }
+
+    /** The band line's right-hand spot: the channel width, taking turns with the frequency and TDD / FDD of the band (known bands only). */
+    private String bwRot(SimInfo si) {
+        String base = bwText(si);
+        if (base == null || !Cfg.b(Cfg.SH_RADIO, Cfg.D_SH_RADIO) || si.band == null) return base;
+        String bd = si.band.split("[+ ,]")[0];
+        int n;
+        try { n = Integer.parseInt(bd.substring(1).replaceAll("[^0-9].*", "")); } catch (Throwable t) { return base; }
+        int[] known = {1, 3, 5, 8, 28, 40, 41, 77, 78};
+        boolean ok = false;
+        for (int kn : known) if (kn == n) ok = true;
+        if (!ok) return base;
+        boolean tdd = n == 40 || n == 41 || n == 77 || n == 78;
+        double mhz = Bands.bandMhz(bd);
+        String f = (mhz >= 1000 ? String.format(Locale.US, "%.1f GHz", mhz / 1000.0) : Math.round(mhz) + " MHz") + (tdd ? " TDD" : " FDD");
+        long secs = Math.max(3, Math.min(20, Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS)));
+        return ((System.currentTimeMillis() / (secs * 1000L)) + si.slot + 1) % 2 == 0 ? f : base;
     }
 
     /** Channel width text for the band line ("100 MHz"; "~100 MHz" when the modem gives none and it is a typical value for the band), or null. */
