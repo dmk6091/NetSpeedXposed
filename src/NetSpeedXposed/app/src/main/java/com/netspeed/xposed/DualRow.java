@@ -740,7 +740,7 @@ final class DualRow {
 
         // Values filled in by the worker thread.
         volatile float cpuTemp = Float.NaN;
-        volatile float gpuTemp = Float.NaN;
+        volatile float gpuTemp = Float.NaN, skinTemp = Float.NaN;
         volatile float cpuGhz = Float.NaN;
         volatile long ramFree = -1, ramTotal = -1;
         /** Last location fix {lat, lon, altitude m (NaN if unknown)}; null until one exists. */
@@ -2736,6 +2736,7 @@ final class DualRow {
             } catch (Throwable ignored) { }
             rb.latLon = lastLatLon;
             rb.gpu = gpuTemp;
+            rb.skin = skinTemp;
             rb.ghz = cpuGhz;
             rb.ramFree = ramFree;
             rb.ramTotal = ramTotal;
@@ -4908,6 +4909,7 @@ final class DualRow {
                 if (!ScreenState.on()) { worker.postDelayed(this, TEMP_INTERVAL_MS); return; }
                 if (Cfg.b(Cfg.SHOW_CPU, Cfg.D_SHOW_CPU)) cpuTemp = readCpuTemp(ctx);
                 gpuTemp = readGpuTemp(ctx);
+                if (Cfg.b(Cfg.SH_SKIN, Cfg.D_SH_SKIN)) skinTemp = readSkinTemp(ctx);
                 cpuGhz = readCpuGhz();
                 try {
                     android.app.ActivityManager am = ctx.getSystemService(android.app.ActivityManager.class);
@@ -5298,6 +5300,42 @@ final class DualRow {
         }
         if (max <= 0) logOnce("ghz-none", "no readable CPU clock");
         return max <= 0 ? Float.NaN : max / 1_000_000f;
+    }
+
+    /** Skin (outer body) temperature: Android's own sensor first, then thermal zones named skin / quiet / xo-therm. */
+    private static float readSkinTemp(Context ctx) {
+        try {
+            HardwarePropertiesManager hpm = ctx.getSystemService(HardwarePropertiesManager.class);
+            if (hpm != null) {
+                float max = Float.NaN;
+                for (float t : hpm.getDeviceTemperatures(HardwarePropertiesManager.DEVICE_TEMPERATURE_SKIN,
+                        HardwarePropertiesManager.TEMPERATURE_CURRENT)) {
+                    if (t == HardwarePropertiesManager.UNDEFINED_TEMPERATURE || t <= 0 || t > 150) continue;
+                    if (Float.isNaN(max) || t > max) max = t;
+                }
+                if (!Float.isNaN(max)) return max;
+            }
+        } catch (Throwable ignored) { }
+        float max = Float.NaN;
+        try {
+            File[] zones = new File("/sys/class/thermal").listFiles();
+            if (zones == null) return max;
+            for (File z : zones) {
+                if (!z.getName().startsWith("thermal_zone")) continue;
+                String type = readLine(new File(z, "type"));
+                if (type == null) continue;
+                String t = type.toLowerCase(Locale.US);
+                if (!(t.contains("skin") || t.contains("quiet") || t.contains("xo-therm"))) continue;
+                String v = readLine(new File(z, "temp"));
+                if (v == null) continue;
+                float c = Float.parseFloat(v.trim());
+                if (c > 1000) c /= 1000f;
+                if (c <= 0 || c > 150) continue;
+                if (Float.isNaN(max) || c > max) max = c;
+            }
+        } catch (Throwable ignored) { }
+        if (Float.isNaN(max)) logOnce("skin-none", "no readable skin temperature found");
+        return max;
     }
 
     /** GPU temperature: Android's own sensor first, then thermal zones named gpu*. */

@@ -360,6 +360,7 @@ public class SettingsActivity extends Activity {
         toggle(c, "Free RAM", "Free memory after the system icons", Cfg.SH_RAM, Cfg.D_SH_RAM);
         toggle(c, "CPU clock", "Current CPU frequency in GHz", Cfg.SH_GHZ, Cfg.D_SH_GHZ);
         toggle(c, "Deep sleep share", "Time the phone spent in deep sleep, as %", Cfg.SH_SLEEP, Cfg.D_SH_SLEEP);
+        toggle(c, "Skin temperature", "Outer body temperature of the phone, shown as SK", Cfg.SH_SKIN, Cfg.D_SH_SKIN);
         toggle(c, "Next alarm", "Time of the next alarm", Cfg.SH_ALARM, Cfg.D_SH_ALARM);
         toggle(c, "Notification count", "Bell with the number of notifications", Cfg.SH_NOTIF, Cfg.D_SH_NOTIF);
         toggle(c, "Bluetooth device battery", "Battery % of the connected Bluetooth device", Cfg.SH_BTBAT, Cfg.D_SH_BTBAT);

@@ -112,7 +112,7 @@ final class ReadableBar extends View {
     int battPct = -1;
     private boolean battPctMoved;   // the phone battery level is drawn after the BAT temperature: not again in the right column
     double[] latLon = {18.62, 73.80};
-    float gpu = Float.NaN;
+    float gpu = Float.NaN, skin = Float.NaN;
     float ghz = Float.NaN;
     long ramFree = -1, ramTotal = -1;
     float wxVis = Float.NaN;
@@ -2160,6 +2160,8 @@ final class ReadableBar extends View {
             its.add(new Item(8, 24).t("R ", 14, semi, dim).t(String.format(Locale.US, "%.1f", g), 22, bold, low ? orange() : green()).t("G", 14, semi, dim));
         }
         if (deep >= 0 && Cfg.b(Cfg.SH_SLEEP, Cfg.D_SH_SLEEP)) its.add(new Item(6, 24).t("S ", 14, semi, dim).t(deep + "%", 22, bold, deep >= 60 ? green() : deep >= 30 ? yellow() : orange()));
+        if (!Float.isNaN(skin) && skin > 0 && Cfg.b(Cfg.SH_SKIN, Cfg.D_SH_SKIN))
+            its.add(new Item(5, 24).t("SK ", 14, semi, dim).t(Math.round(skin) + "\u00b0", 22, bold, skin >= 45 ? red() : skin >= 40 ? orange() : skin >= 36 ? yellow() : green()));
         if (x1 - x0 < 60) return;
         drawLine(c, its, x0, cy, x1, 14);
     }

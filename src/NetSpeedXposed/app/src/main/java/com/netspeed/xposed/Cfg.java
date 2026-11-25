@@ -119,6 +119,7 @@ final class Cfg {
     static final String SH_NOTIF = "sh_notif"; static final boolean D_SH_NOTIF = true;
     static final String SH_BTBAT = "sh_btbat"; static final boolean D_SH_BTBAT = true;
     static final String SH_SLEEP = "sh_sleep"; static final boolean D_SH_SLEEP = true;
+    static final String SH_SKIN = "sh_skin"; static final boolean D_SH_SKIN = true;
     static final String SH_LOAD = "sh_load"; static final boolean D_SH_LOAD = false;
     static final String SH_GHZ = "sh_ghz"; static final boolean D_SH_GHZ = true;
     static final String SH_DATA = "sh_data"; static final boolean D_SH_DATA = true;
