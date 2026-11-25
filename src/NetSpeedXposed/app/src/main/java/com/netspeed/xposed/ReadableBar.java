@@ -3968,7 +3968,10 @@ final class ReadableBar extends View {
                     d.add(new DSeg("F", 15, bold, pc).chip().extra());
                     d.add(new DSeg(" " + t0 + si.clearPct + "%", 19, bold, fade(pc, roughAll ? 0.9f : 1f)).extra());
                 }
-                tl.add(new DSeg(ex, 18, bold, fade(geoGrey(), roughAll ? 0.9f : 1f)).extra());
+                java.util.List<DSeg> rf2 = null;
+                try { rf2 = radioFrame(si); } catch (Throwable ignored) { }
+                if (rf2 != null) for (DSeg sg : rf2) tl.add(sg.extra());   // the radio frame takes the geometry's place for its turn
+                else tl.add(new DSeg(ex, 18, bold, fade(geoGrey(), roughAll ? 0.9f : 1f)).extra());
                 if (real && !roughAll) tl.add(new DSeg(" mast " + si.mastM + "m", 15, bold, 0xFF78C8FF).chip().extra());
             }
         }
@@ -3979,10 +3982,6 @@ final class ReadableBar extends View {
             d.add(ms);
         }
         if (!tl.isEmpty()) L.add(tl);
-        try {
-            java.util.List<DSeg> rl = radioLine(si);
-            if (rl != null && !rl.isEmpty()) L.add(rl);
-        } catch (Throwable ignored) { }
         return L;
     }
 
@@ -3995,7 +3994,15 @@ final class ReadableBar extends View {
     }
 
     /** The rotating radio line of a SIM box: one frame at a time (path clearance, rain, k-factor, tower vs sun, bulge, Kp). */
-    private java.util.List<DSeg> radioLine(SimInfo si) {
+    private java.util.List<DSeg> radioFrame(SimInfo si) {
+        java.util.List<java.util.List<DSeg>> fr = radioFrames(si);
+        if (fr == null || fr.isEmpty()) return null;
+        long secs = Math.max(3, Math.min(20, Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS)));
+        int pi = (int) (((System.currentTimeMillis() / (secs * 1000L)) + si.slot) % (fr.size() + 1));   // turn 0 = the usual angle / horizon
+        return pi == 0 ? null : fr.get(pi - 1);
+    }
+
+    private java.util.List<java.util.List<DSeg>> radioFrames(SimInfo si) {
         if (!Cfg.b(Cfg.SH_RADIO, Cfg.D_SH_RADIO)) return null;
         int g = grey();
         java.util.List<java.util.List<DSeg>> fr = new java.util.ArrayList<>();
@@ -4003,7 +4010,7 @@ final class ReadableBar extends View {
             int pc = si.clearPct >= 80 ? green() : si.clearPct >= 60 ? yellow() : orange();
             java.util.List<DSeg> f = new java.util.ArrayList<>();
             f.add(new DSeg("FRES ", 16, semi, g)); f.add(new DSeg(si.clearPct + "%", 20, bold, pc));
-            f.add(new DSeg(si.clearPct >= 80 ? " path clear" : si.clearPct >= 60 ? " partly blocked" : " blocked", 16, semi, g));
+            f.add(new DSeg(si.clearPct >= 80 ? " clear" : si.clearPct >= 60 ? " part" : " blocked", 16, semi, g));
             fr.add(f);
         }
         if (wxRain >= 0) {
@@ -4043,21 +4050,17 @@ final class ReadableBar extends View {
             double dk = dm / 1000.0, h = dk * dk / 67.9;
             java.util.List<DSeg> f = new java.util.ArrayList<>();
             f.add(new DSeg("BULGE ", 16, semi, g)); f.add(new DSeg(Math.round(h) + "m", 20, bold, blue()));
-            f.add(new DSeg(" at " + Math.round(dk) + " km", 16, semi, g));
+            f.add(new DSeg(" @" + Math.round(dk) + "km", 16, semi, g));
             fr.add(f);
         }
         if (!Double.isNaN(ClimIdx.kp) && ClimIdx.kp >= 4) {
             java.util.List<DSeg> f = new java.util.ArrayList<>();
             f.add(new DSeg("Kp ", 16, semi, g)); f.add(new DSeg(String.format(Locale.US, "%.0f", ClimIdx.kp), 20, bold, ClimIdx.kp >= 6 ? red() : orange()));
-            f.add(new DSeg(ClimIdx.kp >= 5 ? " storm \u00b7 GPS drift" : " unsettled", 16, semi, g));
+            f.add(new DSeg(ClimIdx.kp >= 5 ? " storm" : " unsettled", 16, semi, g));
             fr.add(f);
         }
         if (fr.isEmpty()) return null;
-        long secs = Math.max(3, Math.min(20, Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS)));
-        int pi = (int) (((System.currentTimeMillis() / (secs * 1000L)) + si.slot) % fr.size());
-        java.util.List<DSeg> out = fr.get(pi);
-        for (DSeg sg : out) sg.rot = true;
-        return out;
+        return fr;
     }
 
     /** Metres from a distance label like "\u22482.0km" / "~266m" / "1.0km", or -1. */
