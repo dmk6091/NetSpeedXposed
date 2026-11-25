@@ -3085,7 +3085,7 @@ final class ReadableBar extends View {
         if (!fold || n <= 0 || sims.size() < n) return lim;
         try {
             SimInfo last = sims.get(n - 1);
-            float eq = boxW(n);
+            float eq = boxWi(last);
             float wa = line1W(last);
             float f = Math.min(eq / Math.max(1f, wa), 1.04f);
             float by1 = cl + eq + 7f - wa * f;                  // first line ends right at the curve
@@ -3105,8 +3105,7 @@ final class ReadableBar extends View {
         float simR = simRight(R1, n);
         final float pad = 7, gap = 2;
         float total = gap * (n - 1);
-        float eq = boxW(n);
-        for (int i = 0; i < n; i++) total += eq + 2 * pad;
+        for (int i = 0; i < n; i++) total += boxWi(sims.get(i)) + 2 * pad;
         if (stretch && simR - (R0 - STRETCH_TOUCH) > total) total = simR - (R0 - STRETCH_TOUCH);   // boxes fill up to the camera cutout
         float f = total > simR - R0 ? (simR - R0) / total : 1f;
         if (stretch && total * f < simR - (R0 - STRETCH_TOUCH) + 0.5f) f = 1f;
@@ -3126,7 +3125,7 @@ final class ReadableBar extends View {
             float[] bw = new float[n];
             float total = gap * (n - 1);
             for (int i = 0; i < n; i++) {
-                bw[i] = boxW(n) + 2 * pad;
+                bw[i] = boxWi(sims.get(i)) + 2 * pad;
                 total += bw[i];
             }
             boolean fill = stretch && simR - (R0 - STRETCH_TOUCH) > total;
@@ -3647,6 +3646,9 @@ final class ReadableBar extends View {
 
     /** Both SIM boxes get the width of the wider one, so they match. */
     private static final float STRETCH_W = 50, STRETCH_TOUCH = 0, STRETCH_CAM = 18;   // touch: how far past the usual gap beside the camera the boxes may reach
+
+    /** This SIM's own box width: just what its own rows need (each box fits its content, 2026-11-25). */
+    private float boxWi(SimInfo si) { return stretch ? simW(si) + STRETCH_W : simW(si); }
 
     private float boxW(int n) {
         float w = 0;
