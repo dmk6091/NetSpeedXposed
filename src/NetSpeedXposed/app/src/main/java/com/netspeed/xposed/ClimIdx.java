@@ -24,6 +24,7 @@ final class ClimIdx {
     static volatile long at = 0, triedAt = 0;
     static volatile double iod = Double.NaN, pdo = Double.NaN, nao = Double.NaN, mjoAmp = Double.NaN, sst = Double.NaN, trend = Double.NaN;
     static volatile double iodPrev = Double.NaN, pdoPrev = Double.NaN, naoPrev = Double.NaN;   // the month before, for the up / down arrow
+    static volatile double kp = Double.NaN;   // planetary Kp, latest 3-hour value (NOAA SWPC)
     static volatile double ao = Double.NaN, aoPrev = Double.NaN, atl = Double.NaN, atlPrev = Double.NaN, qbo = Double.NaN, qboPrev = Double.NaN;   // Arctic Oscillation, Atlantic Nino (ATL3), QBO 30 hPa wind (m/s)
     static volatile int aoM = 0, atlM = 0, qboM = 0;
     static volatile int iodM = 0, pdoM = 0, naoM = 0, mjoPhase = 0;   // month 1..12 of the value
@@ -35,6 +36,7 @@ final class ClimIdx {
         try { String s = EarthSci.get(URL_IOD); String[] l = lastRow(s, 5); if (l != null) { iod = Double.parseDouble(l[4]); iodM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 5, 1); if (p != null) iodPrev = Double.parseDouble(p[4]); } } catch (Throwable ignored) { }
         try { String s = EarthSci.get(URL_PDO); String[] l = lastRow(s, 3); if (l != null) { pdo = Double.parseDouble(l[2]); pdoM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 3, 1); if (p != null) pdoPrev = Double.parseDouble(p[2]); } } catch (Throwable ignored) { }
         try { String s = EarthSci.get(URL_NAO); String[] l = lastRow(s, 3); if (l != null) { nao = Double.parseDouble(l[2]); naoM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 3, 1); if (p != null) naoPrev = Double.parseDouble(p[2]); } } catch (Throwable ignored) { }
+        try { String s = EarthSci.get("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"); java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\[\"[^\"]*\",\\s*\"([0-9.]+)\"").matcher(s); double last = Double.NaN; while (m.find()) last = Double.parseDouble(m.group(1)); if (!Double.isNaN(last)) { kp = last; any = true; } } catch (Throwable ignored) { }
         try { String s = EarthSci.get(URL_AO); String[] l = lastRow(s, 3); if (l != null) { ao = Double.parseDouble(l[2]); aoM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 3, 1); if (p != null) aoPrev = Double.parseDouble(p[2]); } } catch (Throwable ignored) { }
         try { String s = EarthSci.get(URL_ATL); String[] l = lastRow(s, 6); if (l != null) { atl = Double.parseDouble(l[5]); atlM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 6, 1); if (p != null) atlPrev = Double.parseDouble(p[5]); } } catch (Throwable ignored) { }
         try { qbo(EarthSci.get(URL_QBO)); any = true; } catch (Throwable e1) { try { qbo(EarthSci.get(URL_QBO2)); any = true; } catch (Throwable ignored) { } }

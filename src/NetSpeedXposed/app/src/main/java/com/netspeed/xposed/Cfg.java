@@ -121,6 +121,7 @@ final class Cfg {
     static final String SH_SLEEP = "sh_sleep"; static final boolean D_SH_SLEEP = true;
     static final String SH_SKIN = "sh_skin"; static final boolean D_SH_SKIN = true;
     static final String SH_UPTIME = "sh_uptime"; static final boolean D_SH_UPTIME = true;
+    static final String SH_RADIO = "sh_radio"; static final boolean D_SH_RADIO = true;
     static final String SH_TRIP = "sh_trip"; static final boolean D_SH_TRIP = true;
     static final String SH_LOAD = "sh_load"; static final boolean D_SH_LOAD = false;
     static final String SH_GHZ = "sh_ghz"; static final boolean D_SH_GHZ = true;

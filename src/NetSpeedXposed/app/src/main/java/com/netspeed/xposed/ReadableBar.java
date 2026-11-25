@@ -3881,6 +3881,7 @@ final class ReadableBar extends View {
     private static final class DSeg {
         final String t; final float sz; final Typeface f; final int col;
         boolean chip;   // drawn as dark text on a filled, coloured rounded tag
+        boolean rot;    // the rotating radio line: never widens the box
         boolean mg;     // part of the age / tower changes / ping line: the one that may sit beside a short place name
         boolean extra;  // extra info after a line: drawn with its own room, never widens the box or squeezes the main text
         DSeg(String t, float sz, Typeface f, int col) { this.t = t; this.sz = sz; this.f = f; this.col = col; }
@@ -3978,7 +3979,85 @@ final class ReadableBar extends View {
             d.add(ms);
         }
         if (!tl.isEmpty()) L.add(tl);
+        try {
+            java.util.List<DSeg> rl = radioLine(si);
+            if (rl != null && !rl.isEmpty()) L.add(rl);
+        } catch (Throwable ignored) { }
         return L;
+    }
+
+    private static double compassDeg(String b) {
+        if (b == null) return Double.NaN;
+        String t = b.replaceAll("[^NESW]", "");
+        String[] k = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+        for (int i = 0; i < 8; i++) if (k[i].equals(t)) return i * 45;
+        return Double.NaN;
+    }
+
+    /** The rotating radio line of a SIM box: one frame at a time (path clearance, rain, k-factor, tower vs sun, bulge, Kp). */
+    private java.util.List<DSeg> radioLine(SimInfo si) {
+        if (!Cfg.b(Cfg.SH_RADIO, Cfg.D_SH_RADIO)) return null;
+        int g = grey();
+        java.util.List<java.util.List<DSeg>> fr = new java.util.ArrayList<>();
+        if (si.clearPct >= 0) {
+            int pc = si.clearPct >= 80 ? green() : si.clearPct >= 60 ? yellow() : orange();
+            java.util.List<DSeg> f = new java.util.ArrayList<>();
+            f.add(new DSeg("FRES ", 16, semi, g)); f.add(new DSeg(si.clearPct + "%", 20, bold, pc));
+            f.add(new DSeg(si.clearPct >= 80 ? " path clear" : si.clearPct >= 60 ? " partly blocked" : " blocked", 16, semi, g));
+            fr.add(f);
+        }
+        if (wxRain >= 0) {
+            java.util.List<DSeg> f = new java.util.ArrayList<>();
+            f.add(new DSeg("RAIN ", 16, semi, g)); f.add(new DSeg(wxRain + "%", 20, bold, wxRain >= 60 ? orange() : wxRain >= 30 ? yellow() : green()));
+            f.add(new DSeg(wxRain >= 60 ? " fade risk" : " chance", 16, semi, g));
+            fr.add(f);
+        }
+        try {
+            if (wxTemp != null && wxHum >= 0 && !Float.isNaN(wxPres)) {
+                double T = Double.parseDouble(wxTemp.replaceAll("[^0-9.\\-]", ""));
+                double e = wxHum / 100.0 * 6.1078 * Math.pow(10, 7.5 * T / (T + 237.3));
+                double Tk = T + 273.15, N = 77.6 / Tk * (wxPres + 4810 * e / Tk);
+                double k = 157.0 / (157.0 - 7.32 * Math.exp(0.005577 * N));
+                java.util.List<DSeg> f = new java.util.ArrayList<>();
+                int kc = k > 1.5 ? orange() : k < 1.2 ? yellow() : green();
+                f.add(new DSeg("k ", 16, semi, g)); f.add(new DSeg(String.format(Locale.US, "%.2f", k), 20, bold, kc));
+                f.add(new DSeg(k > 1.5 ? " ducting" : k < 1.2 ? " sub-refraction" : " normal", 16, semi, g));
+                fr.add(f);
+            }
+        } catch (Throwable ignored) { }
+        try {
+            double td = compassDeg(si.bearing);
+            double[] pos = fix != null ? new double[]{fix[0], fix[1]} : latLon;
+            Astro.Pos sp = Astro.sun(System.currentTimeMillis(), pos[0], pos[1]);
+            if (!Double.isNaN(td) && sp.alt > 0) {
+                double d = ((td - sp.az + 540) % 360) - 180;
+                java.util.List<DSeg> f = new java.util.ArrayList<>();
+                f.add(new DSeg("TOWER ", 16, semi, g));
+                if (Math.abs(d) < 10) f.add(new DSeg("near sun", 20, bold, yellow()));
+                else { f.add(new DSeg(Math.round(Math.abs(d)) + "\u00b0 " + (d < 0 ? "left" : "right"), 20, bold, blue())); f.add(new DSeg(" of sun", 16, semi, g)); }
+                fr.add(f);
+            }
+        } catch (Throwable ignored) { }
+        double dm = distMetres(si.dist);
+        if (dm >= 5000) {
+            double dk = dm / 1000.0, h = dk * dk / 67.9;
+            java.util.List<DSeg> f = new java.util.ArrayList<>();
+            f.add(new DSeg("BULGE ", 16, semi, g)); f.add(new DSeg(Math.round(h) + "m", 20, bold, blue()));
+            f.add(new DSeg(" at " + Math.round(dk) + " km", 16, semi, g));
+            fr.add(f);
+        }
+        if (!Double.isNaN(ClimIdx.kp) && ClimIdx.kp >= 4) {
+            java.util.List<DSeg> f = new java.util.ArrayList<>();
+            f.add(new DSeg("Kp ", 16, semi, g)); f.add(new DSeg(String.format(Locale.US, "%.0f", ClimIdx.kp), 20, bold, ClimIdx.kp >= 6 ? red() : orange()));
+            f.add(new DSeg(ClimIdx.kp >= 5 ? " storm \u00b7 GPS drift" : " unsettled", 16, semi, g));
+            fr.add(f);
+        }
+        if (fr.isEmpty()) return null;
+        long secs = Math.max(3, Math.min(20, Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS)));
+        int pi = (int) (((System.currentTimeMillis() / (secs * 1000L)) + si.slot) % fr.size());
+        java.util.List<DSeg> out = fr.get(pi);
+        for (DSeg sg : out) sg.rot = true;
+        return out;
     }
 
     /** Metres from a distance label like "\u22482.0km" / "~266m" / "1.0km", or -1. */
@@ -3999,6 +4078,7 @@ final class ReadableBar extends View {
     private float detailW(SimInfo si) {
         float m = 0;
         for (java.util.List<DSeg> ln : detailLines(si)) {
+            if (!ln.isEmpty() && ln.get(0).rot) continue;   // the rotating radio line never widens the box
             float w = 0, wx = 0;
             for (DSeg sg : ln) { if (sg.extra) wx += dsW(sg); else w += dsW(sg) + (sg.chip ? 5 : 0); }
             if (wx > 0) w += 10 + wx;   // the F tag and mountain sit on the line: the box grows to hold them (the box-width limit still applies)

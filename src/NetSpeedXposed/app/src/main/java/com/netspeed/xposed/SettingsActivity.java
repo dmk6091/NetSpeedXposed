@@ -362,6 +362,7 @@ public class SettingsActivity extends Activity {
         toggle(c, "Deep sleep share", "Time the phone spent in deep sleep, as %", Cfg.SH_SLEEP, Cfg.D_SH_SLEEP);
         toggle(c, "Skin temperature", "Outer body temperature of the phone, shown as SK", Cfg.SH_SKIN, Cfg.D_SH_SKIN);
         toggle(c, "Uptime", "Time since the last reboot, shown as UP", Cfg.SH_UPTIME, Cfg.D_SH_UPTIME);
+        toggle(c, "SIM box: rotating radio line", "A bottom line in each SIM box that rotates path clearance (FRES), rain chance, air bending (k), tower against the sun, Earth bulge and magnetic storms (Kp)", Cfg.SH_RADIO, Cfg.D_SH_RADIO);
         toggle(c, "Distance today", "How far the phone has travelled today in km (from GPS and network fixes), shown as TR", Cfg.SH_TRIP, Cfg.D_SH_TRIP);
         toggle(c, "Next alarm", "Time of the next alarm", Cfg.SH_ALARM, Cfg.D_SH_ALARM);
         toggle(c, "Notification count", "Bell with the number of notifications", Cfg.SH_NOTIF, Cfg.D_SH_NOTIF);
@@ -2397,6 +2398,7 @@ public class SettingsActivity extends Activity {
             {"TOWER AND CELL LINE"},
             {"12m \u00d73", "Time on this cell, and how many times you changed cells today.", g(m, "oncell") == null ? null : g(m, "oncell") + " on it, " + g(m, "ho") + " changes today", "A change of cell as you move is called a handover."},
             {"\u2197 arrow", "Direction from you to the tower.", dir, "Yellow = exact tower position. Grey with ~ = rough guess."},
+            {"FRES 82% / RAIN 20% / k 1.33 / TOWER 40\u00b0 left of sun / BULGE 3m / Kp 5", "The bottom line of the box rotates every few seconds. FRES: how much of the signal path is clear (under 60% is partly blocked). RAIN: chance of rain here. k: how much the air bends the signal, 1.33 normal, above 1.5 ducting (signal overshoots). TOWER: where the tower is against the sun, near 0\u00b0 means glare for dishes. BULGE: how much the Earth's curve hides at that distance. Kp: magnetic storm level, shown only at 4 or more.", null, "Frames with nothing to say are skipped. Turn the line off in Settings under SIM box."},
             {"LOS clear / LOS +6m", "Line of sight from you to the tower: clear, or how many metres of ground stick up in the way.", los == null || "0".equals(los) ? (live ? "clear" : null) : los + " m in the way", "LOS = line of sight, looked at from your place toward the tower."},
             {"\u2220+1\u00b0", "Angle you look up (+) or down (-) to the antenna.", ang == null ? null : est + (Integer.parseInt(ang) >= 0 ? "+" : "\u2212") + Math.abs(Integer.parseInt(ang)) + "\u00b0", ""},
             {"28 km", "Radio horizon: how far a signal can reach before the Earth's curve hides it. Uses the tower's real mast height when OpenStreetMap lists it, else an assumed 30 m (shown with ~).", live ? (g(m, "hz") != null ? g(m, "hz") : est + "28") + " km" : null, "Radio waves bend slightly with the air, so the horizon is a bit farther than what the eye sees."},
