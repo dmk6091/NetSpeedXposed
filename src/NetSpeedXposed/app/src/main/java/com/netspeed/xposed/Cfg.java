@@ -168,6 +168,9 @@ final class Cfg {
     static final String CL_TREND = "cl_trend"; static final boolean D_CL_TREND = true;
     static final String CL_SST = "cl_sst"; static final boolean D_CL_SST = true;
     static final String CL_NAO = "cl_nao"; static final boolean D_CL_NAO = true;
+    static final String CL_AO = "cl_ao"; static final boolean D_CL_AO = true;
+    static final String CL_ATL = "cl_atl"; static final boolean D_CL_ATL = true;
+    static final String CL_QBO = "cl_qbo"; static final boolean D_CL_QBO = true;
     static final String CL_PDO = "cl_pdo"; static final boolean D_CL_PDO = true;
     static final String CL_SECS = "cl_secs"; static final int D_CL_SECS = 8;
     static final String SEA_ROW3 = "sea_row3";         static final boolean D_SEA_ROW3 = true;    // row 3: tide, sea temperature, waves, sea state and current side by side; the disaster item goes to row 4

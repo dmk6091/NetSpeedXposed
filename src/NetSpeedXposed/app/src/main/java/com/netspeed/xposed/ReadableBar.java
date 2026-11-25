@@ -2668,6 +2668,21 @@ final class ReadableBar extends View {
             climFrame(out, "NAO", "NAO", o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey(), ClimIdx.fmt(o) + ClimIdx.arrow(o, ClimIdx.naoPrev),
                     ClimIdx.sign(o, 0.5, "positive", "negative", "neutral"), ClimIdx.MON[ClimIdx.naoM], grey());
         }
+        if (Cfg.b(Cfg.CL_AO, Cfg.D_CL_AO) && !Double.isNaN(ClimIdx.ao) && ClimIdx.aoM > 0) {
+            double o = ClimIdx.ao;
+            climFrame(out, "AO", "AO", o >= 1 ? orange() : o <= -1 ? blue() : grey(), ClimIdx.fmt(o) + ClimIdx.arrow(o, ClimIdx.aoPrev),
+                    o >= 1 ? "positive" : o <= -1 ? "negative" : "neutral", ClimIdx.MON[ClimIdx.aoM] + (o <= -1 ? " \u00b7 cold spells" : o >= 1 ? " \u00b7 cold stays north" : ""), grey());
+        }
+        if (Cfg.b(Cfg.CL_ATL, Cfg.D_CL_ATL) && !Double.isNaN(ClimIdx.atl) && ClimIdx.atlM > 0) {
+            double o = ClimIdx.atl;
+            climFrame(out, "Atlantic Ni\u00f1o", "ATL3", o >= 0.4 ? orange() : o <= -0.4 ? blue() : grey(), ClimIdx.fmt(o) + "\u00b0" + ClimIdx.arrow(o, ClimIdx.atlPrev),
+                    o >= 0.4 ? "warm" : o <= -0.4 ? "cool" : "neutral", ClimIdx.MON[ClimIdx.atlM] + " \u00b7 east Atlantic", grey());
+        }
+        if (Cfg.b(Cfg.CL_QBO, Cfg.D_CL_QBO) && !Double.isNaN(ClimIdx.qbo) && ClimIdx.qboM > 0) {
+            double o = ClimIdx.qbo;
+            climFrame(out, "QBO", "QBO", o >= 0 ? teal() : orange(), String.format(Locale.US, "%+.0f", o).replace('-', '\u2212') + ClimIdx.arrow(o, ClimIdx.qboPrev),
+                    o >= 0 ? "westerly" : "easterly", ClimIdx.MON[ClimIdx.qboM] + " \u00b7 stratosphere 30 hPa", grey());
+        }
         if (Cfg.b(Cfg.CL_PDO, Cfg.D_CL_PDO) && !Double.isNaN(ClimIdx.pdo) && ClimIdx.pdoM > 0) {
             double o = ClimIdx.pdo;
             climFrame(out, "PDO", "PDO", o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey(), ClimIdx.fmt(o) + ClimIdx.arrow(o, ClimIdx.pdoPrev),

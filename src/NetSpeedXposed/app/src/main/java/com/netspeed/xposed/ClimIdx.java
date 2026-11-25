@@ -15,11 +15,17 @@ final class ClimIdx {
     static final String URL_PDO = "https://www.cpc.ncep.noaa.gov/products/GODAS/multiora/index/mnth.ersstv5.clim19912020.pdo_current.txt";
     static final String URL_NAO = "https://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.nao.monthly.b5001.current.ascii";
     static final String URL_MJO = "https://www.bom.gov.au/climate/mjo/graphics/rmm.74toRealtime.txt";
+    static final String URL_AO = "https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/monthly.ao.index.b50.current.ascii";
+    static final String URL_ATL = "https://cpc.ncep.noaa.gov/products/international/ocean_monitoring/IODMI/mnth.ersstv6.clim19912020.tav_current.txt";
+    static final String URL_QBO = "https://www.cpc.ncep.noaa.gov/data/indices/qbo.u30.index";
+    static final String URL_QBO2 = "https://psl.noaa.gov/data/correlation/qbo.data";
     static final String URL_SST = "https://marine-api.open-meteo.com/v1/marine?latitude=15&longitude=68&current=sea_surface_temperature";
 
     static volatile long at = 0, triedAt = 0;
     static volatile double iod = Double.NaN, pdo = Double.NaN, nao = Double.NaN, mjoAmp = Double.NaN, sst = Double.NaN, trend = Double.NaN;
     static volatile double iodPrev = Double.NaN, pdoPrev = Double.NaN, naoPrev = Double.NaN;   // the month before, for the up / down arrow
+    static volatile double ao = Double.NaN, aoPrev = Double.NaN, atl = Double.NaN, atlPrev = Double.NaN, qbo = Double.NaN, qboPrev = Double.NaN;   // Arctic Oscillation, Atlantic Nino (ATL3), QBO 30 hPa wind (m/s)
+    static volatile int aoM = 0, atlM = 0, qboM = 0;
     static volatile int iodM = 0, pdoM = 0, naoM = 0, mjoPhase = 0;   // month 1..12 of the value
 
     static boolean due(long now) { return now - triedAt > 10 * 60_000L && now - at > 12 * 3600_000L; }
@@ -29,6 +35,9 @@ final class ClimIdx {
         try { String s = EarthSci.get(URL_IOD); String[] l = lastRow(s, 5); if (l != null) { iod = Double.parseDouble(l[4]); iodM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 5, 1); if (p != null) iodPrev = Double.parseDouble(p[4]); } } catch (Throwable ignored) { }
         try { String s = EarthSci.get(URL_PDO); String[] l = lastRow(s, 3); if (l != null) { pdo = Double.parseDouble(l[2]); pdoM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 3, 1); if (p != null) pdoPrev = Double.parseDouble(p[2]); } } catch (Throwable ignored) { }
         try { String s = EarthSci.get(URL_NAO); String[] l = lastRow(s, 3); if (l != null) { nao = Double.parseDouble(l[2]); naoM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 3, 1); if (p != null) naoPrev = Double.parseDouble(p[2]); } } catch (Throwable ignored) { }
+        try { String s = EarthSci.get(URL_AO); String[] l = lastRow(s, 3); if (l != null) { ao = Double.parseDouble(l[2]); aoM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 3, 1); if (p != null) aoPrev = Double.parseDouble(p[2]); } } catch (Throwable ignored) { }
+        try { String s = EarthSci.get(URL_ATL); String[] l = lastRow(s, 6); if (l != null) { atl = Double.parseDouble(l[5]); atlM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 6, 1); if (p != null) atlPrev = Double.parseDouble(p[5]); } } catch (Throwable ignored) { }
+        try { qbo(EarthSci.get(URL_QBO)); any = true; } catch (Throwable e1) { try { qbo(EarthSci.get(URL_QBO2)); any = true; } catch (Throwable ignored) { } }
         try { mjo(tail(URL_MJO, 3000)); any = true; } catch (Throwable ignored) { }
         try {
             String s = EarthSci.get(URL_SST);
@@ -84,6 +93,22 @@ final class ClimIdx {
             while ((line = r.readLine()) != null) { sb.append(line).append('\n'); if (sb.length() > 4 * n) sb.delete(0, sb.length() - 2 * n); }
         }
         return sb.toString();
+    }
+
+    /** QBO wind at 30 hPa: rows are a year then twelve monthly values (m/s); stars and fill values (over 90 either way) are skipped. */
+    private static void qbo(String s) {
+        java.util.ArrayList<double[]> vals = new java.util.ArrayList<>();
+        for (String line : s.split("\n")) {
+            String[] f = line.trim().split("\\s+");
+            if (f.length < 13 || !f[0].matches("\\d{4}")) continue;
+            for (int i = 1; i <= 12; i++) {
+                try { double v = Double.parseDouble(f[i]); if (Math.abs(v) < 90) vals.add(new double[]{v, i}); } catch (Exception ignored) { }
+            }
+        }
+        if (vals.isEmpty()) throw new IllegalStateException("no QBO row");
+        double[] a = vals.get(vals.size() - 1);
+        qbo = a[0]; qboM = (int) a[1];
+        qboPrev = vals.size() > 1 ? vals.get(vals.size() - 2)[0] : Double.NaN;
     }
 
     private static void mjo(String s) {
