@@ -384,6 +384,8 @@ final class ReadableBar extends View {
     /** Light grey-blue text for the \u2220 / km line and the landform text; the dim colour on light backgrounds. */
     private int geoGrey() { return dk ? 0xFFC8D4E4 : grey(); }
 
+    /** Readable warm tone for the small climate description text (grey was too faint). */
+    private int climTxt() { return dk ? 0xFFFFE9A8 : 0xFF7A4B00; }
     private int grey() { return dk ? 0xFFCDCDCD : SysViews.dim(color); }
 
     private static int fade(int col, float k) {
@@ -2606,7 +2608,7 @@ final class ReadableBar extends View {
     /** One climate-pattern frame: label, value, word, detail; each shorter version drops the detail, then the word, then the value. */
     private void climFrame(List<List<Item>> out, String name, String lab, int lc, String val, String word, String det, int wc) {
         List<Item> v = new ArrayList<>();
-        if (!word.isEmpty() && !det.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 16, semi, wc).sp(6).t(det, 16, semi, grey()));
+        if (!word.isEmpty() && !det.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 16, semi, wc).sp(6).t(det, 16, semi, climTxt()));
         if (!word.isEmpty()) v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color).sp(6).t(word, 16, semi, wc));
         v.add(new Item(3, 24).t(lab, 22, bold, lc).sp(6).t(val, 22, bold, color));
         v.add(new Item(3, 24).t(lab, 19, bold, lc));
@@ -2629,8 +2631,8 @@ final class ReadableBar extends View {
             int wc = weak ? grey() : color;
             String pv = "ph" + ClimIdx.mjoPhase + " " + String.format(Locale.US, "%.1f", ClimIdx.mjoAmp), ef = ClimIdx.mjoEffect();
             List<Item> v = new ArrayList<>();
-            if (!weak && !ef.isEmpty()) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, grey()).sp(6).t(ef, 16, semi, grey()));
-            if (!weak) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, grey()));
+            if (!weak && !ef.isEmpty()) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, climTxt()).sp(6).t(ef, 16, semi, climTxt()));
+            if (!weak) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, climTxt()));
             v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc));
             v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(weak ? w : "ph" + ClimIdx.mjoPhase, weak ? 16 : 22, weak ? semi : bold, weak ? wc : color));
             v.add(new Item(3, 24).t("MJO", 19, bold, lc));
@@ -2639,9 +2641,9 @@ final class ReadableBar extends View {
         if (Cfg.b(Cfg.CL_MON, Cfg.D_CL_MON)) {
             String[] m = ClimIdx.monsoon();
             List<Item> v = new ArrayList<>();
-            if (!m[1].isEmpty()) v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[1], 16, semi, grey()).sp(6).t(m[2], 16, semi, grey()));
-            else v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[2], 16, semi, grey()));
-            v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[1].isEmpty() ? m[2] : m[1], 16, semi, grey()));
+            if (!m[1].isEmpty()) v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[1], 16, semi, climTxt()).sp(6).t(m[2], 16, semi, climTxt()));
+            else v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[2], 16, semi, climTxt()));
+            v.add(new Item(3, 24).t(m[0], 22, bold, blue()).sp(6).t(m[1].isEmpty() ? m[2] : m[1], 16, semi, climTxt()));
             v.add(new Item(3, 24).t(m[0], 22, bold, blue()));
             out.add(v); earthNames.add("Monsoon");
         }
@@ -2657,9 +2659,9 @@ final class ReadableBar extends View {
             String sv = String.format(Locale.US, "%.1f\u00b0", ClimIdx.sst), an = "\u2248" + ClimIdx.fmt(a) + "\u00b0";
             int ac = a >= 0.5 ? red() : a >= 0.2 ? orange() : a <= -0.5 ? blue() : grey();
             List<Item> v = new ArrayList<>();
-            v.add(new Item(3, 24).t("Arabian Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, grey()).sp(6).t("vs normal", 16, semi, grey()));
-            v.add(new Item(3, 24).t("Arabian Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, grey()));
-            v.add(new Item(3, 24).t("Arab Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, grey()));
+            v.add(new Item(3, 24).t("Arabian Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, climTxt()).sp(6).t("vs normal", 16, semi, climTxt()));
+            v.add(new Item(3, 24).t("Arabian Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, climTxt()));
+            v.add(new Item(3, 24).t("Arab Sea", 22, bold, ac).sp(6).t(sv, 22, bold, color).sp(6).t(an, 16, semi, climTxt()));
             v.add(new Item(3, 24).t("Arab Sea", 19, bold, ac).sp(6).t(sv, 19, bold, color));
             out.add(v); earthNames.add("Arabian Sea");
         }
