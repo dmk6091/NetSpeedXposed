@@ -3339,7 +3339,7 @@ final class ReadableBar extends View {
     private float foldRowY(SimInfo d, float cw) {
         int nLines = 0;
         for (java.util.List<DSeg> ln : detailLines(d)) if (!ln.isEmpty()) nLines++;
-        nLines -= mergeDrop(d, cw) + (comboIdx(d, cw) >= 0 ? 1 : 0);
+        nLines -= mergeDrop(d, cw);
         float ph = placeH(d, cw);
         float y0 = y(P2) + 4;
         float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
@@ -4151,26 +4151,6 @@ final class ReadableBar extends View {
         return nameLineW(si, cw) + 10 + bwW(si) + tag <= cw;
     }
 
-    private float rowW(java.util.List<DSeg> ln) {
-        float w = 0, wx = 0;
-        for (DSeg sg : ln) { if (sg.extra) wx += dsW(sg); else w += dsW(sg) + (sg.chip ? 5 : 0); }
-        return w + (wx > 0 ? (w > 0 ? 10 : 0) + wx : 0);
-    }
-
-    /** After the age row has moved beside the name, its extras (F tag, mountain) are alone on a row: when the next row (LOS) fits beside them
-     *  with its text scaled down by at most a quarter, the two share one row and the box is one row shorter. Returns that next row's index or -1. */
-    private int comboIdx(SimInfo si, float cw) {
-        int mi = mergeIdx(si, cw);
-        if (mi < 0) return -1;
-        java.util.List<java.util.List<DSeg>> L = detailLines(si);
-        if (mi + 1 >= L.size()) return -1;
-        float wx = 0;
-        for (DSeg sg : L.get(mi)) if (sg.extra) wx += dsW(sg);
-        if (wx <= 0) return -1;
-        float tot = wx + 14f + rowW(L.get(mi + 1));
-        return tot * 0.75f <= cw ? mi + 1 : -1;
-    }
-
     /** True when the merged line has nothing else left on it, so its own row is dropped and the box gets one row shorter. */
     private int mergeDrop(SimInfo si, float cw) {
         int mi = mergeIdx(si, cw);
@@ -4183,7 +4163,6 @@ final class ReadableBar extends View {
         float cy = y0;
         boolean first = true;
         final java.util.List<java.util.List<DSeg>> allLn = detailLines(si);
-        final int combo = comboIdx(si, cw);
         final int mi = mergeIdx(si, cw);   // short place name: the main part of one line (age, changes, ping) shares the name's line
         float mw0 = 0;
         if (mi >= 0) for (DSeg sg : allLn.get(mi)) if (!sg.extra) mw0 += dsW(sg) + (sg.chip ? 5 : 0);
@@ -4191,7 +4170,6 @@ final class ReadableBar extends View {
         int li = -1;
         for (final java.util.List<DSeg> ln : allLn) {
             li++;
-            if (li == combo) continue;   // drawn together with the row above
             final boolean merged = li == mi;
             // the place name (if any) is drawn between the first line (CQI) and the rest
             if (first) {
@@ -4214,20 +4192,6 @@ final class ReadableBar extends View {
                     float e = 0;
                     for (DSeg sg : ln) if (!sg.extra) e = dsDraw(c, sg, e);
                 });
-                continue;
-            }
-            if (merged && wx > 0 && combo >= 0) {   // the extras and the next (LOS) row share this row, scaled to fit
-                final java.util.List<DSeg> nx = allLn.get(combo);
-                final float tot = wx + 14f + rowW(nx);
-                fit(c, x, lcy, tot, cw, () -> {
-                    float e = 0;
-                    for (DSeg sg : ln) if (sg.extra) e = dsDraw(c, sg, e);
-                    e += 14f;
-                    boolean gap = false;
-                    for (DSeg sg : nx) { if (sg.extra && !gap) { e += 10f; gap = true; } e = dsDraw(c, sg, e); }
-                });
-                slots.add(new float[]{lcy, x + cw});
-                cy += 22f;
                 continue;
             }
             // the last row (data / Q) is the more important one: a line it lands on shows faintly behind it
