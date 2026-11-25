@@ -2163,10 +2163,10 @@ final class ReadableBar extends View {
         if (!Float.isNaN(skin) && skin > 0 && Cfg.b(Cfg.SH_SKIN, Cfg.D_SH_SKIN))
             its.add(new Item(5, 24).t("SK ", 14, semi, dim).t(Math.round(skin) + "\u00b0", 22, bold, skin >= 45 ? red() : skin >= 40 ? orange() : skin >= 36 ? yellow() : green()));
         if (dayKm >= 0 && Cfg.b(Cfg.SH_TRIP, Cfg.D_SH_TRIP))
-            its.add(new Item(3, 24).t("TRIP ", 14, semi, dim).t(String.format(Locale.US, dayKm < 100 ? "%.1f" : "%.0f", dayKm), 22, bold, teal()).t("km", 14, semi, dim));
+            its.add(new Item(3, 24).t("TR ", 14, semi, dim).t(String.format(Locale.US, dayKm < 100 ? "%.1f" : "%.0f", dayKm), 22, bold, teal()).t("km", 14, semi, dim));
         if (Cfg.b(Cfg.SH_UPTIME, Cfg.D_SH_UPTIME)) {
             long m = android.os.SystemClock.elapsedRealtime() / 60000L;
-            String up = m >= 1440 ? (m / 1440) + "d" + ((m % 1440) / 60) + "h" : m >= 60 ? (m / 60) + "h" + (m % 60) + "m" : m + "m";
+            String up = m >= 1440 ? (m / 1440) + "d" : m >= 60 ? (m / 60) + "h" + (m % 60) + "m" : m + "m";
             its.add(new Item(4, 24).t("UP ", 14, semi, dim).t(up, 22, bold, teal()));
         }
         if (x1 - x0 < 60) return;
