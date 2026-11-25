@@ -4212,19 +4212,23 @@ final class ReadableBar extends View {
     }
 
     /** The band line's right-hand spot: the channel width, taking turns with the frequency and TDD / FDD of the band (known bands only). */
-    private String bwRot(SimInfo si) {
-        String base = bwText(si);
-        if (base == null || !Cfg.b(Cfg.SH_RADIO, Cfg.D_SH_RADIO) || si.band == null) return base;
+    private String bwFreq(SimInfo si) {
+        if (!Cfg.b(Cfg.SH_RADIO, Cfg.D_SH_RADIO) || si.band == null) return null;
         String bd = si.band.split("[+ ,]")[0];
         int n;
-        try { n = Integer.parseInt(bd.substring(1).replaceAll("[^0-9].*", "")); } catch (Throwable t) { return base; }
+        try { n = Integer.parseInt(bd.substring(1).replaceAll("[^0-9].*", "")); } catch (Throwable t) { return null; }
         int[] known = {1, 3, 5, 8, 28, 40, 41, 77, 78};
         boolean ok = false;
         for (int kn : known) if (kn == n) ok = true;
-        if (!ok) return base;
+        if (!ok) return null;
         boolean tdd = n == 40 || n == 41 || n == 77 || n == 78;
         double mhz = Bands.bandMhz(bd);
-        String f = (mhz >= 1000 ? String.format(Locale.US, "%.1f GHz", mhz / 1000.0) : Math.round(mhz) + " MHz") + (tdd ? " TDD" : " FDD");
+        return (mhz >= 1000 ? String.format(Locale.US, "%.1f GHz", mhz / 1000.0) : Math.round(mhz) + " MHz") + (tdd ? " TDD" : " FDD");
+    }
+
+    private String bwRot(SimInfo si) {
+        String base = bwText(si), f = bwFreq(si);
+        if (base == null || f == null) return base;
         long secs = Math.max(3, Math.min(20, Cfg.i(Cfg.CL_SECS, Cfg.D_CL_SECS)));
         return ((System.currentTimeMillis() / (secs * 1000L)) + si.slot + 1) % 2 == 0 ? f : base;
     }
@@ -4297,7 +4301,7 @@ final class ReadableBar extends View {
     }
 
     /** Width of the channel-width text ("· 10 MHz") when it is drawn on its own, 0 if none. */
-    private float bwW(SimInfo si) { return bwText(si) == null ? 0f : tw("\u00b7 " + bwText(si), 18, bold); }
+    private float bwW(SimInfo si) { String f = bwFreq(si); return bwText(si) == null ? 0f : Math.max(tw("\u00b7 " + bwText(si), 18, bold), f == null ? 0f : tw("\u00b7 " + f, 18, bold)); }
 
     /** Width the name line already needs: the place name plus the merged age/ping items, if any. */
     private float nameLineW(SimInfo si, float cw) {
@@ -4346,7 +4350,7 @@ final class ReadableBar extends View {
                 float ph = drawPlace(c, si, x, cw, cy);
                 if (ph > 0) { nameYs.add(cy); if (ph >= 30f) nameYs.add(cy + 22f); }
                 final boolean bwm = ph > 0 && ph < 30f && bwMoved(si, cw);
-                if (bwm) textB(c, "\u00b7 " + bwText(si), x + nameLineW(si, cw) + 10, cy, 22, 18, bold, grey());
+                if (bwm) textB(c, "\u00b7 " + bwRot(si), x + nameLineW(si, cw) + 10, cy, 22, 18, bold, grey());
                 if (ph > 0 && ph < 30f) slots.add(new float[]{cy, x + Math.min(nameLineW(si, cw) + (bwm ? 10 + bwW(si) : 0), cw)});
                 else if (ph > 0) slots.add(new float[]{cy + 22f, x + cw});   // two-line name: both lines are full
                 cy += ph; first = false;
