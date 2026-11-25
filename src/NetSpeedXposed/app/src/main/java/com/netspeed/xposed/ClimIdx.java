@@ -19,15 +19,16 @@ final class ClimIdx {
 
     static volatile long at = 0, triedAt = 0;
     static volatile double iod = Double.NaN, pdo = Double.NaN, nao = Double.NaN, mjoAmp = Double.NaN, sst = Double.NaN, trend = Double.NaN;
+    static volatile double iodPrev = Double.NaN, pdoPrev = Double.NaN, naoPrev = Double.NaN;   // the month before, for the up / down arrow
     static volatile int iodM = 0, pdoM = 0, naoM = 0, mjoPhase = 0;   // month 1..12 of the value
 
     static boolean due(long now) { return now - triedAt > 10 * 60_000L && now - at > 12 * 3600_000L; }
 
     static void fetch(long now) {
         boolean any = false;
-        try { String s = EarthSci.get(URL_IOD); String[] l = lastRow(s, 5); if (l != null) { iod = Double.parseDouble(l[4]); iodM = Integer.parseInt(l[1]); any = true; } } catch (Throwable ignored) { }
-        try { String s = EarthSci.get(URL_PDO); String[] l = lastRow(s, 3); if (l != null) { pdo = Double.parseDouble(l[2]); pdoM = Integer.parseInt(l[1]); any = true; } } catch (Throwable ignored) { }
-        try { String s = EarthSci.get(URL_NAO); String[] l = lastRow(s, 3); if (l != null) { nao = Double.parseDouble(l[2]); naoM = Integer.parseInt(l[1]); any = true; } } catch (Throwable ignored) { }
+        try { String s = EarthSci.get(URL_IOD); String[] l = lastRow(s, 5); if (l != null) { iod = Double.parseDouble(l[4]); iodM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 5, 1); if (p != null) iodPrev = Double.parseDouble(p[4]); } } catch (Throwable ignored) { }
+        try { String s = EarthSci.get(URL_PDO); String[] l = lastRow(s, 3); if (l != null) { pdo = Double.parseDouble(l[2]); pdoM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 3, 1); if (p != null) pdoPrev = Double.parseDouble(p[2]); } } catch (Throwable ignored) { }
+        try { String s = EarthSci.get(URL_NAO); String[] l = lastRow(s, 3); if (l != null) { nao = Double.parseDouble(l[2]); naoM = Integer.parseInt(l[1]); any = true; String[] p = rowFromEnd(s, 3, 1); if (p != null) naoPrev = Double.parseDouble(p[2]); } } catch (Throwable ignored) { }
         try { mjo(tail(URL_MJO, 3000)); any = true; } catch (Throwable ignored) { }
         try {
             String s = EarthSci.get(URL_SST);
@@ -38,16 +39,34 @@ final class ClimIdx {
     }
 
     /** Last line whose first two fields are a year and a month and whose value fields are numbers (stars and other fill are skipped). */
-    private static String[] lastRow(String s, int minFields) {
+    private static String[] lastRow(String s, int minFields) { return rowFromEnd(s, minFields, 0); }
+
+    /** The skip-th valid row counted from the end (0 = the last one). */
+    private static String[] rowFromEnd(String s, int minFields, int skip) {
         String[] ls = s.split("\n");
         for (int i = ls.length - 1; i >= 0; i--) {
             String[] f = ls[i].trim().split("\\s+");
             if (f.length < minFields || !f[0].matches("\\d{4}") || !f[1].matches("\\d{1,2}")) continue;
             try { Double.parseDouble(f[f.length - 1]); } catch (Exception e) { continue; }
             if (f[f.length - 1].contains("*")) continue;
+            if (skip-- > 0) continue;
             return f;
         }
         return null;
+    }
+
+    /** Up / down / steady arrow for a monthly index against the month before ("" when the earlier month is not known). */
+    static String arrow(double cur, double prev) {
+        if (Double.isNaN(prev)) return "";
+        double d = cur - prev;
+        return Math.abs(d) < 0.1 ? "\u2192" : d > 0 ? "\u2191" : "\u2193";
+    }
+
+    /** What the MJO phase usually means for India in the monsoon months (June to September), "" otherwise or when weak. */
+    static String mjoEffect() {
+        int m = Calendar.getInstance().get(Calendar.MONTH) + 1;
+        if (m < 6 || m > 9 || mjoAmp < 1.0) return "";
+        return mjoPhase >= 2 && mjoPhase <= 4 ? "rain boost" : mjoPhase >= 6 && mjoPhase <= 8 ? "rain lull" : "";
     }
 
     /** The end of a big file: asks for the last bytes only; a server that sends it all is read to its end keeping just the tail. */

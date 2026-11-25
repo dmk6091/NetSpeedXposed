@@ -2619,14 +2619,22 @@ final class ReadableBar extends View {
         boolean fresh = now - ClimIdx.at < 5L * 86400_000L;
         if (Cfg.b(Cfg.CL_IOD, Cfg.D_CL_IOD) && fresh && !Double.isNaN(ClimIdx.iod)) {
             double o = ClimIdx.iod;
-            climFrame(out, "IOD", "IOD", o >= 0.4 ? green() : o <= -0.4 ? orange() : grey(), ClimIdx.fmt(o),
+            climFrame(out, "IOD", "IOD", o >= 0.4 ? green() : o <= -0.4 ? orange() : grey(), ClimIdx.fmt(o) + ClimIdx.arrow(o, ClimIdx.iodPrev),
                     ClimIdx.sign(o, 0.4, "positive", "negative", "neutral"), ClimIdx.MON[ClimIdx.iodM] + (o >= 0.4 ? " \u00b7 wetter monsoon" : o <= -0.4 ? " \u00b7 drier monsoon" : ""), grey());
         }
         if (Cfg.b(Cfg.CL_MJO, Cfg.D_CL_MJO) && fresh && !Double.isNaN(ClimIdx.mjoAmp)) {
             boolean weak = ClimIdx.mjoAmp < 1.0;
             String w = weak ? "weak" : ClimIdx.mjoAmp >= 2.0 ? "strong" : "active";
             int lc = weak ? grey() : (ClimIdx.mjoPhase == 2 || ClimIdx.mjoPhase == 3) ? blue() : teal();
-            climFrame(out, "MJO", "MJO", lc, weak ? "" : "ph" + ClimIdx.mjoPhase, w, weak ? "" : ClimIdx.mjoWhere(), weak ? grey() : color);
+            int wc = weak ? grey() : color;
+            String pv = "ph" + ClimIdx.mjoPhase + " " + String.format(Locale.US, "%.1f", ClimIdx.mjoAmp), ef = ClimIdx.mjoEffect();
+            List<Item> v = new ArrayList<>();
+            if (!weak && !ef.isEmpty()) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, grey()).sp(6).t(ef, 16, semi, grey()));
+            if (!weak) v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc).sp(6).t(ClimIdx.mjoWhere(), 16, semi, grey()));
+            v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(pv, 22, bold, color).sp(6).t(w, 16, semi, wc));
+            v.add(new Item(3, 24).t("MJO", 22, bold, lc).sp(6).t(weak ? w : "ph" + ClimIdx.mjoPhase, weak ? 16 : 22, weak ? semi : bold, weak ? wc : color));
+            v.add(new Item(3, 24).t("MJO", 19, bold, lc));
+            out.add(v); earthNames.add("MJO");
         }
         if (Cfg.b(Cfg.CL_MON, Cfg.D_CL_MON)) {
             String[] m = ClimIdx.monsoon();
@@ -2657,12 +2665,12 @@ final class ReadableBar extends View {
         }
         if (Cfg.b(Cfg.CL_NAO, Cfg.D_CL_NAO) && !Double.isNaN(ClimIdx.nao) && ClimIdx.naoM > 0) {
             double o = ClimIdx.nao;
-            climFrame(out, "NAO", "NAO", o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey(), ClimIdx.fmt(o),
+            climFrame(out, "NAO", "NAO", o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey(), ClimIdx.fmt(o) + ClimIdx.arrow(o, ClimIdx.naoPrev),
                     ClimIdx.sign(o, 0.5, "positive", "negative", "neutral"), ClimIdx.MON[ClimIdx.naoM], grey());
         }
         if (Cfg.b(Cfg.CL_PDO, Cfg.D_CL_PDO) && !Double.isNaN(ClimIdx.pdo) && ClimIdx.pdoM > 0) {
             double o = ClimIdx.pdo;
-            climFrame(out, "PDO", "PDO", o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey(), ClimIdx.fmt(o),
+            climFrame(out, "PDO", "PDO", o >= 0.5 ? orange() : o <= -0.5 ? blue() : grey(), ClimIdx.fmt(o) + ClimIdx.arrow(o, ClimIdx.pdoPrev),
                     o >= 0.5 ? "warm phase" : o <= -0.5 ? "cool phase" : "neutral", ClimIdx.MON[ClimIdx.pdoM], grey());
         }
     }
