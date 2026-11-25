@@ -3947,8 +3947,9 @@ final class ReadableBar extends View {
     private float detailW(SimInfo si) {
         float m = 0;
         for (java.util.List<DSeg> ln : detailLines(si)) {
-            float w = 0;
-            for (DSeg sg : ln) if (!sg.extra) w += dsW(sg) + (sg.chip ? 5 : 0);
+            float w = 0, wx = 0;
+            for (DSeg sg : ln) { if (sg.extra) wx += dsW(sg); else w += dsW(sg) + (sg.chip ? 5 : 0); }
+            if (wx > 0) w += 10 + wx;   // the F tag and mountain sit on the line: the box grows to hold them (the box-width limit still applies)
             m = Math.max(m, w);
         }
         return Math.max(m, placeW(si));
