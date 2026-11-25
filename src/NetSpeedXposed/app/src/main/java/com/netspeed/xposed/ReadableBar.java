@@ -1040,7 +1040,7 @@ final class ReadableBar extends View {
     private long flagsAt = 0;
     private int sysFlags = 0;   // 1 airplane, 2 battery saver, 4 NFC, 8 hotspot
     /** Camera hole centre and radius in this view's pixels (NaN = unknown). */
-    float camX = Float.NaN, camY = Float.NaN, camR = Float.NaN;
+    float camX = Float.NaN, camY = Float.NaN, camR = Float.NaN, camLeftX = 0f;
 
     private static final float PRO_H = 206f;
     /** The data SIM's box is this much taller than its four old lines, to hold the radio details. */
@@ -1453,6 +1453,7 @@ final class ReadableBar extends View {
                 rightStart = cx + cr + 22f;
                 leftEnd = Math.min(cx - cr - 14f, healthX - 14f);
             }
+            camLeftX = cx - cr - 14f;   // the device-values row may run right up to the camera hole
             l4End = 0;
             w4Start = rightEnd;
             camRight = cx + cr;
@@ -1740,7 +1741,7 @@ final class ReadableBar extends View {
         Item ni = new Item(9, 27).g(G_BELL, 24, ncol).sp(6).t(n, 27, bold, ncol);
         if (notifSilent > 0) ni.sp(5).t("(" + notifSilent + ")", 20, semi, grey());
         if (Cfg.b(Cfg.SH_NOTIF, Cfg.D_SH_NOTIF)) r2.add(ni);
-        float r2End = L1;
+        float r2End = Math.max(L1, Math.min(camLeftX, L1 + 40f));
         float e2 = drawLine(c, r2, 22, y(P2), r2End - 120, 18);
         proSlot(c, e2 + 16, r2End, y(P2));
 
