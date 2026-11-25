@@ -2162,6 +2162,11 @@ final class ReadableBar extends View {
         if (deep >= 0 && Cfg.b(Cfg.SH_SLEEP, Cfg.D_SH_SLEEP)) its.add(new Item(6, 24).t("S ", 14, semi, dim).t(deep + "%", 22, bold, deep >= 60 ? green() : deep >= 30 ? yellow() : orange()));
         if (!Float.isNaN(skin) && skin > 0 && Cfg.b(Cfg.SH_SKIN, Cfg.D_SH_SKIN))
             its.add(new Item(5, 24).t("SK ", 14, semi, dim).t(Math.round(skin) + "\u00b0", 22, bold, skin >= 45 ? red() : skin >= 40 ? orange() : skin >= 36 ? yellow() : green()));
+        if (Cfg.b(Cfg.SH_UPTIME, Cfg.D_SH_UPTIME)) {
+            long m = android.os.SystemClock.elapsedRealtime() / 60000L;
+            String up = m >= 1440 ? (m / 1440) + "d" + ((m % 1440) / 60) + "h" : m >= 60 ? (m / 60) + "h" + (m % 60) + "m" : m + "m";
+            its.add(new Item(4, 24).t("UP ", 14, semi, dim).t(up, 22, bold, teal()));
+        }
         if (x1 - x0 < 60) return;
         drawLine(c, its, x0, cy, x1, 14);
     }
