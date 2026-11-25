@@ -2173,7 +2173,19 @@ final class ReadableBar extends View {
             its.add(new Item(4, 24).t("UP ", 14, semi, dim).t(up, 22, bold, teal()));
         }
         if (x1 - x0 < 60) return;
-        drawLine(c, its, x0, cy, x1, 14);
+        // shrink the whole row a little (down to 76%) before dropping anything, so SK / TR / UP stay when Bluetooth etc. take room
+        float tot = 0;
+        for (Item it : its) tot += it.w();
+        float[] sc = {1f, 0.92f, 0.85f, 0.78f};
+        float use = sc[sc.length - 1];
+        for (float f : sc) {
+            float gp2 = f == 1f ? 14 : 8;
+            if ((tot + gp2 * Math.max(0, its.size() - 1)) * f <= x1 - x0) { use = f; break; }
+        }
+        if (use >= 1f) { drawLine(c, its, x0, cy, x1, 14); return; }
+        c.save();
+        c.scale(use, use, x0, cy);
+        try { drawLine(c, its, x0, cy, x0 + (x1 - x0) / use, 8); } finally { c.restore(); }
     }
 
     // ---- centre: battery health and cycles under the camera (numbers only)
