@@ -2110,7 +2110,7 @@ public class SettingsActivity extends Activity {
         wpChoice(opts, wp, "Major dams with river, size, height, type, year", "dams", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "National parks, sanctuaries, biosphere reserves", "parks", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "Physical features: ranges, plateaus, big peaks", "phys", 0, new String[]{"Show", "Hide"});
-        wpChoice(opts, wp, "Map detail: how many names on the map", "density", 2, new String[]{"Sparse", "Normal", "Busy"});
+        wpSlider(opts, wp, "Map detail: how many names on the map", "densp", 100, 50, 150);
         wpChoice(opts, wp, "Towns and villages (extra places)", "towns", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "Mountain passes (ghats)", "ghats", 0, new String[]{"Show", "Hide"});
         wpChoice(opts, wp, "Hills and forts found in the elevation data", "hills", 0, new String[]{"Show", "Hide"});
@@ -2145,6 +2145,33 @@ public class SettingsActivity extends Activity {
     }
 
     /** km stores the index into KMS; card stores 0 = show, 1 = hide. */
+    private void wpSlider(LinearLayout parent, final android.content.SharedPreferences wp, String label, final String key, final int def, int min, int max) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(0, dp(10), 0, dp(6));
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.addView(text(label, 15, fg), new LinearLayout.LayoutParams(0, -2, 1f));
+        final TextView val = text("", 14, accent);
+        top.addView(val);
+        box.addView(top);
+        SeekBar sb = new SeekBar(this);
+        sb.setMin(min);
+        sb.setMax(max);
+        int cur = wp.getInt(key, def);
+        sb.setProgress(cur);
+        val.setText(cur + "%" + (cur == def ? "  (default)" : ""));
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar b, int v, boolean user) { val.setText(v + "%" + (v == def ? "  (default)" : "")); }
+            @Override public void onStartTrackingTouch(SeekBar b) { }
+            @Override public void onStopTrackingTouch(SeekBar b) { wp.edit().putInt(key, b.getProgress()).commit(); }
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.topMargin = dp(4);
+        box.addView(sb, lp);
+        parent.addView(box);
+    }
+
     private void wpChoice(LinearLayout parent, final android.content.SharedPreferences wp, String label, String key, int def, String[] o) {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.VERTICAL);

@@ -114,7 +114,7 @@ final class TerrainMaker {
         final boolean showFaults = wsp.getInt("faults", 0) == 0, showCoast = wsp.getInt("coast", 0) == 0, showCities = wsp.getInt("cities", 0) == 0,
                 showForest = wsp.getInt("forest", 0) == 0, showLegend = wsp.getInt("legend", 0) == 0,
                 showRivers = wsp.getInt("rivers", 0) == 0, showDams = wsp.getInt("dams", 0) == 0, showParks = wsp.getInt("parks", 0) == 0, showPhys = wsp.getInt("phys", 0) == 0;
-        { int dn0 = wsp.getInt("density", 2); IndiaMap.densF = dn0 == 0 ? 0.35f : dn0 == 1 ? 0.65f : 1f;
+        { IndiaMap.densF = Math.max(0.5f, Math.min(1.5f, wsp.getInt("densp", 100) / 100f));
           IndiaMap.optTowns = wsp.getInt("towns", 0) == 0; IndiaMap.optGhats = wsp.getInt("ghats", 0) == 0;
           IndiaMap.optHills = wsp.getInt("hills", 0) == 0; IndiaMap.optList = wsp.getInt("nearlist", 0) == 0; }
         WpStatus.step(1);
