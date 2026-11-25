@@ -121,7 +121,8 @@ jobs:
           cat update.json
           # "latest" keeps only what the app and the NetSwitch update link need
           if gh release view latest -R "$R" >/dev/null 2>&1; then
-            gh release upload latest FieldAtlas.apk NetSpeedXposed.apk NetSwitch.zip update.json changelog.md --clobber -R "$R"
+            gh release upload latest FieldAtlas.apk --clobber -R "$R"
+            for f in NetSpeedXposed.apk NetSwitch.zip update.json changelog.md; do gh release upload latest "$f" --clobber -R "$R" || echo "skip $f"; done
             gh release edit latest --notes-file notes.txt -R "$R"
           else
             gh release create latest FieldAtlas.apk NetSpeedXposed.apk NetSwitch.zip update.json changelog.md --title "Field Atlas (latest build)" --notes-file notes.txt -R "$R"
