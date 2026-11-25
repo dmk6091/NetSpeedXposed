@@ -2700,6 +2700,7 @@ final class DualRow {
                 rb.wake = StatsCol.wake();
                 rb.ping = SysState.pingMs;
                 long upMs = android.os.SystemClock.uptimeMillis(), elMs = Math.max(1, android.os.SystemClock.elapsedRealtime());
+                rb.dayKm = RideGps.dayKm;
                 rb.deep = (int) Math.round(100.0 * (1.0 - (double) upMs / elMs));
                 Vpn.update(ctx);
                 rb.vpn = Vpn.active;

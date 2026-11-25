@@ -19,8 +19,41 @@ final class RideGps {
     static volatile boolean moving;
     static volatile int fixes;
 
+    // distance travelled today: sum of the steps between fixes taken every 20 s (jitter, bad fixes and jumps ignored), reset at midnight
+    static volatile float dayKm = -1f;
+    private static double[] odoP;
+    private static long odoT;
+    private static String odoDay;
+
+    private static void odo(Context ctx) {
+        try {
+            if (!Cfg.b(Cfg.SH_TRIP, Cfg.D_SH_TRIP)) return;
+            long now = SystemClock.elapsedRealtime();
+            if (now - odoT < 20_000 && odoT != 0) return;
+            long prevT = odoT;
+            odoT = now;
+            android.content.SharedPreferences sp = ctx.getSharedPreferences("odo", 0);
+            String key = new java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).format(new java.util.Date());
+            if (odoDay == null) { odoDay = sp.getString("day", ""); dayKm = odoDay.equals(key) ? sp.getFloat("km", 0f) : 0f; }
+            if (!key.equals(odoDay)) { odoDay = key; dayKm = 0f; odoP = null; }
+            Location l = TowerDb.myLocation(ctx);
+            if (l == null || (l.hasAccuracy() && l.getAccuracy() > 60f)) return;
+            if (odoP != null && now - prevT <= 120_000) {
+                float[] d = new float[1];
+                Location.distanceBetween(odoP[0], odoP[1], l.getLatitude(), l.getLongitude(), d);
+                if (d[0] >= 40f && d[0] <= 900f) {   // under 40 m is jitter, over 900 m in 20 s is a bad fix
+                    dayKm += d[0] / 1000f;
+                    odoP = new double[]{l.getLatitude(), l.getLongitude()};
+                    sp.edit().putString("day", odoDay).putFloat("km", dayKm).apply();
+                }
+            } else odoP = new double[]{l.getLatitude(), l.getLongitude()};
+            if (dayKm < 0f) dayKm = 0f;
+        } catch (Throwable ignored) { }
+    }
+
     /** Worker thread, every few seconds. */
     static void tick(Context ctx) {
+        odo(ctx);
         if (!Cfg.b(Cfg.RIDE_GPS, Cfg.D_RIDE_GPS) || !Cfg.b(Cfg.LEARN, Cfg.D_LEARN)) { moving = false; return; }
         long now = SystemClock.elapsedRealtime();
         if (now - trailAt < 20_000) return;

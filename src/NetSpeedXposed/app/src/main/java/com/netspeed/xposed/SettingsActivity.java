@@ -362,6 +362,7 @@ public class SettingsActivity extends Activity {
         toggle(c, "Deep sleep share", "Time the phone spent in deep sleep, as %", Cfg.SH_SLEEP, Cfg.D_SH_SLEEP);
         toggle(c, "Skin temperature", "Outer body temperature of the phone, shown as SK", Cfg.SH_SKIN, Cfg.D_SH_SKIN);
         toggle(c, "Uptime", "Time since the last reboot, shown as UP", Cfg.SH_UPTIME, Cfg.D_SH_UPTIME);
+        toggle(c, "Distance today", "How far the phone has travelled today in km (from GPS and network fixes), shown as TRIP", Cfg.SH_TRIP, Cfg.D_SH_TRIP);
         toggle(c, "Next alarm", "Time of the next alarm", Cfg.SH_ALARM, Cfg.D_SH_ALARM);
         toggle(c, "Notification count", "Bell with the number of notifications", Cfg.SH_NOTIF, Cfg.D_SH_NOTIF);
         toggle(c, "Bluetooth device battery", "Battery % of the connected Bluetooth device", Cfg.SH_BTBAT, Cfg.D_SH_BTBAT);
