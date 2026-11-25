@@ -55,7 +55,7 @@ public class SettingsActivity extends Activity {
         String t = raw.toLowerCase(java.util.Locale.ROOT);
         if (t.equals("sim box guide") || t.equals("uv guide and sunscreen timer") || t.equals("heat and power diagnostics") || t.startsWith("heat and power history")
                 || t.equals("map wallpaper guide: what the symbols mean") || t.equals("place guide: soil and plants") || t.equals("climate guide: el ni\u00f1o and the others") || t.equals("sky guide: what is up now")) return 7;
-        if (t.equals("back up all settings to downloads") || t.equals("restore settings from downloads")) return 6;
+        if (t.equals("settings changed from default") || t.equals("back up all settings to downloads") || t.equals("restore settings from downloads")) return 6;
         if (t.contains("satellite strip")) return 2;
         if (t.contains("fault line")) return 3;
         if (t.contains("reservoir")) return 2;
@@ -429,6 +429,7 @@ public class SettingsActivity extends Activity {
         button(c, "Sky guide: what is up now", false, v -> showSkyGuide());
         button(c, "Climate guide: El Ni\u00f1o and the others", false, v -> showClimateGuide());
         button(c, "Map wallpaper guide: what the symbols mean", false, v -> showMapGuide());
+        button(c, "Settings changed from default", false, v -> showChanged());
         button(c, "Back up all settings to Downloads", false, v -> backupSettings());
         button(c, "Restore settings from Downloads", false, v -> restoreSettings());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
@@ -2588,6 +2589,32 @@ public class SettingsActivity extends Activity {
                 default: break;
             }
         }
+    }
+
+    /** Lists every status bar setting whose value differs from the built-in default. */
+    private void showChanged() {
+        StringBuilder sb = new StringBuilder();
+        int n = 0;
+        try {
+            java.util.Map<String, ?> all = sp.getAll();
+            for (java.lang.reflect.Field f : Cfg.class.getDeclaredFields()) {
+                if (f.getType() != String.class || !java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
+                String name = f.getName();
+                if (name.startsWith("D_")) continue;
+                java.lang.reflect.Field df;
+                try { df = Cfg.class.getDeclaredField("D_" + name); } catch (NoSuchFieldException e) { continue; }
+                f.setAccessible(true); df.setAccessible(true);
+                String key = (String) f.get(null);
+                Object def = df.get(null), cur = all.get(key);
+                if (cur == null || def == null) continue;
+                boolean same = String.valueOf(cur).equals(String.valueOf(def));
+                if (!same && cur instanceof Number && def instanceof Number) same = Math.abs(((Number) cur).doubleValue() - ((Number) def).doubleValue()) < 1e-6;
+                if (same) continue;
+                sb.append("\u2022 ").append(name.toLowerCase(java.util.Locale.ROOT).replace('_', ' ')).append(":  ").append(cur).append("   (default ").append(def).append(")\n");
+                n++;
+            }
+        } catch (Throwable t) { sb.append("Could not read the list: ").append(t.getClass().getSimpleName()); }
+        showGuideText("Settings changed from default (" + n + ")", n == 0 ? "Everything is at its default." : sb.toString());
     }
 
     /** Saves every setting (the app's and the wallpaper's) as one file in Downloads, through root. */

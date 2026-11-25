@@ -152,8 +152,6 @@ final class MapNames {
             RectF r = new RectF(left - (sym && !rightPin ? ic + 4 * u : 4 * u), top - 12 * u * (l.flow != null ? 1 : 0) - 4 * u, right + (rightPin ? ic + 4 * u : 4 * u), bottom + 4 * u);
             boolean ok = r.top > 0 && r.bottom < H;
             for (RectF o : used) if (ok && RectF.intersects(o, r)) ok = false;
-            boolean imp = l.kind == DAM || (l.kind == PEAK && !l.text.matches("\\d+ m"));
-            if (ok && imp && IndiaMap.softHit(r, W, H)) ok = false;   // big names stay clear of icons and dock
             if (!ok) continue;
             used.add(r);
             got[bd][l.kind]++;

@@ -95,6 +95,7 @@ final class TerrainMaker {
     }
 
     static Bitmap draw(Context c, double lat, double lon, boolean day, int z, boolean card, Info info) throws Exception {
+        cacheDir = c.getCacheDir();
         android.util.DisplayMetrics dm = c.getResources().getDisplayMetrics();
         final int W = dm.widthPixels, H = dm.heightPixels;
         final int gw = (int) Math.ceil(W / S), gh = (int) Math.ceil(H / S);
@@ -436,7 +437,24 @@ final class TerrainMaker {
         return bmp;
     }
 
+    static volatile java.io.File cacheDir;
+
     static String overpass(String q) {
+        java.io.File cf = null;
+        try {   // the same place asked again within a week: use the saved answer, no waiting for the servers
+            if (cacheDir != null) {
+                cf = new java.io.File(cacheDir, "ovp_" + Integer.toHexString(q.hashCode()) + "_" + q.length() + ".json");
+                if (cf.exists() && System.currentTimeMillis() - cf.lastModified() < 7L * 86400000L && cf.length() > 2) {
+                    return new String(java.nio.file.Files.readAllBytes(cf.toPath()), "UTF-8");
+                }
+            }
+        } catch (Throwable ignored) { }
+        String r = overpassNet(q);
+        try { if (r != null && cf != null) java.nio.file.Files.write(cf.toPath(), r.getBytes("UTF-8")); } catch (Throwable ignored) { }
+        return r;
+    }
+
+    private static String overpassNet(String q) {
         String[] hosts = {"https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter", "https://overpass.kumi.systems/api/interpreter"};
         for (String h : hosts) {
             try {

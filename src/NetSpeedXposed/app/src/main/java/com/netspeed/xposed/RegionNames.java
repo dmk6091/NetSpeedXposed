@@ -152,7 +152,6 @@ final class RegionNames {
             if (r.left < 8 * gu || r.right > W - 8 * gu || r.top < 0 || r.bottom > H) continue;
             boolean ok = true;
             for (RectF o : used) if (RectF.intersects(o, r)) { ok = false; break; }
-            if (ok && IndiaMap.softHit(r, W, H)) ok = false;
             if (!ok) continue;
             used.add(r);
             android.graphics.Path tri = new android.graphics.Path();
@@ -179,7 +178,6 @@ final class RegionNames {
             if (r.left < 8 * u || r.right > W - 8 * u || r.top < 0 || r.bottom > H) continue;
             boolean ok = true;
             for (RectF o : used) if (RectF.intersects(o, r)) { ok = false; break; }
-            if (ok && ci < extraFrom && IndiaMap.softHit(r, W, H)) ok = false;   // the big places stay clear of icons and dock
             if (!ok) continue;
             used.add(r);
             dot.setStyle(Paint.Style.FILL); dot.setColor(day ? 0xFF222222 : 0xFFFFFFFF);
