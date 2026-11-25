@@ -30,7 +30,6 @@ final class RideGps {
             if (!Cfg.b(Cfg.SH_TRIP, Cfg.D_SH_TRIP)) return;
             long now = SystemClock.elapsedRealtime();
             if (now - odoT < 20_000 && odoT != 0) return;
-            android.util.Log.i("FieldAtlasTrip", "odo tick");
             long prevT = odoT;
             odoT = now;
             android.content.SharedPreferences sp = ctx.getSharedPreferences("odo", 0);
@@ -49,8 +48,7 @@ final class RideGps {
                 }
             } else odoP = new double[]{l.getLatitude(), l.getLongitude()};
             if (dayKm < 0f) dayKm = 0f;
-            android.util.Log.i("FieldAtlasTrip", "dayKm=" + dayKm + " loc=" + (l != null));
-        } catch (Throwable t) { android.util.Log.w("FieldAtlasTrip", "odo failed: " + t); }
+        } catch (Throwable ignored) { }
     }
 
     /** Worker thread, every few seconds. */
