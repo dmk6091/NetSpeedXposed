@@ -1052,7 +1052,7 @@ final class ReadableBar extends View {
     private float boxExtra(int n) {
         float h = 44f;
         for (SimInfo si : sims) {
-            float r = 22f + 22f * Math.max(1, detailLines(si).size());
+            float r = 22f + 22f * Math.max(1, detailLines(si).size() - mergeDrop(si, boxW(n)));
             if (placeW(si) > boxW(n)) r += 22f;
             h = Math.max(h, r);
         }
@@ -3340,6 +3340,7 @@ final class ReadableBar extends View {
     private float foldRowY(SimInfo d, float cw) {
         int nLines = 0;
         for (java.util.List<DSeg> ln : detailLines(d)) if (!ln.isEmpty()) nLines++;
+        nLines -= mergeDrop(d, cw);
         float ph = placeH(d, cw);
         float y0 = y(P2) + 4;
         float lastCy = nLines > 0 ? y0 + ph + 22f * (nLines - 1) : y0 + Math.max(0f, ph - 22f);
@@ -3831,6 +3832,7 @@ final class ReadableBar extends View {
     private static final class DSeg {
         final String t; final float sz; final Typeface f; final int col;
         boolean chip;   // drawn as dark text on a filled, coloured rounded tag
+        boolean mg;     // part of the age / tower changes / ping line: the one that may sit beside a short place name
         boolean extra;  // extra info after a line: drawn with its own room, never widens the box or squeezes the main text
         DSeg(String t, float sz, Typeface f, int col) { this.t = t; this.sz = sz; this.f = f; this.col = col; }
         SimInfo mtn;    // set: draws the boxed mountain with the tower ground height of this SIM
@@ -3878,6 +3880,7 @@ final class ReadableBar extends View {
         }
         // direction to the tower after the ping (Tower column layout): faint grey while the position is only rough
         if (tower && si.dirArrow != null) d.add(new DSeg((d.isEmpty() ? "" : "  ") + (si.dirRough ? "~" : "") + si.dirArrow, 21, bold, si.dirRough ? fade(g, 0.8f) : yellow()));
+        for (DSeg sg : d) sg.mg = true;
         if (!d.isEmpty()) L.add(d);
         // tower line: height against you and line of sight, "\u25b2 +12m \u00b7 LOS clear" / "\u25bc \u22123m \u00b7 rise 8m"
         java.util.List<DSeg> tl = new java.util.ArrayList<>();
@@ -4114,12 +4117,20 @@ final class ReadableBar extends View {
         if (dupPlace(si) || placeText(si) == null || placeH(si, cw) >= 30f) return -1;
         java.util.List<java.util.List<DSeg>> L = detailLines(si);
         for (int i = 0; i < L.size(); i++) {
-            float w = 0; boolean ex = false;
-            for (DSeg sg : L.get(i)) { if (sg.extra) ex = true; else w += dsW(sg) + (sg.chip ? 5 : 0); }
-            if (!ex || w <= 0) continue;
-            return placeW(si) + 14f + w <= cw ? i : -1;
+            if (L.get(i).isEmpty() || !L.get(i).get(0).mg) continue;
+            float w = 0;
+            for (DSeg sg : L.get(i)) if (!sg.extra) w += dsW(sg) + (sg.chip ? 5 : 0);
+            return w > 0 && placeW(si) + 14f + w <= cw ? i : -1;
         }
         return -1;
+    }
+
+    /** True when the merged line has nothing else left on it, so its own row is dropped and the box gets one row shorter. */
+    private int mergeDrop(SimInfo si, float cw) {
+        int mi = mergeIdx(si, cw);
+        if (mi < 0) return 0;
+        for (DSeg sg : detailLines(si).get(mi)) if (sg.extra) return 0;
+        return 1;
     }
 
     private void simDetail(final Canvas c, SimInfo si, float x, float cw, float y0) {
@@ -4147,6 +4158,14 @@ final class ReadableBar extends View {
             final float lcy = cy;
             float w = 0, wx = 0;
             for (DSeg sg : ln) { if (sg.extra) wx += dsW(sg); else w += dsW(sg) + (sg.chip ? 5 : 0); }
+            if (merged && wx == 0) {   // nothing but the main part: it all goes beside the name and this row is dropped
+                final float xm = x + placeW(si) + 14f;
+                fit(c, xm, nameCy, w, x + cw - xm, () -> {
+                    float e = 0;
+                    for (DSeg sg : ln) if (!sg.extra) e = dsDraw(c, sg, e);
+                });
+                continue;
+            }
             // the last row (data / Q) is the more important one: a line it lands on shows faintly behind it
             boolean under = hasFoldRow(si) && Math.abs(lcy - foldRowY(si, cw)) < 21f;
             if (under) c.saveLayerAlpha(x - 6, lcy - 16, x + cw + 6, lcy + 16, 90);
