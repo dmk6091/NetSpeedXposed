@@ -3811,7 +3811,7 @@ final class ReadableBar extends View {
         final String cells = si.cells > 0 ? String.valueOf(si.cells) : null;
         float w2 = tw(band, 26, semi) + (dist != null ? 10 + tw(dist, 26, semi) : 0)
                 + (cells != null ? 12 + DISH_W + 4 + tw(cells, 24, bold) : 0)
-                + (bwText(si) != null ? 10 + tw("\u00b7 " + bwText(si), 18, bold) : 0);
+                + (bwText(si) != null && !bwMoved(si, cw) ? 10 + tw("\u00b7 " + bwText(si), 18, bold) : 0);
         fitK(c, x, yL3, w2, cw, S3, () -> {
             float e = textB(c, band, 0, 0, 26, 26, semi, fade(blue(), k));
             if (dist != null) {
@@ -3822,7 +3822,7 @@ final class ReadableBar extends View {
                 e += 12 + DISH_W - 1;
                 e = textB(c, cells, e + 5, 0, 26, 24, bold, grey());
             }
-            if (bwText(si) != null) textB(c, "\u00b7 " + bwText(si), e + 10, 0, 26, 18, bold, fade(grey(), k));
+            if (bwText(si) != null && !bwMoved(si, cw)) textB(c, "\u00b7 " + bwText(si), e + 10, 0, 26, 18, bold, fade(grey(), k));
         });
         slots.add(new float[]{yL3, x + Math.min(w2 + 10, cw)});   // generous: the line's real end is a little past the sum of its parts
         // lines 4-7: radio details of this SIM's serving cell and tower
@@ -4125,6 +4125,30 @@ final class ReadableBar extends View {
         return -1;
     }
 
+    /** Width of the channel-width text ("· 10 MHz") when it is drawn on its own, 0 if none. */
+    private float bwW(SimInfo si) { return bwText(si) == null ? 0f : tw("\u00b7 " + bwText(si), 18, bold); }
+
+    /** Width the name line already needs: the place name plus the merged age/ping items, if any. */
+    private float nameLineW(SimInfo si, float cw) {
+        float w = placeW(si);
+        int mi = mergeIdx(si, cw);
+        if (mi >= 0) {
+            float mw = 0;
+            for (DSeg sg : detailLines(si).get(mi)) if (!sg.extra) mw += dsW(sg) + (sg.chip ? 5 : 0);
+            w += 14f + mw;
+        }
+        return w;
+    }
+
+    /** True when there is room beside a short place name for the channel width, so it leaves the band line (which then has more room). */
+    private boolean bwMoved(SimInfo si, float cw) {
+        if (!si.inService || bwText(si) == null || dupPlace(si) || placeText(si) == null || placeH(si, cw) >= 30f) return false;
+        float tag = 0;
+        if (Cfg.b(Cfg.TC_SITE, Cfg.D_TC_SITE) && si.site != null) tag += 28 + tw(si.site, 19, bold) + 16;
+        if (Cfg.b(Cfg.TC_NB, Cfg.D_TC_NB) && si.nbr != null) tag += 28 + tw(si.nbr, 19, bold) + 16;
+        return nameLineW(si, cw) + 10 + bwW(si) + tag <= cw;
+    }
+
     /** True when the merged line has nothing else left on it, so its own row is dropped and the box gets one row shorter. */
     private int mergeDrop(SimInfo si, float cw) {
         int mi = mergeIdx(si, cw);
@@ -4150,7 +4174,9 @@ final class ReadableBar extends View {
                 nameCy = cy;
                 float ph = drawPlace(c, si, x, cw, cy);
                 if (ph > 0) { nameYs.add(cy); if (ph >= 30f) nameYs.add(cy + 22f); }
-                if (ph > 0 && ph < 30f) slots.add(new float[]{cy, x + Math.min(mi >= 0 ? placeW(si) + 14f + mw0 : placeW(si), cw)});
+                final boolean bwm = ph > 0 && ph < 30f && bwMoved(si, cw);
+                if (bwm) textB(c, "\u00b7 " + bwText(si), x + nameLineW(si, cw) + 10, cy, 22, 18, bold, grey());
+                if (ph > 0 && ph < 30f) slots.add(new float[]{cy, x + Math.min(nameLineW(si, cw) + (bwm ? 10 + bwW(si) : 0), cw)});
                 else if (ph > 0) slots.add(new float[]{cy + 22f, x + cw});   // two-line name: both lines are full
                 cy += ph; first = false;
             }
