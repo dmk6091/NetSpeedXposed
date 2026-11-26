@@ -4043,15 +4043,16 @@ final class ReadableBar extends View {
             }
         } catch (Throwable ignored) { }
         try {
-            double td = compassDeg(si.bearing);
+            boolean roughDir = si.bearing == null;   // the direction is only an estimate: shown with a ~
+            double td = compassDeg(roughDir ? si.dirArrow : si.bearing);
             double[] pos = fix != null ? new double[]{fix[0], fix[1]} : latLon;
             Astro.Pos sp = Astro.sun(System.currentTimeMillis(), pos[0], pos[1]);
             if (!Double.isNaN(td) && sp.alt > 0) {
                 double d = ((td - sp.az + 540) % 360) - 180;
                 java.util.List<DSeg> f = new java.util.ArrayList<>();
                 f.add(new DSeg("TOWER ", 16, semi, g));
-                if (Math.abs(d) < 10) f.add(new DSeg("near sun", 20, bold, yellow()));
-                else { f.add(new DSeg(Math.round(Math.abs(d)) + "\u00b0 " + (d < 0 ? "left" : "right"), 20, bold, blue())); f.add(new DSeg(" of sun", 16, semi, g)); }
+                if (Math.abs(d) < 10) f.add(new DSeg((roughDir ? "~" : "") + "near sun", 20, bold, yellow()));
+                else { f.add(new DSeg((roughDir ? "~" : "") + Math.round(Math.abs(d)) + "\u00b0 " + (d < 0 ? "left" : "right"), 20, bold, blue())); f.add(new DSeg(" of sun", 16, semi, g)); }
                 fr.add(f);
             }
         } catch (Throwable ignored) { }
