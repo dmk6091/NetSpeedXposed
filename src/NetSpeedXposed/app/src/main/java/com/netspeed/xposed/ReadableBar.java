@@ -4081,6 +4081,15 @@ final class ReadableBar extends View {
             f.add(new DSeg(ClimIdx.kp >= 5 ? " storm" : " unsettled", 16, semi, g));
             fr.add(f);
         }
+        try {
+            double sd = Double.NaN;
+            try { sd = Astro.sun(System.currentTimeMillis(), (fix != null ? fix[0] : latLon[0]), (fix != null ? fix[1] : latLon[1])).alt; } catch (Throwable ignored) { }
+            StringBuilder nm = new StringBuilder();
+            for (java.util.List<DSeg> f : fr) { if (nm.length() > 0) nm.append(", "); nm.append(f.get(0).t.trim()); }
+            Info.radioDiag[si.slot & 3] = "tower direction: " + (si.bearing != null ? si.bearing + " (real)" : si.dirArrow != null ? si.dirArrow + " (rough)" : "none")
+                    + " \u00b7 sun " + (Double.isNaN(sd) ? "?" : String.format(Locale.US, "%.0f\u00b0 up", sd)) + " \u00b7 distance " + si.dist
+                    + " \u00b7 frames now: " + (nm.length() == 0 ? "none" : nm);
+        } catch (Throwable ignored) { }
         if (fr.isEmpty()) return null;
         return fr;
     }

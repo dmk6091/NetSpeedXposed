@@ -14,6 +14,7 @@ final class Info {
     }
 
     static volatile String row3 = "", row4 = "";
+    static final String[] radioDiag = {"", "", "", ""};   // per SIM slot: tower direction and the radio frames it has right now
 
     static String feed(double lat, double lon, long now) {
         StringBuilder b = new StringBuilder();
@@ -127,6 +128,7 @@ final class Info {
             add(b, 'E', "Sea at " + (Tide.place == null ? "the tide place" : Tide.place), offS + (sv == null ? "no marine data yet" : (Float.isNaN(sv[0]) ? "" : String.format(us, "waves %.1f m", sv[0]) + (Float.isNaN(sv[1]) ? "" : String.format(us, " \u00b7 %.0f s", sv[1])) + " \u00b7 " + Tide.stateWord(sv[0]) + " \u00b7 ") + (Float.isNaN(sv[2]) ? "no current" : String.format(us, "current %.1f kn", sv[2] / 1.852f)) + (cn == null ? "" : " \u00b7 " + cn + " (name from a built-in table, approximate)")));
             add(b, 'E', "Marine feed (Open-Meteo)", Diag.line("marine-api.open-meteo.com") + (Tide.fetchedAt > 0 ? " \u00b7 data from " + Math.max(0, (now - Tide.fetchedAt) / 60000L) + " min ago" : ""));
         } catch (Throwable ignored) { }
+        for (int i = 0; i < 4; i++) if (!radioDiag[i].isEmpty()) add(b, 'L', "SIM box radio frames, SIM slot " + (i + 1), radioDiag[i]);
         add(b, 'L', "Row 3 (tide and sea)", row3.isEmpty() ? "not drawn yet" : row3);
         add(b, 'L', "Row 4 (weather, disaster, earth)", row4.isEmpty() ? "not drawn yet" : row4);
     }
