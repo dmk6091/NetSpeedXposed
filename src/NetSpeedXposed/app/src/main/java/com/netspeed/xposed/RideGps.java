@@ -22,7 +22,7 @@ final class RideGps {
     // distance travelled today: sum of the steps between fixes taken every 20 s (jitter, bad fixes and jumps ignored), reset at midnight
     static volatile float dayKm = -1f;
     private static double[] odoP;
-    private static long odoT;
+    private static long odoT, odoFixNs;
     private static String odoDay;
 
     private static void odo(Context ctx) {
@@ -37,16 +37,22 @@ final class RideGps {
             if (odoDay == null) { odoDay = sp.getString("day", ""); dayKm = odoDay.equals(key) ? sp.getFloat("km", 0f) : 0f; }
             if (!key.equals(odoDay)) { odoDay = key; dayKm = 0f; odoP = null; }
             Location l = TowerDb.myLocation(ctx);
-            if (l == null || (l.hasAccuracy() && l.getAccuracy() > 60f)) return;
-            if (odoP != null && now - prevT <= 120_000) {
+            if (l == null || (l.hasAccuracy() && l.getAccuracy() > 100f)) return;
+            long fixNs = l.getElapsedRealtimeNanos();
+            if (odoP != null && fixNs == odoFixNs) return;   // the same fix again: nothing new to add
+            if (odoP != null) {
                 float[] d = new float[1];
                 Location.distanceBetween(odoP[0], odoP[1], l.getLatitude(), l.getLongitude(), d);
-                if (d[0] >= 40f && d[0] <= 900f) {   // under 40 m is jitter, over 900 m in 20 s is a bad fix
-                    dayKm += d[0] / 1000f;
-                    odoP = new double[]{l.getLatitude(), l.getLongitude()};
-                    sp.edit().putString("day", odoDay).putFloat("km", dayKm).apply();
-                }
-            } else odoP = new double[]{l.getLatitude(), l.getLongitude()};
+                double dt = (fixNs - odoFixNs) / 1e9;   // seconds between the two FIXES (they can come minutes apart)
+                float jitter = Math.max(40f, l.hasAccuracy() ? l.getAccuracy() : 0f);
+                if (dt > 0 && dt <= 1200 && d[0] / dt <= 45.0) {   // up to 160 km/h: believable, count the whole step
+                    if (d[0] >= jitter) {
+                        dayKm += d[0] / 1000f;
+                        odoP = new double[]{l.getLatitude(), l.getLongitude()}; odoFixNs = fixNs;
+                        sp.edit().putString("day", odoDay).putFloat("km", dayKm).apply();
+                    }   // under the jitter: keep the old anchor so slow movement still adds up
+                } else { odoP = new double[]{l.getLatitude(), l.getLongitude()}; odoFixNs = fixNs; }   // a jump or a long gap: start again from here, count nothing
+            } else { odoP = new double[]{l.getLatitude(), l.getLongitude()}; odoFixNs = fixNs; }
             if (dayKm < 0f) dayKm = 0f;
         } catch (Throwable ignored) { }
     }
