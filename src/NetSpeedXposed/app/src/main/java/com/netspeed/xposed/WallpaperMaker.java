@@ -193,7 +193,7 @@ final class WallpaperMaker {
                 android.location.Location.distanceBetween(sp.getFloat("lastLat", 0), sp.getFloat("lastLon", 0), lat, lon, d);
                 long age = System.currentTimeMillis() - sp.getLong("lastAt", 0);
                 boolean dayNow = DayNight.isDay(lat, lon);
-                boolean sameLook = sp.getInt("style", 0) != 1 || !sp.contains("lastDay") || sp.getBoolean("lastDay", true) == dayNow;   // terrain look: redraw when day turns to night or back
+                boolean sameLook = sp.getInt("style", 0) != 1 || (sp.contains("lastDay") && sp.getBoolean("lastDay", true) == dayNow);   // no day/night record yet counts as different, so it redraws once and starts recording   // terrain look: redraw when day turns to night or back
                 if (d[0] < sp.getInt("km", 2) * 1000f && age < 24 * 3600_000L && sameLook) { WpStatus.end(); return "still near the last picture"; }
             }
             String place = "";
