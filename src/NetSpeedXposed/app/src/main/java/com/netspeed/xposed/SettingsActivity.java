@@ -434,6 +434,7 @@ public class SettingsActivity extends Activity {
         button(c, "Climate guide: El Ni\u00f1o and the others", false, v -> showClimateGuide());
         button(c, "Map wallpaper guide: what the symbols mean", false, v -> showMapGuide());
         button(c, "Settings changed from default", false, v -> showChanged());
+        button(c, "Distance history (km per day)", false, v -> showDistanceHistory());
         button(c, "Back up all settings to Downloads", false, v -> backupSettings());
         button(c, "Restore settings from Downloads", false, v -> restoreSettings());
         button(c, "Play Integrity checks (history)", false, v -> showIntegrity());
@@ -504,6 +505,9 @@ public class SettingsActivity extends Activity {
         toggle(c, "Learn while riding", "When you're on the move (not standing still), one GPS fix a minute so towers get "
                 + "learned even without a navigation app. Also learns the nearby towers your phone hears. A little battery "
                 + "while moving, none while still", Cfg.RIDE_GPS, Cfg.D_RIDE_GPS);
+        toggle(c, "Accurate distance while riding", "Distance today (TR) uses the phone's GPS every ~3 seconds while you are on the move, "
+                + "so bends are followed and the total is within a few percent. Switches off by itself after 2 minutes of standing still. "
+                + "A little battery while riding", Cfg.RIDE_ACC, Cfg.D_RIDE_ACC);
         toggle(c, "Weak 5G → 4G (quota-guarded)", "When the data SIM's 5G is weak for 20 s, switch it to 4G, retry 5G after "
                 + "3 min (longer if it keeps failing). Stops once 4G data today reaches the limit below, so a 5G-unlimited / "
                 + "4G-capped plan isn't eaten. The bar shows 4G·used while it's on. Needs \"Phone Services\" in LSPosed; reboot once",
@@ -2670,6 +2674,7 @@ public class SettingsActivity extends Activity {
                     putPref(w, e);
                 }
                 root.put("app", a).put("wallpaper", w).put("version", 1);
+                try { String dh = android.provider.Settings.Global.getString(ctx.getContentResolver(), "netspeed_odo_hist"); if (dh != null && !dh.isEmpty()) root.put("distance", dh); } catch (Throwable ignored) { }
                 java.io.File f = new java.io.File(ctx.getCacheDir(), "FieldAtlas-settings.json");
                 try (java.io.FileOutputStream fo = new java.io.FileOutputStream(f)) { fo.write(root.toString(1).getBytes("UTF-8")); }
                 Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", "cp '" + f.getAbsolutePath() + "' /sdcard/Download/FieldAtlas-settings.json && chmod 666 /sdcard/Download/FieldAtlas-settings.json"});
@@ -2702,11 +2707,75 @@ public class SettingsActivity extends Activity {
                         android.content.SharedPreferences.Editor e2 = WallpaperMaker.sp(ctx).edit();
                         loadPrefs(e2, root.getJSONObject("wallpaper"));
                         e2.commit();
+                        try {
+                            String dh = root.optString("distance", "");
+                            if (dh.matches("[0-9=;.]*") && !dh.isEmpty()) Runtime.getRuntime().exec(new String[]{"su", "-c", "settings put global netspeed_odo_hist '" + dh + "'"}).waitFor();
+                        } catch (Throwable ignored) { }
                         ok = true;
                         msg = "Settings restored. Restart System UI to apply the status bar ones.";
                     } catch (Throwable t) { msg = "Restore failed: no readable backup in Downloads (" + t.getClass().getSimpleName() + ")"; }
                     final String m = msg; final boolean okf = ok;
                     runOnUiThread(() -> { android.widget.Toast.makeText(this, m, android.widget.Toast.LENGTH_LONG).show(); if (okf) recreate(); });
+                }).start()).show();
+    }
+
+    /** Daily distance history (from the status bar's distance today): list, totals and CSV export to Downloads. */
+    private void showDistanceHistory() {
+        String raw = "";
+        try { raw = String.valueOf(android.provider.Settings.Global.getString(getContentResolver(), "netspeed_odo_hist")); } catch (Throwable ignored) { }
+        final java.util.TreeMap<String, Float> m = new java.util.TreeMap<>();
+        if (raw != null) for (String e : raw.split(";")) {
+            int q = e.indexOf('=');
+            if (q > 0) try { m.put(e.substring(0, q), Float.parseFloat(e.substring(q + 1))); } catch (Throwable ignored) { }
+        }
+        if (m.isEmpty()) {
+            showGuideText("Distance history", "Nothing saved yet. The status bar's TR counts the distance you travel each day and saves every day's total here at midnight. "
+                    + "Turn on \"Distance today\" (Device settings) and ride; today's value appears here within a minute.");
+            return;
+        }
+        java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US), out = new java.text.SimpleDateFormat("EEE d MMM yyyy", java.util.Locale.US);
+        StringBuilder b = new StringBuilder();
+        float all = 0, w7 = 0, mon = 0, best = 0;
+        String bestDay = "";
+        String thisMonth = new java.text.SimpleDateFormat("yyyyMM", java.util.Locale.US).format(new java.util.Date());
+        java.util.ArrayList<String> days = new java.util.ArrayList<>(m.descendingKeySet());
+        int idx = 0;
+        for (String d : days) {
+            float v = m.get(d);
+            all += v; if (idx < 7) w7 += v; if (d.startsWith(thisMonth)) mon += v;
+            if (v > best) { best = v; bestDay = d; }
+            idx++;
+        }
+        b.append(String.format(java.util.Locale.US, "Last 7 days: %.1f km\nThis month: %.1f km\nAll saved days (%d): %.1f km\n", w7, mon, days.size(), all));
+        try { if (!bestDay.isEmpty()) b.append(String.format(java.util.Locale.US, "Longest day: %.1f km (%s)\n", best, out.format(in.parse(bestDay)))); } catch (Throwable ignored) { }
+        b.append("\n");
+        for (String d : days) {
+            String lab = d;
+            try { lab = out.format(in.parse(d)); } catch (Throwable ignored) { }
+            b.append(String.format(java.util.Locale.US, "%s   %.1f km\n", lab, m.get(d)));
+        }
+        final String csv;
+        StringBuilder cb = new StringBuilder("date,km\n");
+        for (java.util.Map.Entry<String, Float> e : m.entrySet()) {
+            String d = e.getKey();
+            cb.append(d.length() == 8 ? d.substring(0, 4) + "-" + d.substring(4, 6) + "-" + d.substring(6) : d).append(',').append(String.format(java.util.Locale.US, "%.2f", e.getValue())).append('\n');
+        }
+        csv = cb.toString();
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        TextView t = text(b.toString(), 14, fg);
+        t.setPadding(dp(18), dp(10), dp(18), dp(10));
+        sv.addView(t);
+        new AlertDialog.Builder(this).setTitle("Distance history").setView(sv).setPositiveButton("Close", null)
+                .setNeutralButton("Export CSV", (dd, ww) -> new Thread(() -> {
+                    String msg;
+                    try {
+                        java.io.File f = new java.io.File(getCacheDir(), "FieldAtlas-distance.csv");
+                        try (java.io.FileOutputStream fo = new java.io.FileOutputStream(f)) { fo.write(csv.getBytes("UTF-8")); }
+                        int rc = Runtime.getRuntime().exec(new String[]{"su", "-c", "cp '" + f.getAbsolutePath() + "' /sdcard/Download/FieldAtlas-distance.csv && chmod 666 /sdcard/Download/FieldAtlas-distance.csv"}).waitFor();
+                        msg = rc == 0 ? "Saved Downloads/FieldAtlas-distance.csv" : "Could not copy to Downloads (root refused)";
+                    } catch (Throwable th) { msg = "Export failed: " + th.getClass().getSimpleName(); }
+                    final String mm = msg;
+                    runOnUiThread(() -> android.widget.Toast.makeText(this, mm, android.widget.Toast.LENGTH_LONG).show());
                 }).start()).show();
     }
 

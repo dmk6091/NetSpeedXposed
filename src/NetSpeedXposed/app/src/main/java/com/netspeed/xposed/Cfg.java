@@ -93,6 +93,7 @@ final class Cfg {
     static final String LOW_HEAT = "low_heat";         static final boolean D_LOW_HEAT = true;
     static final String LEARN = "learn_towers";        static final boolean D_LEARN = true;
     /** While moving, one GPS fix a minute for tower learning. */
+    static final String RIDE_ACC = "ride_acc";         static final boolean D_RIDE_ACC = true;
     static final String RIDE_GPS = "ride_gps";         static final boolean D_RIDE_GPS = true;
     /** Weak 5G -> 4G for a while, until this much 4G data is used today (MB). */
     static final String NR_FALLBACK = "nr_fallback";   static final boolean D_NR_FALLBACK = true;
