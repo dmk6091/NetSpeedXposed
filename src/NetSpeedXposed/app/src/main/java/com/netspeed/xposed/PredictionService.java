@@ -98,6 +98,25 @@ public class PredictionService extends AppPredictionService {
         super.onDestroy();
     }
 
+    private static volatile long wpWakeAt = 0;
+    private static volatile boolean wpWakeBusy = false;
+
+    /** Screen turned on: if the map wallpaper is automatic, let it check whether you moved far enough (at most once per 3 minutes). It only redraws when you moved, so a quiet wake costs almost nothing. */
+    static void wallpaperOnWake(final android.content.Context c) {
+        try {
+            long now = System.currentTimeMillis();
+            if (wpWakeBusy || now - wpWakeAt < 3 * 60_000L) return;
+            if (!WallpaperMaker.sp(c).getBoolean("auto", false)) return;
+            if (!WallpaperMaker.sp(c).getBoolean("onWake", true)) return;
+            wpWakeAt = now;
+            wpWakeBusy = true;
+            new Thread(() -> {
+                try { WallpaperMaker.run(c, false); } catch (Throwable ignored) { }
+                finally { wpWakeBusy = false; }
+            }).start();
+        } catch (Throwable ignored) { }
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -110,6 +129,7 @@ public class PredictionService extends AppPredictionService {
             screenRx = new android.content.BroadcastReceiver() {
                 @Override public void onReceive(android.content.Context c, Intent i) {
                     screenOn = Intent.ACTION_SCREEN_ON.equals(i.getAction());
+                    if (screenOn) wallpaperOnWake(c.getApplicationContext());
                 }
             };
             registerReceiver(screenRx, f, android.content.Context.RECEIVER_EXPORTED);
