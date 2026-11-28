@@ -250,9 +250,47 @@ final class TowerArea {
         }
         org.json.JSONObject a = new org.json.JSONObject(sb.toString()).optJSONObject("address");
         if (a == null) return null;
-        return first(a.optString("neighbourhood"), a.optString("quarter"), a.optString("suburb"), a.optString("hamlet"),
-                a.optString("village"), a.optString("residential"), a.optString("city_district"), a.optString("town"),
-                a.optString("city"));
+        String fine = first(a.optString("neighbourhood"), a.optString("quarter"), a.optString("suburb"), a.optString("hamlet"),
+                a.optString("village"), a.optString("residential"), a.optString("city_district"), a.optString("town"));
+        if (!fine.isEmpty()) return fine;
+        // Only the city came back (a point between villages): use the nearest named village / hamlet / suburb within 2 km instead
+        try {
+            String near = nearestPlace(lat, lon);
+            if (near != null && !near.isEmpty()) return near;
+        } catch (Throwable ignored) { }
+        return first(a.optString("city"));
+    }
+
+    /** Nearest named place node (village, hamlet, suburb, town, locality) within 2 km, from OpenStreetMap (Overpass). */
+    private static String nearestPlace(double lat, double lon) throws Exception {
+        String q = String.format(Locale.US, "[out:json][timeout:10];node(around:2000,%.5f,%.5f)[place~\"^(village|hamlet|suburb|town|neighbourhood|locality)$\"][name];out 30;", lat, lon);
+        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL("https://overpass-api.de/api/interpreter?data=" + java.net.URLEncoder.encode(q, "UTF-8")).openConnection();
+        c.setConnectTimeout(8_000);
+        c.setReadTimeout(12_000);
+        c.setRequestProperty("User-Agent", "NetSpeedXposed/1.0 (status bar module; github.com/dmk6091/NetSpeedXposed)");
+        if (c.getResponseCode() != 200) return null;
+        StringBuilder sb = new StringBuilder();
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(c.getInputStream(), "UTF-8"))) {
+            String line;
+            while ((line = r.readLine()) != null) sb.append(line);
+        }
+        org.json.JSONArray el = new org.json.JSONObject(sb.toString()).optJSONArray("elements");
+        if (el == null) return null;
+        String best = null;
+        float bd = Float.MAX_VALUE;
+        for (int i = 0; i < el.length(); i++) {
+            org.json.JSONObject e = el.optJSONObject(i);
+            if (e == null) continue;
+            org.json.JSONObject tg = e.optJSONObject("tags");
+            if (tg == null) continue;
+            String nm = tg.optString("name:en", "");
+            if (nm.isEmpty()) nm = tg.optString("name", "");
+            if (nm.isEmpty() || !nm.matches(".*[A-Za-z].*")) continue;   // Latin names only (the bar font)
+            float[] d = new float[1];
+            android.location.Location.distanceBetween(lat, lon, e.optDouble("lat"), e.optDouble("lon"), d);
+            if (d[0] < bd) { bd = d[0]; best = nm; }
+        }
+        return best;
     }
 
     private static String first(String... v) {
